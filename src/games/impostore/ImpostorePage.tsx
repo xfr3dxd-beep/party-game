@@ -39,6 +39,7 @@ export default function ImpostorePage() {
     submitMrWhiteGuess,
     continueAfterResult,
     newGame,
+    nextRound,
     getPlayerWord,
   } = useGameState();
 
@@ -115,6 +116,7 @@ export default function ImpostorePage() {
             isGameOver={false}
             onContinue={continueAfterResult}
             onNewGame={newGame}
+            onNextRound={nextRound}
           />
         );
 
@@ -127,6 +129,7 @@ export default function ImpostorePage() {
             isGameOver={true}
             onContinue={continueAfterResult}
             onNewGame={newGame}
+            onNextRound={nextRound}
           />
         );
 

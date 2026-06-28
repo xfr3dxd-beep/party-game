@@ -84,15 +84,54 @@ export function useGameState() {
       score: 0,
     }));
 
-    // Shuffle card positions (indices 0..n-1)
-    const cardPositions = shuffleArray(Array.from({ length: players.length }, (_, i) => i));
-
     setState({
       ...initialState,
       phase: 'card_picking',
       players,
       wordSet,
       currentPickIndex: 0,
+    });
+  }, [fetchRandomWordSet]);
+
+  // Next round: keep players + cumulated scores, new word set, re-shuffle roles
+  const nextRound = useCallback(async () => {
+    const wordSet = await fetchRandomWordSet();
+    if (!wordSet) {
+      alert('Errore: nessun set di parole trovato nel database!');
+      return;
+    }
+
+    setState(prev => {
+      // Build the role distribution from current players
+      const roleCount: RoleConfig = { civile: 0, undercover: 0, mr_white: 0 };
+      prev.players.forEach(p => roleCount[p.role]++);
+
+      const roles: Role[] = [
+        ...Array(roleCount.civile).fill('civile'),
+        ...Array(roleCount.undercover).fill('undercover'),
+        ...Array(roleCount.mr_white).fill('mr_white'),
+      ];
+      const shuffledRoles = shuffleArray(roles);
+
+      // Apply points from game result, reset elimination, assign new roles
+      const updatedPlayers: Player[] = prev.players.map((p, index) => {
+        const awarded = prev.gameResult?.pointsAwarded.find(a => a.playerId === p.id);
+        return {
+          ...p,
+          score: p.score + (awarded?.points ?? 0),
+          role: shuffledRoles[index],
+          isEliminated: false,
+          cardIndex: null,
+        };
+      });
+
+      return {
+        ...initialState,
+        phase: 'card_picking',
+        players: updatedPlayers,
+        wordSet,
+        currentPickIndex: 0,
+      };
     });
   }, [fetchRandomWordSet]);
 
@@ -260,26 +299,9 @@ export function useGameState() {
     });
   }, []);
 
-  // Apply points and reset for new game
+  // Reset everything for a brand new game
   const newGame = useCallback(() => {
-    setState(prev => {
-      // Apply points from game result to players
-      const updatedPlayers = prev.players.map(p => {
-        const awarded = prev.gameResult?.pointsAwarded.find(a => a.playerId === p.id);
-        return {
-          ...p,
-          score: p.score + (awarded?.points ?? 0),
-          isEliminated: false,
-          cardIndex: null,
-        };
-      });
-
-      return {
-        ...initialState,
-        phase: 'lobby',
-        players: [], // Clear for new lobby setup but we keep leaderboard separately
-      };
-    });
+    setState(initialState);
   }, []);
 
   // Get cumulative scores across games (for leaderboard)
@@ -320,6 +342,7 @@ export function useGameState() {
     submitMrWhiteGuess,
     continueAfterResult,
     newGame,
+    nextRound,
     getLeaderboard,
     getPlayerWord,
     setPhase,
