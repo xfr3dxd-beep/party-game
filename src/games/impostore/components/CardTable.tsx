@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Player } from '../types';
 
 interface CardTableProps {
@@ -10,8 +10,20 @@ interface CardTableProps {
 
 export default function CardTable({ players, currentPickIndex, onPickCard, getPlayerWord }: CardTableProps) {
   const [flippedCard, setFlippedCard] = useState<number | null>(null);
+  const [wordVisible, setWordVisible] = useState(false);
   const [revealedCards, setRevealedCards] = useState<Set<number>>(new Set());
   const [pickedCards, setPickedCards] = useState<Map<number, number>>(new Map()); // cardIndex -> playerIndex
+
+  // Delay showing the word until the card has rotated past 90° (300ms into the 600ms flip)
+  useEffect(() => {
+    if (flippedCard !== null) {
+      setWordVisible(false);
+      const timer = setTimeout(() => setWordVisible(true), 300);
+      return () => clearTimeout(timer);
+    } else {
+      setWordVisible(false);
+    }
+  }, [flippedCard]);
 
   const currentPlayer = currentPickIndex < players.length ? players[currentPickIndex] : null;
 
@@ -87,7 +99,7 @@ export default function CardTable({ players, currentPickIndex, onPickCard, getPl
                   )}
                 </div>
                 <div className="game-playing-card-back" onClick={e => { e.stopPropagation(); handleCardRead(); }}>
-                  {playerWord && (
+                  {isFlipped && wordVisible && playerWord && (
                     <>
                       <div className="card-word">{playerWord.word}</div>
                       {playerWord.hint && (
