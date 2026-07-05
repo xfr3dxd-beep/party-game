@@ -49,18 +49,19 @@ export default function Home() {
 
           {/* Sciarade Card */}
           <div
-            className="game-card disabled animate-slide-in"
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/sciarada')}
             id="game-card-sciarade"
             style={{ animationDelay: '0.2s' }}
           >
-            <span className="game-card-badge badge-soon">Prossimamente</span>
+            <span className="game-card-badge badge-live">Giocabile</span>
             <div className="game-card-icon sciarade">
               🎭
             </div>
             <h2 className="game-card-title">Sciarade</h2>
             <p className="game-card-desc">
               Il classico gioco delle sciarade in versione digitale!
-              Mima, descrivi e indovina con i tuoi amici.
+              Mima le frasi italiane e sfida le altre squadre a tempo.
             </p>
           </div>
         </div>

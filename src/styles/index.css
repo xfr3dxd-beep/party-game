@@ -1456,3 +1456,258 @@ input, textarea, select {
   background: rgba(139, 92, 246, 0.3);
   color: white;
 }
+
+/* ============================================
+   Sciarada Game Styles
+   ============================================ */
+
+/* Lobby Option Grid */
+.sciarada-option-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.sciarada-option-grid.wide {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+
+.sciarada-option-btn {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  text-align: center;
+}
+
+.sciarada-option-btn:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+  background: rgba(6, 182, 212, 0.08);
+}
+
+.sciarada-option-btn.active {
+  border-color: var(--accent-cyan);
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--accent-cyan-light);
+  box-shadow: var(--shadow-glow-cyan);
+}
+
+/* Play View */
+.sciarada-play {
+  display: flex;
+  flex-direction: column;
+  min-height: 70vh;
+  gap: var(--space-lg);
+}
+
+/* Team Banner */
+.sciarada-team-banner {
+  text-align: center;
+  padding: var(--space-md);
+}
+
+.sciarada-team-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.sciarada-team-name {
+  display: block;
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--accent-cyan-light);
+  margin-top: var(--space-xs);
+}
+
+/* Sentence Card */
+.sciarada-sentence-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl) var(--space-xl);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  min-height: 200px;
+}
+
+.sciarada-sentence {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.5;
+  animation: sentenceIn 0.3s ease-out;
+}
+
+@keyframes sentenceIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Action Buttons */
+.sciarada-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.sciarada-btn-correct {
+  padding: var(--space-lg) !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: none !important;
+  color: white !important;
+  border-radius: var(--radius-lg) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  transition: all var(--transition-fast);
+}
+
+.sciarada-btn-correct:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+.sciarada-btn-correct:active {
+  transform: scale(0.97);
+}
+
+.sciarada-btn-skip {
+  padding: var(--space-lg) !important;
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 2px solid var(--border-medium) !important;
+  color: var(--text-secondary) !important;
+  border-radius: var(--radius-lg) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  transition: all var(--transition-fast);
+}
+
+.sciarada-btn-skip:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: var(--text-muted) !important;
+  color: var(--text-primary) !important;
+}
+
+/* Timer Bar */
+.sciarada-timer-container {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+}
+
+.sciarada-timer-bar {
+  flex: 1;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.sciarada-timer-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--accent-cyan) 0%, var(--accent-cyan-light) 100%);
+  transition: width 1s linear;
+}
+
+.sciarada-timer-fill.low {
+  background: linear-gradient(90deg, var(--accent-amber) 0%, var(--accent-amber-light) 100%);
+}
+
+.sciarada-timer-fill.critical {
+  background: linear-gradient(90deg, var(--accent-rose) 0%, var(--accent-rose-light) 100%);
+  animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+@keyframes timerPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.sciarada-timer-text {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--accent-cyan-light);
+  min-width: 50px;
+  text-align: right;
+}
+
+.sciarada-timer-text.low {
+  color: var(--accent-amber-light);
+}
+
+.sciarada-timer-text.critical {
+  color: var(--accent-rose-light);
+  animation: timerPulse 0.5s ease-in-out infinite;
+}
+
+/* Transition Screen */
+.sciarada-transition {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: var(--space-2xl) 0;
+}
+
+/* Glass Card Static (reusable) */
+.glass-card-static {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Mobile Responsive for Sciarada */
+@media (max-width: 480px) {
+  .sciarada-sentence {
+    font-size: 1.3rem;
+  }
+
+  .sciarada-team-name {
+    font-size: 1.4rem;
+  }
+
+  .sciarada-option-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sciarada-option-grid.wide {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .sciarada-actions {
+    grid-template-columns: 1fr;
+  }
+}

@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import ImpostorePage from './games/impostore/ImpostorePage';
+import SciaradaPage from './games/sciarada/SciaradaPage';
 
 export default function App() {
   return (
@@ -25,6 +26,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <ImpostorePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sciarada"
+            element={
+              <ProtectedRoute>
+                <SciaradaPage />
               </ProtectedRoute>
             }
           />
