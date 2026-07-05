@@ -1498,6 +1498,48 @@ input, textarea, select {
   box-shadow: var(--shadow-glow-cyan);
 }
 
+/* Timer Stepper */
+.sciarada-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+}
+
+.sciarada-stepper-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-full) !important;
+  background: rgba(6, 182, 212, 0.15) !important;
+  border: 2px solid var(--accent-cyan) !important;
+  color: var(--accent-cyan-light) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 !important;
+  transition: all var(--transition-fast);
+}
+
+.sciarada-stepper-btn:hover:not(:disabled) {
+  background: rgba(6, 182, 212, 0.25) !important;
+  transform: scale(1.1);
+  box-shadow: var(--shadow-glow-cyan);
+}
+
+.sciarada-stepper-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sciarada-stepper-value {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  min-width: 140px;
+  text-align: center;
+}
+
 /* Play View */
 .sciarada-play {
   display: flex;

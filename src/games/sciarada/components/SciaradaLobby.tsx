@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { Plus, X, Play, Users, Timer, Type } from 'lucide-react';
+import { Plus, Minus, X, Play, Users, Timer, Type } from 'lucide-react';
 import { GameConfig, WordCount } from '../types';
 
 interface SciaradaLobbyProps {
   onStartGame: (teamNames: string[], config: GameConfig) => void;
 }
 
-const timerOptions = [
-  { value: 60, label: '1 Minuto' },
-  { value: 90, label: '1 Min e Mezzo' },
-  { value: 120, label: '2 Minuti' },
-];
+const TIMER_MIN = 30;
+const TIMER_MAX = 300;
+const TIMER_STEP = 30;
+
+function formatTimer(seconds: number): string {
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+  if (sec === 0) {
+    return min === 1 ? '1 Minuto' : `${min} Minuti`;
+  }
+  return `${min} Min ${sec}s`;
+}
 
 const wordCountOptions: { value: WordCount; label: string }[] = [
   { value: 4, label: '4 Parole' },
@@ -139,16 +146,26 @@ export default function SciaradaLobby({ onStartGame }: SciaradaLobbyProps) {
           Tempo per Turno
         </p>
 
-        <div className="sciarada-option-grid">
-          {timerOptions.map(opt => (
-            <button
-              key={opt.value}
-              className={`sciarada-option-btn ${timerSeconds === opt.value ? 'active' : ''}`}
-              onClick={() => setTimerSeconds(opt.value)}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="sciarada-stepper">
+          <button
+            className="btn sciarada-stepper-btn"
+            onClick={() => setTimerSeconds(Math.max(TIMER_MIN, timerSeconds - TIMER_STEP))}
+            disabled={timerSeconds <= TIMER_MIN}
+            id="timer-minus"
+          >
+            <Minus size={20} />
+          </button>
+          <span className="sciarada-stepper-value">
+            {formatTimer(timerSeconds)}
+          </span>
+          <button
+            className="btn sciarada-stepper-btn"
+            onClick={() => setTimerSeconds(Math.min(TIMER_MAX, timerSeconds + TIMER_STEP))}
+            disabled={timerSeconds >= TIMER_MAX}
+            id="timer-plus"
+          >
+            <Plus size={20} />
+          </button>
         </div>
       </div>
 
