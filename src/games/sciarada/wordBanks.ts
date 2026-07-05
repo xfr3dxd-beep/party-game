@@ -1,23 +1,32 @@
 // Italian Word Banks for Sciarada Sentence Generator
+// Every noun is tagged with a category so the generator can assign
+// semantically coherent roles (subjects vs objects vs locations).
+
+export type NounCategory = 'person' | 'animal' | 'object' | 'food' | 'place' | 'concept';
 
 export interface Noun {
   word: string;
   gender: 'm' | 'f';
-  article: string;      // definite article: il, la, lo, l'
+  article: string;      // definite: il, la, lo, l'
   articleIndef: string;  // indefinite: un, una, uno, un'
+  cat: NounCategory;
 }
 
 export interface Adjective {
-  m: string;  // masculine form
-  f: string;  // feminine form
+  m: string;
+  f: string;
+  /** If true this adjective only makes sense for animate beings (person/animal) */
+  animate?: boolean;
+  /** If true this adjective only makes sense for inanimate things */
+  inanimate?: boolean;
 }
 
 export interface Verb {
-  present: string;       // 3rd person singular present
-  gerund: string;        // gerundio
-  pastPart: string;      // participio passato (masculine)
-  pastPartF: string;     // participio passato (feminine)
-  infinitive: string;    // infinito
+  present: string;
+  gerund: string;
+  pastPart: string;
+  pastPartF: string;
+  infinitive: string;
   type: 'transitive' | 'intransitive';
 }
 
@@ -27,174 +36,227 @@ export interface ReflexiveVerb {
   infinitive: string;
 }
 
-// ============ NOUNS (~160) ============
+// ============ NOUNS ============
 export const nouns: Noun[] = [
-  // Persone
-  { word: 'ragazzo', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'ragazza', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'bambino', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'bambina', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'uomo', gender: 'm', article: "l'", articleIndef: 'un' },
-  { word: 'donna', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'nonno', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'nonna', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'dottore', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'maestro', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'maestra', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'pittore', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'cantante', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'cuoco', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'contadino', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'pescatore', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'cavaliere', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'principe', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'principessa', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'soldato', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'pirata', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'capitano', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'musicista', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'artista', gender: 'm', article: "l'", articleIndef: 'un' },
-  { word: 'astronauta', gender: 'm', article: "l'", articleIndef: 'un' },
-  // Animali
-  { word: 'cane', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'gatto', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'cavallo', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'leone', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'tigre', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'elefante', gender: 'm', article: "l'", articleIndef: 'un' },
-  { word: 'scimmia', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'serpente', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'aquila', gender: 'f', article: "l'", articleIndef: "un'" },
-  { word: 'delfino', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'pappagallo', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'coniglio', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'farfalla', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'tartaruga', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'pinguino', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'coccodrillo', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'lupo', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'orso', gender: 'm', article: "l'", articleIndef: 'un' },
-  { word: 'volpe', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'balena', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'topo', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'rana', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'gallina', gender: 'f', article: 'la', articleIndef: 'una' },
-  // Oggetti
-  { word: 'libro', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'chitarra', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'spada', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'corona', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'bottiglia', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'telescopio', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'orologio', gender: 'm', article: "l'", articleIndef: 'un' },
-  { word: 'ombrello', gender: 'm', article: "l'", articleIndef: 'un' },
-  { word: 'violino', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'pallone', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'bicicletta', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'candela', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'pentola', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'cappello', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'specchio', gender: 'm', article: 'lo', articleIndef: 'uno' },
-  { word: 'quadro', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'martello', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'tesoro', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'bandiera', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'lanterna', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'diamante', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'scatola', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'macchina', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'tamburo', gender: 'm', article: 'il', articleIndef: 'un' },
-  // Cibo
-  { word: 'torta', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'pizza', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'mela', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'formaggio', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'gelato', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'cioccolato', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'pane', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'minestra', gender: 'f', article: 'la', articleIndef: 'una' },
-  // Natura / Luoghi
-  { word: 'montagna', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'spiaggia', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'foresta', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'deserto', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'fiume', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'cascata', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'vulcano', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'giardino', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'castello', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'palazzo', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'villaggio', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'mercato', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'ponte', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'fontana', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'torre', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'grotta', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'isola', gender: 'f', article: "l'", articleIndef: "un'" },
-  { word: 'oceano', gender: 'm', article: "l'", articleIndef: 'un' },
-  { word: 'bosco', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'prato', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'sentiero', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'lago', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'chiesa', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'stella', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'luna', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'tempesta', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'nuvola', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'collina', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'tramonto', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'arcobaleno', gender: 'm', article: "l'", articleIndef: 'un' },
-  // Concetti
-  { word: 'festa', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'avventura', gender: 'f', article: "l'", articleIndef: "un'" },
-  { word: 'viaggio', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'battaglia', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'segreto', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'mistero', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'sogno', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'canzone', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'ricetta', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'storia', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'sorpresa', gender: 'f', article: 'la', articleIndef: 'una' },
-  { word: 'miracolo', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'concerto', gender: 'm', article: 'il', articleIndef: 'un' },
-  { word: 'spettacolo', gender: 'm', article: 'lo', articleIndef: 'uno' },
+  // ---- Persone ----
+  { word: 'ragazzo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'ragazza', gender: 'f', article: 'la', articleIndef: 'una', cat: 'person' },
+  { word: 'bambino', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'bambina', gender: 'f', article: 'la', articleIndef: 'una', cat: 'person' },
+  { word: 'uomo', gender: 'm', article: "l'", articleIndef: 'un', cat: 'person' },
+  { word: 'donna', gender: 'f', article: 'la', articleIndef: 'una', cat: 'person' },
+  { word: 'nonno', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'nonna', gender: 'f', article: 'la', articleIndef: 'una', cat: 'person' },
+  { word: 'dottore', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'maestro', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'maestra', gender: 'f', article: 'la', articleIndef: 'una', cat: 'person' },
+  { word: 'pittore', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'cantante', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'cuoco', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'contadino', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'pescatore', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'cavaliere', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'principe', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'principessa', gender: 'f', article: 'la', articleIndef: 'una', cat: 'person' },
+  { word: 'soldato', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'pirata', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'capitano', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'musicista', gender: 'm', article: 'il', articleIndef: 'un', cat: 'person' },
+  { word: 'artista', gender: 'm', article: "l'", articleIndef: 'un', cat: 'person' },
+  { word: 'astronauta', gender: 'm', article: "l'", articleIndef: 'un', cat: 'person' },
+
+  // ---- Animali ----
+  { word: 'cane', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'gatto', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'cavallo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'leone', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'tigre', gender: 'f', article: 'la', articleIndef: 'una', cat: 'animal' },
+  { word: 'elefante', gender: 'm', article: "l'", articleIndef: 'un', cat: 'animal' },
+  { word: 'scimmia', gender: 'f', article: 'la', articleIndef: 'una', cat: 'animal' },
+  { word: 'serpente', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'aquila', gender: 'f', article: "l'", articleIndef: "un'", cat: 'animal' },
+  { word: 'delfino', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'pappagallo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'coniglio', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'farfalla', gender: 'f', article: 'la', articleIndef: 'una', cat: 'animal' },
+  { word: 'tartaruga', gender: 'f', article: 'la', articleIndef: 'una', cat: 'animal' },
+  { word: 'pinguino', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'coccodrillo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'lupo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'orso', gender: 'm', article: "l'", articleIndef: 'un', cat: 'animal' },
+  { word: 'volpe', gender: 'f', article: 'la', articleIndef: 'una', cat: 'animal' },
+  { word: 'balena', gender: 'f', article: 'la', articleIndef: 'una', cat: 'animal' },
+  { word: 'topo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'animal' },
+  { word: 'rana', gender: 'f', article: 'la', articleIndef: 'una', cat: 'animal' },
+  { word: 'gallina', gender: 'f', article: 'la', articleIndef: 'una', cat: 'animal' },
+
+  // ---- Oggetti ----
+  { word: 'libro', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'chitarra', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'spada', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'corona', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'bottiglia', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'telescopio', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'orologio', gender: 'm', article: "l'", articleIndef: 'un', cat: 'object' },
+  { word: 'ombrello', gender: 'm', article: "l'", articleIndef: 'un', cat: 'object' },
+  { word: 'violino', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'pallone', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'bicicletta', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'candela', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'pentola', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'cappello', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'specchio', gender: 'm', article: 'lo', articleIndef: 'uno', cat: 'object' },
+  { word: 'quadro', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'martello', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'tesoro', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'bandiera', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'lanterna', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'diamante', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'scatola', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'macchina', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'tamburo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+
+  // ---- Cibo ----
+  { word: 'torta', gender: 'f', article: 'la', articleIndef: 'una', cat: 'food' },
+  { word: 'pizza', gender: 'f', article: 'la', articleIndef: 'una', cat: 'food' },
+  { word: 'mela', gender: 'f', article: 'la', articleIndef: 'una', cat: 'food' },
+  { word: 'formaggio', gender: 'm', article: 'il', articleIndef: 'un', cat: 'food' },
+  { word: 'gelato', gender: 'm', article: 'il', articleIndef: 'un', cat: 'food' },
+  { word: 'cioccolato', gender: 'm', article: 'il', articleIndef: 'un', cat: 'food' },
+  { word: 'pane', gender: 'm', article: 'il', articleIndef: 'un', cat: 'food' },
+  { word: 'minestra', gender: 'f', article: 'la', articleIndef: 'una', cat: 'food' },
+
+  // ---- Luoghi ----
+  { word: 'montagna', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+  { word: 'spiaggia', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+  { word: 'foresta', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+  { word: 'deserto', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'fiume', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'cascata', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+  { word: 'vulcano', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'giardino', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'castello', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'palazzo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'villaggio', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'mercato', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'ponte', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'fontana', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+  { word: 'torre', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+  { word: 'grotta', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+  { word: 'isola', gender: 'f', article: "l'", articleIndef: "un'", cat: 'place' },
+  { word: 'oceano', gender: 'm', article: "l'", articleIndef: 'un', cat: 'place' },
+  { word: 'bosco', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'prato', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'sentiero', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'lago', gender: 'm', article: 'il', articleIndef: 'un', cat: 'place' },
+  { word: 'chiesa', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+  { word: 'collina', gender: 'f', article: 'la', articleIndef: 'una', cat: 'place' },
+
+  // ---- Concetti / Natura ----
+  { word: 'stella', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'luna', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'tempesta', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'nuvola', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'tramonto', gender: 'm', article: 'il', articleIndef: 'un', cat: 'concept' },
+  { word: 'arcobaleno', gender: 'm', article: "l'", articleIndef: 'un', cat: 'concept' },
+  { word: 'festa', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'avventura', gender: 'f', article: "l'", articleIndef: "un'", cat: 'concept' },
+  { word: 'viaggio', gender: 'm', article: 'il', articleIndef: 'un', cat: 'concept' },
+  { word: 'battaglia', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'segreto', gender: 'm', article: 'il', articleIndef: 'un', cat: 'concept' },
+  { word: 'mistero', gender: 'm', article: 'il', articleIndef: 'un', cat: 'concept' },
+  { word: 'sogno', gender: 'm', article: 'il', articleIndef: 'un', cat: 'concept' },
+  { word: 'canzone', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'ricetta', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'storia', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'sorpresa', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'miracolo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'concept' },
+  { word: 'concerto', gender: 'm', article: 'il', articleIndef: 'un', cat: 'concept' },
+  { word: 'spettacolo', gender: 'm', article: 'lo', articleIndef: 'uno', cat: 'concept' },
 ];
 
-// ============ ADJECTIVES (~70) ============
+// ---- Filtered sub-arrays for quick access ----
+/** Nouns that can be sentence subjects (people & animals) */
+export const subjectNouns = nouns.filter(n => n.cat === 'person' || n.cat === 'animal');
+/** Nouns that can be direct objects of transitive verbs */
+export const objectNouns = nouns.filter(n => n.cat === 'object' || n.cat === 'food' || n.cat === 'concept');
+/** Nouns that work as locations (prep + art + noun) */
+export const placeNouns = nouns.filter(n => n.cat === 'place');
+/** Only person nouns (for human-specific verbs like cucinare, scrivere) */
+export const personNouns = nouns.filter(n => n.cat === 'person');
+
+// ============ ADJECTIVES ============
+// animate = only for living beings (affamato, stanco, furbo…)
+// inanimate = only for things/places (antico, ghiacciato…)
+// neither = works for anything (grande, bello…)
 export const adjectives: Adjective[] = [
+  // Universal
   { m: 'bello', f: 'bella' }, { m: 'brutto', f: 'brutta' },
   { m: 'grande', f: 'grande' }, { m: 'piccolo', f: 'piccola' },
-  { m: 'veloce', f: 'veloce' }, { m: 'lento', f: 'lenta' },
-  { m: 'furbo', f: 'furba' }, { m: 'coraggioso', f: 'coraggiosa' },
-  { m: 'misterioso', f: 'misteriosa' }, { m: 'antico', f: 'antica' },
-  { m: 'magico', f: 'magica' }, { m: 'selvaggio', f: 'selvaggia' },
-  { m: 'gigante', f: 'gigante' }, { m: 'spaventoso', f: 'spaventosa' },
-  { m: 'elegante', f: 'elegante' }, { m: 'silenzioso', f: 'silenziosa' },
-  { m: 'rumoroso', f: 'rumorosa' }, { m: 'profondo', f: 'profonda' },
-  { m: 'luminoso', f: 'luminosa' }, { m: 'oscuro', f: 'oscura' },
-  { m: 'dolce', f: 'dolce' }, { m: 'pesante', f: 'pesante' },
-  { m: 'leggero', f: 'leggera' }, { m: 'strano', f: 'strana' },
+  { m: 'enorme', f: 'enorme' }, { m: 'minuscolo', f: 'minuscola' },
+  { m: 'misterioso', f: 'misteriosa' }, { m: 'strano', f: 'strana' },
   { m: 'famoso', f: 'famosa' }, { m: 'incredibile', f: 'incredibile' },
-  { m: 'invisibile', f: 'invisibile' }, { m: 'colorato', f: 'colorata' },
-  { m: 'dorato', f: 'dorata' }, { m: 'pericoloso', f: 'pericolosa' },
-  { m: 'fortunato', f: 'fortunata' }, { m: 'generoso', f: 'generosa' },
-  { m: 'saggio', f: 'saggia' }, { m: 'simpatico', f: 'simpatica' },
-  { m: 'curioso', f: 'curiosa' }, { m: 'avventuroso', f: 'avventurosa' },
-  { m: 'potente', f: 'potente' }, { m: 'splendido', f: 'splendida' },
-  { m: 'enorme', f: 'enorme' }, { m: 'prezioso', f: 'preziosa' },
-  { m: 'gentile', f: 'gentile' }, { m: 'allegro', f: 'allegra' },
-  { m: 'affamato', f: 'affamata' }, { m: 'stanco', f: 'stanca' },
-  { m: 'felice', f: 'felice' }, { m: 'arrabbiato', f: 'arrabbiata' },
-  { m: 'timido', f: 'timida' }, { m: 'orgoglioso', f: 'orgogliosa' },
-  { m: 'pigro', f: 'pigra' }, { m: 'agile', f: 'agile' },
-  { m: 'astuto', f: 'astuta' }, { m: 'gigantesco', f: 'gigantesca' },
-  { m: 'ghiacciato', f: 'ghiacciata' }, { m: 'infuocato', f: 'infuocata' },
-  { m: 'nascosto', f: 'nascosta' }, { m: 'incantato', f: 'incantata' },
-  { m: 'dispettoso', f: 'dispettosa' }, { m: 'buffo', f: 'buffa' },
-  { m: 'peloso', f: 'pelosa' }, { m: 'profumato', f: 'profumata' },
-  { m: 'robusto', f: 'robusta' }, { m: 'minuscolo', f: 'minuscola' },
+  { m: 'splendido', f: 'splendida' }, { m: 'magico', f: 'magica' },
+  { m: 'prezioso', f: 'preziosa' }, { m: 'potente', f: 'potente' },
+  { m: 'luminoso', f: 'luminosa' }, { m: 'oscuro', f: 'oscura' },
+  { m: 'colorato', f: 'colorata' }, { m: 'gigantesco', f: 'gigantesca' },
+  { m: 'nascosto', f: 'nascosta' }, { m: 'profumato', f: 'profumata' },
+  // Animate-only
+  { m: 'veloce', f: 'veloce', animate: true },
+  { m: 'lento', f: 'lenta', animate: true },
+  { m: 'furbo', f: 'furba', animate: true },
+  { m: 'coraggioso', f: 'coraggiosa', animate: true },
+  { m: 'elegante', f: 'elegante', animate: true },
+  { m: 'silenzioso', f: 'silenziosa', animate: true },
+  { m: 'rumoroso', f: 'rumorosa', animate: true },
+  { m: 'dolce', f: 'dolce', animate: true },
+  { m: 'selvaggio', f: 'selvaggia', animate: true },
+  { m: 'spaventoso', f: 'spaventosa', animate: true },
+  { m: 'leggero', f: 'leggera', animate: true },
+  { m: 'pericoloso', f: 'pericolosa', animate: true },
+  { m: 'fortunato', f: 'fortunata', animate: true },
+  { m: 'generoso', f: 'generosa', animate: true },
+  { m: 'saggio', f: 'saggia', animate: true },
+  { m: 'simpatico', f: 'simpatica', animate: true },
+  { m: 'curioso', f: 'curiosa', animate: true },
+  { m: 'avventuroso', f: 'avventurosa', animate: true },
+  { m: 'gentile', f: 'gentile', animate: true },
+  { m: 'allegro', f: 'allegra', animate: true },
+  { m: 'affamato', f: 'affamata', animate: true },
+  { m: 'stanco', f: 'stanca', animate: true },
+  { m: 'felice', f: 'felice', animate: true },
+  { m: 'arrabbiato', f: 'arrabbiata', animate: true },
+  { m: 'timido', f: 'timida', animate: true },
+  { m: 'orgoglioso', f: 'orgogliosa', animate: true },
+  { m: 'pigro', f: 'pigra', animate: true },
+  { m: 'agile', f: 'agile', animate: true },
+  { m: 'astuto', f: 'astuta', animate: true },
+  { m: 'dispettoso', f: 'dispettosa', animate: true },
+  { m: 'buffo', f: 'buffa', animate: true },
+  { m: 'peloso', f: 'pelosa', animate: true },
+  { m: 'robusto', f: 'robusta', animate: true },
+  // Inanimate-only
+  { m: 'antico', f: 'antica', inanimate: true },
+  { m: 'dorato', f: 'dorata', inanimate: true },
+  { m: 'ghiacciato', f: 'ghiacciata', inanimate: true },
+  { m: 'infuocato', f: 'infuocata', inanimate: true },
+  { m: 'incantato', f: 'incantata', inanimate: true },
+  { m: 'dimenticato', f: 'dimenticata', inanimate: true },
+  { m: 'profondo', f: 'profonda', inanimate: true },
+  { m: 'pesante', f: 'pesante', inanimate: true },
+  { m: 'invisibile', f: 'invisibile', inanimate: true },
+  { m: 'gigante', f: 'gigante', inanimate: true },
 ];
+
+/** Get adjectives appropriate for a noun */
+export function adjsFor(n: Noun): Adjective[] {
+  const isAnimate = n.cat === 'person' || n.cat === 'animal';
+  return adjectives.filter(a => {
+    if (a.animate && !isAnimate) return false;
+    if (a.inanimate && isAnimate) return false;
+    return true;
+  });
+}
 
 // ============ VERBS ============
 export const transitiveVerbs: Verb[] = [
@@ -244,7 +306,6 @@ export const intransitiveVerbs: Verb[] = [
   { present: 'ride', gerund: 'ridendo', pastPart: 'riso', pastPartF: 'risa', infinitive: 'ridere', type: 'intransitive' },
   { present: 'urla', gerund: 'urlando', pastPart: 'urlato', pastPartF: 'urlata', infinitive: 'urlare', type: 'intransitive' },
   { present: 'scivola', gerund: 'scivolando', pastPart: 'scivolato', pastPartF: 'scivolata', infinitive: 'scivolare', type: 'intransitive' },
-  { present: 'rotola', gerund: 'rotolando', pastPart: 'rotolato', pastPartF: 'rotolata', infinitive: 'rotolare', type: 'intransitive' },
   { present: 'trema', gerund: 'tremando', pastPart: 'tremato', pastPartF: 'tremata', infinitive: 'tremare', type: 'intransitive' },
   { present: 'passeggia', gerund: 'passeggiando', pastPart: 'passeggiato', pastPartF: 'passeggiata', infinitive: 'passeggiare', type: 'intransitive' },
   { present: 'fischia', gerund: 'fischiando', pastPart: 'fischiato', pastPartF: 'fischiata', infinitive: 'fischiare', type: 'intransitive' },
@@ -255,7 +316,6 @@ export const intransitiveVerbs: Verb[] = [
   { present: 'galleggia', gerund: 'galleggiando', pastPart: 'galleggiato', pastPartF: 'galleggiata', infinitive: 'galleggiare', type: 'intransitive' },
   { present: 'medita', gerund: 'meditando', pastPart: 'meditato', pastPartF: 'meditata', infinitive: 'meditare', type: 'intransitive' },
   { present: 'sbadiglia', gerund: 'sbadigliando', pastPart: 'sbadigliato', pastPartF: 'sbadigliata', infinitive: 'sbadigliare', type: 'intransitive' },
-  { present: 'striscia', gerund: 'strisciando', pastPart: 'strisciato', pastPartF: 'strisciata', infinitive: 'strisciare', type: 'intransitive' },
 ];
 
 export const reflexiveVerbs: ReflexiveVerb[] = [
@@ -266,14 +326,13 @@ export const reflexiveVerbs: ReflexiveVerb[] = [
   { present: 'traveste', gerund: 'travestendo', infinitive: 'travestirsi' },
   { present: 'addormenta', gerund: 'addormentando', infinitive: 'addormentarsi' },
   { present: 'allena', gerund: 'allenando', infinitive: 'allenarsi' },
-  { present: 'pettina', gerund: 'pettinando', infinitive: 'pettinarsi' },
   { present: 'prepara', gerund: 'preparando', infinitive: 'prepararsi' },
   { present: 'trasforma', gerund: 'trasformando', infinitive: 'trasformarsi' },
   { present: 'lancia', gerund: 'lanciando', infinitive: 'lanciarsi' },
   { present: 'inchina', gerund: 'inchinando', infinitive: 'inchinarsi' },
 ];
 
-// ============ ADVERBS (~30) ============
+// ============ ADVERBS ============
 export const adverbs: string[] = [
   'lentamente', 'velocemente', 'silenziosamente', 'rumorosamente',
   'dolcemente', 'furiosamente', 'elegantemente', 'goffamente',
@@ -282,7 +341,7 @@ export const adverbs: string[] = [
   'energicamente', 'pigramente', 'ferocemente', 'teneramente',
   'nervosamente', 'freneticamente', 'maestosamente', 'appassionatamente',
   'segretamente', 'improvvisamente', 'continuamente', 'intensamente',
-  'distrattamente', 'ridicolmente',
+  'distrattamente',
 ];
 
 // ============ PREPOSITION HELPERS ============

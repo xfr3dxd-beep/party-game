@@ -1,10 +1,16 @@
 // Italian Sentence Generator for Sciarada
-// Template-based generation with gender agreement and varied structures
+// Uses semantic noun categories to guarantee grammatical & logical coherence:
+//   • Subjects are always animate (person / animal)
+//   • Objects are things (object / food / concept)
+//   • Locations are places
+//   • Adjectives match the noun's animate/inanimate nature
+//   • Gender agreement is enforced everywhere
 
 import {
-  nouns, adjectives, transitiveVerbs, intransitiveVerbs, reflexiveVerbs,
+  subjectNouns, objectNouns, placeNouns, personNouns,
+  adjectives, adjsFor, transitiveVerbs, intransitiveVerbs, reflexiveVerbs,
   adverbs, prepArticle, locationPreps, directionPreps,
-  Noun, Adjective, Verb, ReflexiveVerb,
+  Noun, Adjective, Verb,
 } from './wordBanks';
 
 export type WordCount = 4 | 5 | 6 | 7 | 'random';
@@ -20,24 +26,31 @@ function pickExcluding<T>(arr: T[], ...exclude: T[]): T {
   return filtered.length > 0 ? pick(filtered) : pick(arr);
 }
 
+/** Pick a random adjective that fits the noun's category */
+function pickAdj(n: Noun): Adjective {
+  return pick(adjsFor(n));
+}
+
+/** Pick an adjective different from another */
+function pickAdj2(n: Noun, exclude: Adjective): Adjective {
+  const valid = adjsFor(n).filter(a => a !== exclude);
+  return valid.length > 0 ? pick(valid) : exclude;
+}
+
+/** Get the gendered adjective form for a noun */
 function adj(a: Adjective, n: Noun): string {
   return n.gender === 'm' ? a.m : a.f;
 }
 
+/** "il cane" or "l'uomo" (handles elision) */
 function artNoun(n: Noun): string {
-  // Handle l' which needs no space
   if (n.article.endsWith("'")) return `${n.article}${n.word}`;
   return `${n.article} ${n.word}`;
 }
 
-function artIndefNoun(n: Noun): string {
-  if (n.articleIndef.endsWith("'")) return `${n.articleIndef}${n.word}`;
-  return `${n.articleIndef} ${n.word}`;
-}
-
+/** "nel bosco" or "nell'oceano" (preposition + article contraction) */
 function prepArtNoun(prep: string, n: Noun): string {
   const contracted = prepArticle(prep, n);
-  // If contracted ends with ' (like dell'), attach word directly
   if (contracted.endsWith("'")) return `${contracted}${n.word}`;
   return `${contracted} ${n.word}`;
 }
@@ -46,496 +59,271 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// ============ TEMPLATE TYPES ============
+// Shorthand pickers for semantic roles
+const subj = () => pick(subjectNouns);          // animate subject
+const subjNot = (...ex: Noun[]) => pickExcluding(subjectNouns, ...ex);
+const obj = () => pick(objectNouns);            // thing / food / concept
+const objNot = (...ex: Noun[]) => pickExcluding(objectNouns, ...ex);
+const place = () => pick(placeNouns);           // location
+const placeNot = (...ex: Noun[]) => pickExcluding(placeNouns, ...ex);
+const person = () => pick(personNouns);         // human only
+
 type TemplateFn = () => string;
 
 // ============ 4-WORD TEMPLATES ============
-// 4 significant words (4+ letters each)
 
 const templates4: TemplateFn[] = [
-  // SVO: "Il cane veloce corre nel deserto"
+  // "Il cane veloce corre nel bosco"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v = pick(intransitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const prep = pick(locationPreps);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v.present} ${prepArtNoun(prep, n2)}`);
+    const s = subj(); const a = pickAdj(s); const v = pick(intransitiveVerbs); const p = place();
+    return capitalize(`${artNoun(s)} ${adj(a, s)} ${v.present} ${prepArtNoun(pick(locationPreps), p)}`);
   },
-
-  // Transitive: "Il cuoco prepara la torta"
+  // "Il cuoco prepara la torta dorata"
   () => {
-    const n1 = pick(nouns);
-    const v = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a1 = pick(adjectives);
-    return capitalize(`${artNoun(n1)} ${v.present} ${artNoun(n2)} ${adj(a1, n2)}`);
+    const s = subj(); const v = pick(transitiveVerbs); const o = obj(); const a = pickAdj(o);
+    return capitalize(`${artNoun(s)} ${v.present} ${artNoun(o)} ${adj(a, o)}`);
   },
-
-  // Gerund + location: "Camminando nel bosco, trova il tesoro"
+  // "Camminando nel bosco, trova il tesoro"
   () => {
-    const v1 = pick(intransitiveVerbs);
-    const n1 = pick(nouns);
-    const v2 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const prep = pick(locationPreps);
-    return capitalize(`${v1.gerund} ${prepArtNoun(prep, n1)}, ${v2.present} ${artNoun(n2)}`);
+    const v1 = pick(intransitiveVerbs); const p = place(); const v2 = pick(transitiveVerbs); const o = obj();
+    return capitalize(`${v1.gerund} ${prepArtNoun(pick(locationPreps), p)}, ${v2.present} ${artNoun(o)}`);
   },
-
-  // Relative clause: "Il ragazzo che canta sorride"
+  // "Il ragazzo furbo che canta sorride"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(intransitiveVerbs);
-    const v2 = pickExcluding(intransitiveVerbs, v1);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} che ${v1.present} ${v2.present}`);
+    const s = subj(); const a = pickAdj(s); const v1 = pick(intransitiveVerbs); const v2 = pickExcluding(intransitiveVerbs, v1);
+    return capitalize(`${artNoun(s)} ${adj(a, s)} che ${v1.present} ${v2.present}`);
   },
-
-  // Exclamation: "Che bella torta nel forno antico!"
+  // "Che bella torta nel forno antico!" (objects/places only)
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const prep = pick(locationPreps);
-    return `Che ${adj(a1, n1)} ${n1.word} ${prepArtNoun(prep, n2)} ${adj(a2, n2)}!`;
+    const o = obj(); const a1 = pickAdj(o); const p = place(); const a2 = pickAdj(p);
+    return `Che ${adj(a1, o)} ${o.word} ${prepArtNoun(pick(locationPreps), p)} ${adj(a2, p)}!`;
   },
-
-  // Reflexive: "Il gatto si nasconde sotto il tavolo"
+  // "Il gatto si nasconde sotto il ponte"
   () => {
-    const n1 = pick(nouns);
-    const rv = pick(reflexiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const dir = pick(directionPreps);
-    return capitalize(`${artNoun(n1)} si ${rv.present} ${dir} ${artNoun(n2)}`);
+    const s = subj(); const rv = pick(reflexiveVerbs); const p = place();
+    return capitalize(`${artNoun(s)} si ${rv.present} ${pick(directionPreps)} ${artNoun(p)}`);
   },
-
-  // Comparative: "Il leone è più veloce della tartaruga"
+  // "Il leone è più veloce della tartaruga"
   () => {
-    const n1 = pick(nouns);
-    const n2 = pickExcluding(nouns, n1);
-    const a1 = pick(adjectives);
-    const prep = pick(locationPreps);
-    return capitalize(`${artNoun(n1)} è più ${adj(a1, n1)} ${prepArtNoun('di', n2)}`);
+    const s1 = subj(); const s2 = subjNot(s1); const a = pickAdj(s1);
+    return capitalize(`${artNoun(s1)} è più ${adj(a, s1)} ${prepArtNoun('di', s2)}`);
   },
-
-  // Passive: "La torta viene preparata dalla nonna"
+  // "La torta viene preparata dal cuoco" (passive — object as grammatical subject)
   () => {
-    const n1 = pick(nouns);
-    const v = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const pp = n1.gender === 'm' ? v.pastPart : v.pastPartF;
-    return capitalize(`${artNoun(n1)} viene ${pp} ${prepArtNoun('da', n2)}`);
+    const o = obj(); const v = pick(transitiveVerbs); const s = subj();
+    const pp = o.gender === 'm' ? v.pastPart : v.pastPartF;
+    return capitalize(`${artNoun(o)} viene ${pp} ${prepArtNoun('da', s)}`);
   },
-
-  // Direction: "Il cavaliere corre verso il castello"
+  // "Il cavaliere coraggioso corre verso il castello"
   () => {
-    const n1 = pick(nouns);
-    const v = pick(intransitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a1 = pick(adjectives);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v.present} verso ${artNoun(n2)}`);
+    const s = subj(); const a = pickAdj(s); const v = pick(intransitiveVerbs); const p = place();
+    return capitalize(`${artNoun(s)} ${adj(a, s)} ${v.present} verso ${artNoun(p)}`);
   },
-
-  // With adverb: "La volpe cammina silenziosamente nella foresta"
+  // "La volpe cammina silenziosamente nella foresta"
   () => {
-    const n1 = pick(nouns);
-    const v = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n2 = pickExcluding(nouns, n1);
-    return capitalize(`${artNoun(n1)} ${v.present} ${adv} ${prepArtNoun('in', n2)}`);
+    const s = subj(); const v = pick(intransitiveVerbs); const adv = pick(adverbs); const p = place();
+    return capitalize(`${artNoun(s)} ${v.present} ${adv} ${prepArtNoun('in', p)}`);
   },
-
-  // Temporal: "Ogni notte il lupo corre nella foresta"
+  // "Ogni notte il lupo corre nella foresta"
   () => {
-    const n1 = pick(nouns);
-    const v = pick(intransitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
+    const s = subj(); const v = pick(intransitiveVerbs); const p = place();
     const temporal = pick(['ogni sera', 'ogni notte', 'ogni mattina', 'ogni giorno']);
-    return capitalize(`${temporal}, ${artNoun(n1)} ${v.present} ${prepArtNoun('in', n2)}`);
+    return capitalize(`${temporal}, ${artNoun(s)} ${v.present} ${prepArtNoun('in', p)}`);
   },
-
-  // Senza: "Senza la spada, il cavaliere trema"
+  // "Senza la spada, il cavaliere trema"
   () => {
-    const n1 = pick(nouns);
-    const n2 = pickExcluding(nouns, n1);
-    const v = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    return capitalize(`senza ${artNoun(n1)}, ${artNoun(n2)} ${v.present} ${adv}`);
+    const o = obj(); const s = subj(); const v = pick(intransitiveVerbs); const adv = pick(adverbs);
+    return capitalize(`senza ${artNoun(o)}, ${artNoun(s)} ${v.present} ${adv}`);
   },
 ];
 
 // ============ 5-WORD TEMPLATES ============
 
 const templates5: TemplateFn[] = [
-  // SVO + adverb: "La ragazza bella canta dolcemente nella chiesa"
+  // "La ragazza allegra canta dolcemente nella chiesa"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n2 = pickExcluding(nouns, n1);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v.present} ${adv} ${prepArtNoun('in', n2)}`);
+    const s = subj(); const a = pickAdj(s); const v = pick(intransitiveVerbs); const adv = pick(adverbs); const p = place();
+    return capitalize(`${artNoun(s)} ${adj(a, s)} ${v.present} ${adv} ${prepArtNoun('in', p)}`);
   },
-
-  // Mentre (compound): "Il cuoco cucina la torta mentre il gatto dorme"
+  // "Il cuoco cucina la torta mentre il gatto dorme"
   () => {
-    const n1 = pick(nouns);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const v2 = pick(intransitiveVerbs);
-    return capitalize(`${artNoun(n1)} ${v1.present} ${artNoun(n2)} mentre ${artNoun(n3)} ${v2.present}`);
+    const s1 = subj(); const v1 = pick(transitiveVerbs); const o = obj(); const s2 = subjNot(s1); const v2 = pick(intransitiveVerbs);
+    return capitalize(`${artNoun(s1)} ${v1.present} ${artNoun(o)} mentre ${artNoun(s2)} ${v2.present}`);
   },
-
-  // Relative + object: "Il ragazzo che suona la chitarra sorride alla ragazza"
+  // "Il ragazzo che suona la chitarra sorride alla nonna"
   () => {
-    const n1 = pick(nouns);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const v2 = pick(intransitiveVerbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`${artNoun(n1)} che ${v1.present} ${artNoun(n2)} ${v2.present} ${prepArtNoun('a', n3)}`);
+    const s = subj(); const v1 = pick(transitiveVerbs); const o = obj(); const v2 = pick(intransitiveVerbs); const s2 = subjNot(s);
+    return capitalize(`${artNoun(s)} che ${v1.present} ${artNoun(o)} ${v2.present} ${prepArtNoun('a', s2)}`);
   },
-
-  // Gerund + adj: "Camminando nel bosco incantato, il cavaliere trova il tesoro"
+  // "Camminando nel bosco incantato, il cavaliere trova il tesoro"
   () => {
-    const v1 = pick(intransitiveVerbs);
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const v2 = pick(transitiveVerbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`${v1.gerund} ${prepArtNoun('in', n1)} ${adj(a1, n1)}, ${artNoun(n2)} ${v2.present} ${artNoun(n3)}`);
+    const v1 = pick(intransitiveVerbs); const p = place(); const a = pickAdj(p); const s = subj(); const v2 = pick(transitiveVerbs); const o = obj();
+    return capitalize(`${v1.gerund} ${prepArtNoun('in', p)} ${adj(a, p)}, ${artNoun(s)} ${v2.present} ${artNoun(o)}`);
   },
-
-  // Reflexive + location + adj: "Il pirata si arrampica sulla torre antica"
+  // "Il pirata furbo si arrampica sulla torre antica"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const rv = pick(reflexiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} si ${rv.present} ${prepArtNoun('su', n2)} ${adj(a2, n2)}`);
+    const s = subj(); const a1 = pickAdj(s); const rv = pick(reflexiveVerbs); const p = place(); const a2 = pickAdj(p);
+    return capitalize(`${artNoun(s)} ${adj(a1, s)} si ${rv.present} ${prepArtNoun('su', p)} ${adj(a2, p)}`);
   },
-
-  // Double adjective: "Il leone grande e coraggioso corre nel deserto"
+  // "Il leone grande e coraggioso corre nel deserto"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const a2 = pickExcluding(adjectives, a1);
-    const v = pick(intransitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} e ${adj(a2, n1)} ${v.present} ${prepArtNoun('in', n2)}`);
+    const s = subj(); const a1 = pickAdj(s); const a2 = pickAdj2(s, a1); const v = pick(intransitiveVerbs); const p = place();
+    return capitalize(`${artNoun(s)} ${adj(a1, s)} e ${adj(a2, s)} ${v.present} ${prepArtNoun('in', p)}`);
   },
-
-  // Purpose: "Il cuoco cucina la torta per sorprendere la principessa"
+  // "Il cuoco cucina la torta per sorprendere la principessa"
   () => {
-    const n1 = pick(nouns);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const v2 = pickExcluding(transitiveVerbs, v1);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`${artNoun(n1)} ${v1.present} ${artNoun(n2)} per ${v2.infinitive} ${artNoun(n3)}`);
+    const s = person(); const v1 = pick(transitiveVerbs); const o = obj(); const v2 = pickExcluding(transitiveVerbs, v1); const s2 = subjNot(s);
+    return capitalize(`${artNoun(s)} ${v1.present} ${artNoun(o)} per ${v2.infinitive} ${artNoun(s2)}`);
   },
-
-  // Passive + adj: "La corona dorata viene trovata nella grotta oscura"
+  // "La corona dorata viene trovata nella grotta oscura"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v = pick(transitiveVerbs);
-    const pp = n1.gender === 'm' ? v.pastPart : v.pastPartF;
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} viene ${pp} ${prepArtNoun('in', n2)} ${adj(a2, n2)}`);
+    const o = obj(); const a1 = pickAdj(o); const v = pick(transitiveVerbs); const p = place(); const a2 = pickAdj(p);
+    const pp = o.gender === 'm' ? v.pastPart : v.pastPartF;
+    return capitalize(`${artNoun(o)} ${adj(a1, o)} viene ${pp} ${prepArtNoun('in', p)} ${adj(a2, p)}`);
   },
-
-  // Comparative + location: "Il delfino è più agile della tartaruga nell'oceano"
+  // "Il delfino è più agile della tartaruga nell'oceano"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const prep = pick(locationPreps);
-    return capitalize(`${artNoun(n1)} è più ${adj(a1, n1)} ${prepArtNoun('di', n2)} ${prepArtNoun(prep, n3)}`);
+    const s1 = subj(); const a = pickAdj(s1); const s2 = subjNot(s1); const p = place();
+    return capitalize(`${artNoun(s1)} è più ${adj(a, s1)} ${prepArtNoun('di', s2)} ${prepArtNoun('in', p)}`);
   },
-
-  // Exclamation + verb: "Che bello spettacolo guardare il tramonto dalla collina!"
+  // "Che bello spettacolo guardare il tramonto dalla collina!"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return `Che ${adj(a1, n1)} ${n1.word} ${v.infinitive} ${artNoun(n2)} ${prepArtNoun('da', n3)}!`;
+    const o1 = obj(); const a = pickAdj(o1); const v = pick(transitiveVerbs); const o2 = objNot(o1); const p = place();
+    return `Che ${adj(a, o1)} ${o1.word} ${v.infinitive} ${artNoun(o2)} ${prepArtNoun('da', p)}!`;
   },
-
-  // "mentre si" compound reflexive
+  // "Il lupo corre velocemente mentre la volpe si nasconde"
   () => {
-    const n1 = pick(nouns);
-    const v1 = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n2 = pickExcluding(nouns, n1);
-    const rv = pick(reflexiveVerbs);
-    return capitalize(`${artNoun(n1)} ${v1.present} ${adv} mentre ${artNoun(n2)} si ${rv.present}`);
+    const s1 = subj(); const v1 = pick(intransitiveVerbs); const adv = pick(adverbs); const s2 = subjNot(s1); const rv = pick(reflexiveVerbs);
+    return capitalize(`${artNoun(s1)} ${v1.present} ${adv} mentre ${artNoun(s2)} si ${rv.present}`);
   },
-
-  // Temporal + transitive: "Ogni mattina la nonna prepara la minestra nel castello"
+  // "Ogni mattina la nonna prepara la minestra nel castello"
   () => {
     const temporal = pick(['ogni mattina', 'ogni sera', 'ogni giorno']);
-    const n1 = pick(nouns);
-    const v = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`${temporal}, ${artNoun(n1)} ${v.present} ${artNoun(n2)} ${prepArtNoun('in', n3)}`);
+    const s = person(); const v = pick(transitiveVerbs); const o = obj(); const p = place();
+    return capitalize(`${temporal}, ${artNoun(s)} ${v.present} ${artNoun(o)} ${prepArtNoun('in', p)}`);
   },
 ];
 
 // ============ 6-WORD TEMPLATES ============
 
 const templates6: TemplateFn[] = [
-  // Full SVO + adv + location + adj
+  // "Il cavaliere coraggioso cammina lentamente nel bosco incantato"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v.present} ${adv} ${prepArtNoun('in', n2)} ${adj(a2, n2)}`);
+    const s = subj(); const a1 = pickAdj(s); const v = pick(intransitiveVerbs); const adv = pick(adverbs); const p = place(); const a2 = pickAdj(p);
+    return capitalize(`${artNoun(s)} ${adj(a1, s)} ${v.present} ${adv} ${prepArtNoun('in', p)} ${adj(a2, p)}`);
   },
-
-  // Mentre compound + adjectives
+  // "Il ragazzo allegro trova la spada mentre la ragazza balla"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const a2 = pick(adjectives);
-    const v2 = pick(intransitiveVerbs);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v1.present} ${artNoun(n2)} mentre ${artNoun(n3)} ${adj(a2, n3)} ${v2.present}`);
+    const s1 = subj(); const a = pickAdj(s1); const v1 = pick(transitiveVerbs); const o = obj(); const s2 = subjNot(s1); const v2 = pick(intransitiveVerbs);
+    return capitalize(`${artNoun(s1)} ${adj(a, s1)} ${v1.present} ${artNoun(o)} mentre ${artNoun(s2)} ${v2.present}`);
   },
-
-  // Relative clause + adverb + location
+  // "Il pirata che trova la corona dorata sorride allegramente"
   () => {
-    const n1 = pick(nouns);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a1 = pick(adjectives);
-    const v2 = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    return capitalize(`${artNoun(n1)} che ${v1.present} ${artNoun(n2)} ${adj(a1, n2)} ${v2.present} ${adv}`);
+    const s = subj(); const v1 = pick(transitiveVerbs); const o = obj(); const a = pickAdj(o); const v2 = pick(intransitiveVerbs); const adv = pick(adverbs);
+    return capitalize(`${artNoun(s)} che ${v1.present} ${artNoun(o)} ${adj(a, o)} ${v2.present} ${adv}`);
   },
-
-  // Gerund + reflexive + adj
+  // "Correndo nella foresta oscura, il lupo coraggioso si nasconde"
   () => {
-    const v1 = pick(intransitiveVerbs);
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const rv = pick(reflexiveVerbs);
-    return capitalize(`${v1.gerund} ${prepArtNoun('in', n1)} ${adj(a1, n1)}, ${artNoun(n2)} ${adj(a2, n2)} si ${rv.present}`);
+    const v1 = pick(intransitiveVerbs); const p = place(); const a1 = pickAdj(p); const s = subj(); const a2 = pickAdj(s); const rv = pick(reflexiveVerbs);
+    return capitalize(`${v1.gerund} ${prepArtNoun('in', p)} ${adj(a1, p)}, ${artNoun(s)} ${adj(a2, s)} si ${rv.present}`);
   },
-
-  // Passive + agent + location
+  // "La spada antica viene trovata dal cavaliere coraggioso nel castello"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v = pick(transitiveVerbs);
-    const pp = n1.gender === 'm' ? v.pastPart : v.pastPartF;
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} viene ${pp} ${prepArtNoun('da', n2)} ${adj(a2, n2)} ${prepArtNoun('in', n3)}`);
+    const o = obj(); const a1 = pickAdj(o); const v = pick(transitiveVerbs); const s = subj(); const a2 = pickAdj(s); const p = place();
+    const pp = o.gender === 'm' ? v.pastPart : v.pastPartF;
+    return capitalize(`${artNoun(o)} ${adj(a1, o)} viene ${pp} ${prepArtNoun('da', s)} ${adj(a2, s)} ${prepArtNoun('in', p)}`);
   },
-
-  // Purpose + adj
+  // "Il maestro generoso prepara la sorpresa preziosa per il cantante"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const v2 = pick(transitiveVerbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v1.present} ${artNoun(n2)} ${adj(a2, n2)} per ${v2.infinitive} ${artNoun(n3)}`);
+    const s = person(); const a1 = pickAdj(s); const v = pick(transitiveVerbs); const o = obj(); const a2 = pickAdj(o); const s2 = subjNot(s);
+    return capitalize(`${artNoun(s)} ${adj(a1, s)} ${v.present} ${artNoun(o)} ${adj(a2, o)} per ${artNoun(s2)}`);
   },
-
-  // Senza + adj + consequence
+  // "Senza la lanterna magica, il soldato coraggioso trema lentamente"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const v = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    return capitalize(`senza ${artNoun(n1)} ${adj(a1, n1)}, ${artNoun(n2)} ${adj(a2, n2)} ${v.present} ${adv}`);
+    const o = obj(); const a1 = pickAdj(o); const s = subj(); const a2 = pickAdj(s); const v = pick(intransitiveVerbs); const adv = pick(adverbs);
+    return capitalize(`senza ${artNoun(o)} ${adj(a1, o)}, ${artNoun(s)} ${adj(a2, s)} ${v.present} ${adv}`);
   },
-
-  // Temporal + compound
+  // "Ogni sera, il pittore allegro dipinge lentamente nel giardino incantato"
   () => {
     const temporal = pick(['ogni mattina', 'ogni sera', 'durante la notte']);
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    return capitalize(`${temporal}, ${artNoun(n1)} ${adj(a1, n1)} ${v1.present} ${adv} ${prepArtNoun('in', n2)} ${adj(a2, n2)}`);
+    const s = person(); const a = pickAdj(s); const v = pick(intransitiveVerbs); const adv = pick(adverbs); const p = place(); const a2 = pickAdj(p);
+    return capitalize(`${temporal}, ${artNoun(s)} ${adj(a, s)} ${v.present} ${adv} ${prepArtNoun('in', p)} ${adj(a2, p)}`);
   },
-
-  // Double action: "Il pirata trova il tesoro dorato e balla furiosamente"
+  // "Il pirata trova il tesoro dorato e balla furiosamente"
   () => {
-    const n1 = pick(nouns);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a1 = pick(adjectives);
-    const v2 = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    return capitalize(`${artNoun(n1)} ${v1.present} ${artNoun(n2)} ${adj(a1, n2)} e ${v2.present} ${adv}`);
+    const s = subj(); const v1 = pick(transitiveVerbs); const o = obj(); const a = pickAdj(o); const v2 = pick(intransitiveVerbs); const adv = pick(adverbs);
+    return capitalize(`${artNoun(s)} ${v1.present} ${artNoun(o)} ${adj(a, o)} e ${v2.present} ${adv}`);
   },
-
-  // Comparative + context
+  // "Il leone coraggioso è più veloce della tartaruga nel deserto"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const prep = pick(locationPreps);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} è più ${adj(a2, n1)} ${prepArtNoun('di', n2)} ${prepArtNoun(prep, n3)}`);
+    const s1 = subj(); const a1 = pickAdj(s1); const a2 = pickAdj2(s1, a1); const s2 = subjNot(s1); const p = place();
+    return capitalize(`${artNoun(s1)} ${adj(a1, s1)} è più ${adj(a2, s1)} ${prepArtNoun('di', s2)} ${prepArtNoun('in', p)}`);
   },
 ];
 
 // ============ 7-WORD TEMPLATES ============
 
 const templates7: TemplateFn[] = [
-  // Full SVO + mentre + SVO
+  // "Il cuoco allegro prepara la torta mentre la principessa elegante balla"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const a2 = pick(adjectives);
-    const v2 = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v1.present} ${artNoun(n2)} mentre ${artNoun(n3)} ${adj(a2, n3)} ${v2.present} ${adv}`);
+    const s1 = subj(); const a1 = pickAdj(s1); const v1 = pick(transitiveVerbs); const o = obj();
+    const s2 = subjNot(s1); const a2 = pickAdj(s2); const v2 = pick(intransitiveVerbs); const adv = pick(adverbs);
+    return capitalize(`${artNoun(s1)} ${adj(a1, s1)} ${v1.present} ${artNoun(o)} mentre ${artNoun(s2)} ${adj(a2, s2)} ${v2.present} ${adv}`);
   },
-
-  // Gerund + full scene
+  // "Camminando nella foresta oscura, il cavaliere coraggioso trova la spada magica"
   () => {
-    const v1 = pick(intransitiveVerbs);
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const v2 = pick(transitiveVerbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const a3 = pick(adjectives);
-    return capitalize(`${v1.gerund} ${prepArtNoun('in', n1)} ${adj(a1, n1)}, ${artNoun(n2)} ${adj(a2, n2)} ${v2.present} ${artNoun(n3)} ${adj(a3, n3)}`);
+    const v1 = pick(intransitiveVerbs); const p = place(); const a1 = pickAdj(p);
+    const s = subj(); const a2 = pickAdj(s); const v2 = pick(transitiveVerbs); const o = obj(); const a3 = pickAdj(o);
+    return capitalize(`${v1.gerund} ${prepArtNoun('in', p)} ${adj(a1, p)}, ${artNoun(s)} ${adj(a2, s)} ${v2.present} ${artNoun(o)} ${adj(a3, o)}`);
   },
-
-  // Relative + adverb + location + adj
+  // "Il ragazzo furbo che porta la corona corre velocemente nel castello"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const v2 = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} che ${v1.present} ${artNoun(n2)} ${v2.present} ${adv} ${prepArtNoun('in', n3)}`);
+    const s = subj(); const a1 = pickAdj(s); const v1 = pick(transitiveVerbs); const o = obj();
+    const v2 = pick(intransitiveVerbs); const adv = pick(adverbs); const p = place();
+    return capitalize(`${artNoun(s)} ${adj(a1, s)} che ${v1.present} ${artNoun(o)} ${v2.present} ${adv} ${prepArtNoun('in', p)}`);
   },
-
-  // Purpose + double adj
+  // "Il maestro generoso prepara la torta preziosa per sorprendere il bambino allegro"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const v2 = pick(transitiveVerbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const a3 = pick(adjectives);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v1.present} ${artNoun(n2)} ${adj(a2, n2)} per ${v2.infinitive} ${artNoun(n3)} ${adj(a3, n3)}`);
+    const s = person(); const a1 = pickAdj(s); const v1 = pick(transitiveVerbs); const o = obj(); const a2 = pickAdj(o);
+    const v2 = pickExcluding(transitiveVerbs, v1); const s2 = subjNot(s); const a3 = pickAdj(s2);
+    return capitalize(`${artNoun(s)} ${adj(a1, s)} ${v1.present} ${artNoun(o)} ${adj(a2, o)} per ${v2.infinitive} ${artNoun(s2)} ${adj(a3, s2)}`);
   },
-
-  // Passive + adverb + location + adj
+  // "La corona dorata viene trovata lentamente dal cavaliere coraggioso nel castello"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v = pick(transitiveVerbs);
-    const pp = n1.gender === 'm' ? v.pastPart : v.pastPartF;
-    const adv = pick(adverbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} viene ${pp} ${adv} ${prepArtNoun('da', n2)} ${adj(a2, n2)} ${prepArtNoun('in', n3)}`);
+    const o = obj(); const a1 = pickAdj(o); const v = pick(transitiveVerbs); const adv = pick(adverbs);
+    const s = subj(); const a2 = pickAdj(s); const p = place();
+    const pp = o.gender === 'm' ? v.pastPart : v.pastPartF;
+    return capitalize(`${artNoun(o)} ${adj(a1, o)} viene ${pp} ${adv} ${prepArtNoun('da', s)} ${adj(a2, s)} ${prepArtNoun('in', p)}`);
   },
-
-  // Double action + location + adj
+  // "Il pirata coraggioso trova il tesoro dorato e balla furiosamente nel castello"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const v2 = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const a2 = pick(adjectives);
-    return capitalize(`${artNoun(n1)} ${adj(a1, n1)} ${v1.present} ${artNoun(n2)} e ${v2.present} ${adv} ${prepArtNoun('in', n3)} ${adj(a2, n3)}`);
+    const s = subj(); const a1 = pickAdj(s); const v1 = pick(transitiveVerbs); const o = obj();
+    const v2 = pick(intransitiveVerbs); const adv = pick(adverbs); const p = place(); const a2 = pickAdj(p);
+    return capitalize(`${artNoun(s)} ${adj(a1, s)} ${v1.present} ${artNoun(o)} e ${v2.present} ${adv} ${prepArtNoun('in', p)} ${adj(a2, p)}`);
   },
-
-  // Temporal + compound
+  // "Ogni mattina, il nonno allegro prepara la minestra preziosa nel giardino"
   () => {
     const temporal = pick(['ogni mattina', 'ogni sera', 'durante la notte', 'al tramonto']);
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v1 = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const v2 = pick(intransitiveVerbs);
-    return capitalize(`${temporal}, ${artNoun(n1)} ${adj(a1, n1)} ${v1.present} ${artNoun(n2)} ${adj(a2, n2)} ${prepArtNoun('in', n3)} e ${v2.present}`);
+    const s = person(); const a1 = pickAdj(s); const v = pick(transitiveVerbs); const o = obj(); const a2 = pickAdj(o); const p = place();
+    return capitalize(`${temporal}, ${artNoun(s)} ${adj(a1, s)} ${v.present} ${artNoun(o)} ${adj(a2, o)} ${prepArtNoun('in', p)}`);
   },
-
-  // Senza + elaborate
+  // "Senza la spada dorata, il soldato coraggioso cammina lentamente nel deserto"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const v = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    return capitalize(`senza ${artNoun(n1)} ${adj(a1, n1)}, ${artNoun(n2)} ${adj(a2, n2)} ${v.present} ${adv} ${prepArtNoun('in', n3)}`);
+    const o = obj(); const a1 = pickAdj(o); const s = subj(); const a2 = pickAdj(s);
+    const v = pick(intransitiveVerbs); const adv = pick(adverbs); const p = place();
+    return capitalize(`senza ${artNoun(o)} ${adj(a1, o)}, ${artNoun(s)} ${adj(a2, s)} ${v.present} ${adv} ${prepArtNoun('in', p)}`);
   },
-
-  // Exclamation elaborate
+  // "Che bella avventura trovare la corona nascosta nella grotta profonda!"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const v = pick(transitiveVerbs);
-    const n2 = pickExcluding(nouns, n1);
-    const a2 = pick(adjectives);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const a3 = pick(adjectives);
-    return `Che ${adj(a1, n1)} ${n1.word} ${v.infinitive} ${artNoun(n2)} ${adj(a2, n2)} ${prepArtNoun('in', n3)} ${adj(a3, n3)}!`;
+    const o1 = obj(); const a1 = pickAdj(o1); const v = pick(transitiveVerbs);
+    const o2 = objNot(o1); const a2 = pickAdj(o2); const p = place(); const a3 = pickAdj(p);
+    return `Che ${adj(a1, o1)} ${o1.word} ${v.infinitive} ${artNoun(o2)} ${adj(a2, o2)} ${prepArtNoun('in', p)} ${adj(a3, p)}!`;
   },
-
-  // Comparative + action
+  // "Il leone coraggioso è più veloce della tartaruga e corre nel deserto arido"
   () => {
-    const n1 = pick(nouns);
-    const a1 = pick(adjectives);
-    const n2 = pickExcluding(nouns, n1);
-    const v = pick(intransitiveVerbs);
-    const adv = pick(adverbs);
-    const n3 = pickExcluding(nouns, n1, n2);
-    const a2 = pick(adjectives);
-    return capitalize(`${artNoun(n1)} è più ${adj(a1, n1)} ${prepArtNoun('di', n2)} e ${v.present} ${adv} ${prepArtNoun('in', n3)} ${adj(a2, n3)}`);
+    const s1 = subj(); const a1 = pickAdj(s1); const a2 = pickAdj2(s1, a1); const s2 = subjNot(s1);
+    const v = pick(intransitiveVerbs); const p = place(); const a3 = pickAdj(p);
+    return capitalize(`${artNoun(s1)} ${adj(a1, s1)} è più ${adj(a2, s1)} ${prepArtNoun('di', s2)} e ${v.present} ${prepArtNoun('in', p)} ${adj(a3, p)}`);
   },
 ];
 
@@ -552,8 +340,6 @@ export function generateSentence(wordCount: WordCount): string {
   const count = wordCount === 'random'
     ? pick([4, 5, 6, 7] as const)
     : wordCount;
-
   const templates = templateMap[count];
-  const template = pick(templates);
-  return template();
+  return pick(templates)();
 }
