@@ -21,6 +21,14 @@ export interface Adjective {
   inanimate?: boolean;
 }
 
+// objectPool defines which noun categories a transitive verb can take:
+//   'food'     = only food nouns (mangia, cucina)
+//   'object'   = physical objects (lancia, rompe)
+//   'thing'    = object + food + concept (cerca, trova)
+//   'animate'  = person + animal (insegue, abbraccia)
+//   'any'      = everything except places (guarda, fotografa)
+export type ObjectPool = 'food' | 'object' | 'thing' | 'animate' | 'any';
+
 export interface Verb {
   present: string;
   gerund: string;
@@ -28,6 +36,7 @@ export interface Verb {
   pastPartF: string;
   infinitive: string;
   type: 'transitive' | 'intransitive';
+  objectPool?: ObjectPool; // only for transitive verbs
 }
 
 export interface ReflexiveVerb {
@@ -260,37 +269,54 @@ export function adjsFor(n: Noun): Adjective[] {
 
 // ============ VERBS ============
 export const transitiveVerbs: Verb[] = [
-  { present: 'mangia', gerund: 'mangiando', pastPart: 'mangiato', pastPartF: 'mangiata', infinitive: 'mangiare', type: 'transitive' },
-  { present: 'guarda', gerund: 'guardando', pastPart: 'guardato', pastPartF: 'guardata', infinitive: 'guardare', type: 'transitive' },
-  { present: 'costruisce', gerund: 'costruendo', pastPart: 'costruito', pastPartF: 'costruita', infinitive: 'costruire', type: 'transitive' },
-  { present: 'dipinge', gerund: 'dipingendo', pastPart: 'dipinto', pastPartF: 'dipinta', infinitive: 'dipingere', type: 'transitive' },
-  { present: 'porta', gerund: 'portando', pastPart: 'portato', pastPartF: 'portata', infinitive: 'portare', type: 'transitive' },
-  { present: 'cerca', gerund: 'cercando', pastPart: 'cercato', pastPartF: 'cercata', infinitive: 'cercare', type: 'transitive' },
-  { present: 'trova', gerund: 'trovando', pastPart: 'trovato', pastPartF: 'trovata', infinitive: 'trovare', type: 'transitive' },
-  { present: 'prepara', gerund: 'preparando', pastPart: 'preparato', pastPartF: 'preparata', infinitive: 'preparare', type: 'transitive' },
-  { present: 'legge', gerund: 'leggendo', pastPart: 'letto', pastPartF: 'letta', infinitive: 'leggere', type: 'transitive' },
-  { present: 'scrive', gerund: 'scrivendo', pastPart: 'scritto', pastPartF: 'scritta', infinitive: 'scrivere', type: 'transitive' },
-  { present: 'lancia', gerund: 'lanciando', pastPart: 'lanciato', pastPartF: 'lanciata', infinitive: 'lanciare', type: 'transitive' },
-  { present: 'apre', gerund: 'aprendo', pastPart: 'aperto', pastPartF: 'aperta', infinitive: 'aprire', type: 'transitive' },
-  { present: 'raccoglie', gerund: 'raccogliendo', pastPart: 'raccolto', pastPartF: 'raccolta', infinitive: 'raccogliere', type: 'transitive' },
-  { present: 'insegue', gerund: 'inseguendo', pastPart: 'inseguito', pastPartF: 'inseguita', infinitive: 'inseguire', type: 'transitive' },
-  { present: 'abbraccia', gerund: 'abbracciando', pastPart: 'abbracciato', pastPartF: 'abbracciata', infinitive: 'abbracciare', type: 'transitive' },
-  { present: 'suona', gerund: 'suonando', pastPart: 'suonato', pastPartF: 'suonata', infinitive: 'suonare', type: 'transitive' },
-  { present: 'cucina', gerund: 'cucinando', pastPart: 'cucinato', pastPartF: 'cucinata', infinitive: 'cucinare', type: 'transitive' },
-  { present: 'accarezza', gerund: 'accarezzando', pastPart: 'accarezzato', pastPartF: 'accarezzata', infinitive: 'accarezzare', type: 'transitive' },
-  { present: 'rompe', gerund: 'rompendo', pastPart: 'rotto', pastPartF: 'rotta', infinitive: 'rompere', type: 'transitive' },
-  { present: 'pulisce', gerund: 'pulendo', pastPart: 'pulito', pastPartF: 'pulita', infinitive: 'pulire', type: 'transitive' },
-  { present: 'nasconde', gerund: 'nascondendo', pastPart: 'nascosto', pastPartF: 'nascosta', infinitive: 'nascondere', type: 'transitive' },
-  { present: 'disegna', gerund: 'disegnando', pastPart: 'disegnato', pastPartF: 'disegnata', infinitive: 'disegnare', type: 'transitive' },
-  { present: 'solleva', gerund: 'sollevando', pastPart: 'sollevato', pastPartF: 'sollevata', infinitive: 'sollevare', type: 'transitive' },
-  { present: 'colpisce', gerund: 'colpendo', pastPart: 'colpito', pastPartF: 'colpita', infinitive: 'colpire', type: 'transitive' },
-  { present: 'ruba', gerund: 'rubando', pastPart: 'rubato', pastPartF: 'rubata', infinitive: 'rubare', type: 'transitive' },
-  { present: 'salva', gerund: 'salvando', pastPart: 'salvato', pastPartF: 'salvata', infinitive: 'salvare', type: 'transitive' },
-  { present: 'fotografa', gerund: 'fotografando', pastPart: 'fotografato', pastPartF: 'fotografata', infinitive: 'fotografare', type: 'transitive' },
-  { present: 'spinge', gerund: 'spingendo', pastPart: 'spinto', pastPartF: 'spinta', infinitive: 'spingere', type: 'transitive' },
-  { present: 'vende', gerund: 'vendendo', pastPart: 'venduto', pastPartF: 'venduta', infinitive: 'vendere', type: 'transitive' },
-  { present: 'chiude', gerund: 'chiudendo', pastPart: 'chiuso', pastPartF: 'chiusa', infinitive: 'chiudere', type: 'transitive' },
+  // food verbs → only food objects
+  { present: 'mangia', gerund: 'mangiando', pastPart: 'mangiato', pastPartF: 'mangiata', infinitive: 'mangiare', type: 'transitive', objectPool: 'food' },
+  { present: 'cucina', gerund: 'cucinando', pastPart: 'cucinato', pastPartF: 'cucinata', infinitive: 'cucinare', type: 'transitive', objectPool: 'food' },
+  { present: 'prepara', gerund: 'preparando', pastPart: 'preparato', pastPartF: 'preparata', infinitive: 'preparare', type: 'transitive', objectPool: 'food' },
+  // physical verbs → only physical objects
+  { present: 'lancia', gerund: 'lanciando', pastPart: 'lanciato', pastPartF: 'lanciata', infinitive: 'lanciare', type: 'transitive', objectPool: 'object' },
+  { present: 'solleva', gerund: 'sollevando', pastPart: 'sollevato', pastPartF: 'sollevata', infinitive: 'sollevare', type: 'transitive', objectPool: 'object' },
+  { present: 'spinge', gerund: 'spingendo', pastPart: 'spinto', pastPartF: 'spinta', infinitive: 'spingere', type: 'transitive', objectPool: 'object' },
+  { present: 'rompe', gerund: 'rompendo', pastPart: 'rotto', pastPartF: 'rotta', infinitive: 'rompere', type: 'transitive', objectPool: 'object' },
+  { present: 'apre', gerund: 'aprendo', pastPart: 'aperto', pastPartF: 'aperta', infinitive: 'aprire', type: 'transitive', objectPool: 'object' },
+  { present: 'chiude', gerund: 'chiudendo', pastPart: 'chiuso', pastPartF: 'chiusa', infinitive: 'chiudere', type: 'transitive', objectPool: 'object' },
+  { present: 'pulisce', gerund: 'pulendo', pastPart: 'pulito', pastPartF: 'pulita', infinitive: 'pulire', type: 'transitive', objectPool: 'object' },
+  { present: 'colpisce', gerund: 'colpendo', pastPart: 'colpito', pastPartF: 'colpita', infinitive: 'colpire', type: 'transitive', objectPool: 'object' },
+  { present: 'suona', gerund: 'suonando', pastPart: 'suonato', pastPartF: 'suonata', infinitive: 'suonare', type: 'transitive', objectPool: 'object' },
+  // animate verbs → only people/animals as objects
+  { present: 'insegue', gerund: 'inseguendo', pastPart: 'inseguito', pastPartF: 'inseguita', infinitive: 'inseguire', type: 'transitive', objectPool: 'animate' },
+  { present: 'abbraccia', gerund: 'abbracciando', pastPart: 'abbracciato', pastPartF: 'abbracciata', infinitive: 'abbracciare', type: 'transitive', objectPool: 'animate' },
+  { present: 'accarezza', gerund: 'accarezzando', pastPart: 'accarezzato', pastPartF: 'accarezzata', infinitive: 'accarezzare', type: 'transitive', objectPool: 'animate' },
+  { present: 'salva', gerund: 'salvando', pastPart: 'salvato', pastPartF: 'salvata', infinitive: 'salvare', type: 'transitive', objectPool: 'animate' },
+  // thing verbs → objects + food + concepts (not animate)
+  { present: 'cerca', gerund: 'cercando', pastPart: 'cercato', pastPartF: 'cercata', infinitive: 'cercare', type: 'transitive', objectPool: 'thing' },
+  { present: 'trova', gerund: 'trovando', pastPart: 'trovato', pastPartF: 'trovata', infinitive: 'trovare', type: 'transitive', objectPool: 'thing' },
+  { present: 'raccoglie', gerund: 'raccogliendo', pastPart: 'raccolto', pastPartF: 'raccolta', infinitive: 'raccogliere', type: 'transitive', objectPool: 'thing' },
+  { present: 'nasconde', gerund: 'nascondendo', pastPart: 'nascosto', pastPartF: 'nascosta', infinitive: 'nascondere', type: 'transitive', objectPool: 'thing' },
+  { present: 'ruba', gerund: 'rubando', pastPart: 'rubato', pastPartF: 'rubata', infinitive: 'rubare', type: 'transitive', objectPool: 'thing' },
+  { present: 'porta', gerund: 'portando', pastPart: 'portato', pastPartF: 'portata', infinitive: 'portare', type: 'transitive', objectPool: 'thing' },
+  { present: 'vende', gerund: 'vendendo', pastPart: 'venduto', pastPartF: 'venduta', infinitive: 'vendere', type: 'transitive', objectPool: 'thing' },
+  { present: 'legge', gerund: 'leggendo', pastPart: 'letto', pastPartF: 'letta', infinitive: 'leggere', type: 'transitive', objectPool: 'thing' },
+  { present: 'scrive', gerund: 'scrivendo', pastPart: 'scritto', pastPartF: 'scritta', infinitive: 'scrivere', type: 'transitive', objectPool: 'thing' },
+  { present: 'dipinge', gerund: 'dipingendo', pastPart: 'dipinto', pastPartF: 'dipinta', infinitive: 'dipingere', type: 'transitive', objectPool: 'thing' },
+  { present: 'disegna', gerund: 'disegnando', pastPart: 'disegnato', pastPartF: 'disegnata', infinitive: 'disegnare', type: 'transitive', objectPool: 'thing' },
+  { present: 'costruisce', gerund: 'costruendo', pastPart: 'costruito', pastPartF: 'costruita', infinitive: 'costruire', type: 'transitive', objectPool: 'thing' },
+  // any verbs → anything
+  { present: 'guarda', gerund: 'guardando', pastPart: 'guardato', pastPartF: 'guardata', infinitive: 'guardare', type: 'transitive', objectPool: 'any' },
+  { present: 'fotografa', gerund: 'fotografando', pastPart: 'fotografato', pastPartF: 'fotografata', infinitive: 'fotografare', type: 'transitive', objectPool: 'any' },
 ];
+
+/** Get compatible object nouns for a transitive verb */
+export function objectsForVerb(v: Verb): Noun[] {
+  const pool = v.objectPool || 'thing';
+  switch (pool) {
+    case 'food':    return nouns.filter(n => n.cat === 'food');
+    case 'object':  return nouns.filter(n => n.cat === 'object');
+    case 'thing':   return nouns.filter(n => n.cat === 'object' || n.cat === 'food' || n.cat === 'concept');
+    case 'animate': return nouns.filter(n => n.cat === 'person' || n.cat === 'animal');
+    case 'any':     return nouns.filter(n => n.cat !== 'place');
+  }
+}
 
 export const intransitiveVerbs: Verb[] = [
   { present: 'cammina', gerund: 'camminando', pastPart: 'camminato', pastPartF: 'camminata', infinitive: 'camminare', type: 'intransitive' },
