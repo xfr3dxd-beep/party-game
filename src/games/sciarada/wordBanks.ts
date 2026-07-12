@@ -110,7 +110,7 @@ export const nouns: Noun[] = [
   { word: 'ombrello', gender: 'm', article: "l'", articleIndef: 'un', cat: 'object' },
   { word: 'violino', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
   { word: 'pallone', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
-  { word: 'bicicletta', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+
   { word: 'candela', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
   { word: 'pentola', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
   { word: 'cappello', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
@@ -120,9 +120,10 @@ export const nouns: Noun[] = [
   { word: 'tesoro', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
   { word: 'bandiera', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
   { word: 'lanterna', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
-  { word: 'diamante', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
+  { word: 'diamante', gender: 'm', article: 'il', articleIndef: 'un', cat: 'concept' },
   { word: 'scatola', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
-  { word: 'macchina', gender: 'f', article: 'la', articleIndef: 'una', cat: 'object' },
+  { word: 'macchina', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
+  { word: 'bicicletta', gender: 'f', article: 'la', articleIndef: 'una', cat: 'concept' },
   { word: 'tamburo', gender: 'm', article: 'il', articleIndef: 'un', cat: 'object' },
 
   // ---- Cibo ----
@@ -185,14 +186,23 @@ export const nouns: Noun[] = [
 ];
 
 // ---- Filtered sub-arrays for quick access ----
-/** Nouns that can be sentence subjects (people & animals) */
 export const subjectNouns = nouns.filter(n => n.cat === 'person' || n.cat === 'animal');
-/** Nouns that can be direct objects of transitive verbs */
 export const objectNouns = nouns.filter(n => n.cat === 'object' || n.cat === 'food' || n.cat === 'concept');
-/** Nouns that work as locations (prep + art + noun) */
 export const placeNouns = nouns.filter(n => n.cat === 'place');
-/** Only person nouns (for human-specific verbs like cucinare, scrivere) */
 export const personNouns = nouns.filter(n => n.cat === 'person');
+export const animalNouns = nouns.filter(n => n.cat === 'animal');
+
+// ---- Animal sub-groups (for verb restrictions) ----
+const flyingWords = ['aquila', 'pappagallo', 'farfalla'];
+const waterWords = ['delfino', 'balena', 'rana', 'pinguino', 'tartaruga'];
+export const flyingAnimals = animalNouns.filter(n => flyingWords.includes(n.word));
+export const waterAnimals = animalNouns.filter(n => waterWords.includes(n.word));
+export const landAnimals = animalNouns.filter(n => !waterWords.includes(n.word));
+
+// ---- Place sub-groups (for location coherence) ----
+const waterPlaceWords = ['oceano', 'lago', 'fiume', 'spiaggia', 'cascata'];
+export const waterPlaces = placeNouns.filter(n => waterPlaceWords.includes(n.word));
+export const landPlaces = placeNouns.filter(n => !waterPlaceWords.includes(n.word));
 
 // ============ ADJECTIVES ============
 // animate = only for living beings (affamato, stanco, furbo…)
