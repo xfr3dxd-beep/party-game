@@ -259,10 +259,8 @@ export function useTheMindGame({
     if (s.phase !== 'playing' || s.stars <= 0) return;
 
     const votes: Record<string, boolean> = {};
-    // Proposer auto-accepts
-    s.players.forEach(p => {
-      votes[p.id] = p.id === proposerId;
-    });
+    // Only proposer auto-accepts, others need to vote
+    votes[proposerId] = true;
 
     syncState({
       ...s,
@@ -279,9 +277,7 @@ export function useTheMindGame({
 
     const newVotes = { ...s.shurikenVote.votes, [voterId]: accept };
 
-    // Check if anyone declined
-    const declined = Object.values(newVotes).some(v => v === false && newVotes[voterId] !== undefined);
-    // Actually check: if this voter declined, cancel
+    // If this voter declined, cancel the shuriken
     if (!accept) {
       syncState({
         ...s,
