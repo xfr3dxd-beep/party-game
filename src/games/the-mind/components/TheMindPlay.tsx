@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TheMindState, TheMindCard } from '../types';
 
 interface TheMindPlayProps {
@@ -16,26 +16,34 @@ const TheMindPlay: React.FC<TheMindPlayProps> = ({
   onPlayCard,
   onRequestShuriken,
 }) => {
+  const [showShurikenConfirm, setShowShurikenConfirm] = useState(false);
+
   const topWhite = state.whitePile.length > 0 ? state.whitePile[state.whitePile.length - 1] : null;
   const topRed = state.redPile.length > 0 ? state.redPile[state.redPile.length - 1] : null;
+
+  const handleShurikenConfirm = () => {
+    setShowShurikenConfirm(false);
+    onRequestShuriken();
+  };
 
   return (
     <div className="mind-play">
       <div className="mind-hud">
-        <div className="hud-left">
+        <div className="mind-hud-section">
           Livello {state.level}/{state.totalLevels}
         </div>
-        <div className="hud-center">
+        <div className="mind-hud-section" style={{ fontSize: '0.85rem', letterSpacing: '0.1em', opacity: 0.7 }}>
           {state.roomCode}
         </div>
-        <div className="hud-right">
-          ❤️ × {state.lives} | ⭐ × {state.stars}
+        <div className="mind-hud-section">
+          <span className="mind-hud-item">❤️ {state.lives}</span>
+          <span className="mind-hud-item">⭐ {state.stars}</span>
         </div>
       </div>
 
       {state.isBlindLevel && (
-        <div className="mind-blind-indicator">
-          Livello Cieco! Le carte giocate sono coperte.
+        <div className="mind-blind-indicator" style={{ textAlign: 'center', margin: '0.5rem 0' }}>
+          🙈 Livello Cieco!
         </div>
       )}
 
@@ -88,14 +96,42 @@ const TheMindPlay: React.FC<TheMindPlayProps> = ({
         </div>
       </div>
 
+      {/* Shuriken FAB */}
       <button
         className="mind-shuriken-fab"
-        onClick={onRequestShuriken}
+        onClick={() => setShowShurikenConfirm(true)}
         disabled={state.stars === 0}
         title="Usa Shuriken"
       >
         ⭐
       </button>
+
+      {/* Shuriken confirmation dialog */}
+      {showShurikenConfirm && (
+        <div className="mind-shuriken-modal">
+          <div className="mind-shuriken-content">
+            <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>⭐</div>
+            <h3 style={{ marginBottom: '0.5rem' }}>Usare una Stella?</h3>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+              Ogni giocatore scarterà la carta più bassa. Gli altri giocatori dovranno accettare.
+            </p>
+            <div className="mind-shuriken-actions">
+              <button
+                className="btn btn-primary"
+                onClick={handleShurikenConfirm}
+              >
+                ✅ Proponi
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowShurikenConfirm(false)}
+              >
+                ❌ Annulla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

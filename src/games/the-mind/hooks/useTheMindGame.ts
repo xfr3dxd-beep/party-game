@@ -108,27 +108,18 @@ export function useTheMindGame({
       // Conflict! Lose a life
       const newLives = s.lives - 1;
 
-      // Remove the played card + all conflict cards from hands
-      let updatedPlayers = removeCardFromHand(s.players, cardPlayerId, card);
-      for (const cc of result.conflictCards) {
-        updatedPlayers = removeCardFromHand(updatedPlayers, cc.playerId, cc.card);
-      }
+      // Per rules: discard the played card + all cards lower than it from ALL players
+      // removeCardFromHand already handles this: removes the card from the player
+      // AND strips all lower white (or higher red) cards from everyone
+      const updatedPlayers = removeCardFromHand(s.players, cardPlayerId, card);
 
-      // Add the played card to the pile
+      // Add the played card to the pile (conflict cards go to discard, not pile)
       const newWhitePile = card.deck === 'white'
         ? [...s.whitePile, card.value]
-        : s.whitePile;
+        : [...s.whitePile];
       const newRedPile = card.deck === 'red'
         ? [...s.redPile, card.value]
-        : s.redPile;
-
-      // Also add conflict cards to piles (they're lower/higher)
-      for (const cc of result.conflictCards) {
-        if (cc.card.deck === 'white') newWhitePile.push(cc.card.value);
-        else newRedPile.push(cc.card.value);
-      }
-      newWhitePile.sort((a, b) => a - b);
-      newRedPile.sort((a, b) => b - a);
+        : [...s.redPile];
 
       const conflict: ConflictInfo = {
         playedCard: card,
@@ -149,7 +140,7 @@ export function useTheMindGame({
           won: false,
         });
       } else {
-        // Show conflict, then resume
+        // Show conflict, then resume playing the SAME level
         syncState({
           ...s,
           phase: 'conflict',

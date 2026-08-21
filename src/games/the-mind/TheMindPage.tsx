@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Layout from '../../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -54,15 +54,8 @@ export default function TheMindPage() {
   // Derive phase: once game is started use game state, otherwise local phase
   const currentPhase = state.phase !== 'create' ? state.phase : localPhase;
 
-  // Auto-resume conflict for non-host after 3s
-  useEffect(() => {
-    if (state.phase === 'conflict' && isHost) {
-      const timer = setTimeout(() => {
-        resumeAfterConflict();
-      }, 3500);
-      return () => clearTimeout(timer);
-    }
-  }, [state.phase, isHost, resumeAfterConflict]);
+
+
 
   const handleCreateRoom = async (playerName: string) => {
     setIsConnecting(true);
