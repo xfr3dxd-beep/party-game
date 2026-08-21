@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import ImpostorePage from './games/impostore/ImpostorePage';
 import SciaradaPage from './games/sciarada/SciaradaPage';
+import TheMindPage from './games/the-mind/TheMindPage';
 
 export default function App() {
   return (
@@ -34,6 +35,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <SciaradaPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/the-mind"
+            element={
+              <ProtectedRoute>
+                <TheMindPage />
               </ProtectedRoute>
             }
           />

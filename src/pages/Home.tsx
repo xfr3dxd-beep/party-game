@@ -64,6 +64,43 @@ export default function Home() {
               Mima le frasi italiane e sfida le altre squadre a tempo.
             </p>
           </div>
+
+          {/* The Mind Card */}
+          <div
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/the-mind')}
+            id="game-card-the-mind"
+            style={{ animationDelay: '0.3s' }}
+          >
+            <span className="game-card-badge badge-live">Giocabile</span>
+            <div className="game-card-icon" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', fontSize: '3.5rem' }}>
+              🧠
+            </div>
+            <h2 className="game-card-title">The Mind</h2>
+            <p className="game-card-desc">
+              Gioca le carte in ordine crescente senza parlare!
+              Sincronizzati con il tuo team in tempo reale, ognuno dal proprio telefono.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="mind-players-badge">👥 2-4 giocatori</span>
+              <span className="mind-players-badge">📱 Multiplayer online</span>
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="card-role civile">Classic</span>
+              <span className="card-role undercover">Extreme</span>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
