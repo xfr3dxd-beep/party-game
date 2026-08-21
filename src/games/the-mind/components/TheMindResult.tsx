@@ -21,24 +21,35 @@ const TheMindResult: React.FC<TheMindResultProps> = ({
   onGoHome,
 }) => {
   return (
-    <div className={`mind-game-over ${won ? 'win' : 'lose'}`}>
+    <div className={`mind-game-over ${won ? 'win' : 'lose'} animate-fade-in`}>
+      <div style={{ fontSize: '5rem', marginBottom: '1rem' }}>
+        {won ? '🧠' : '💀'}
+      </div>
       <h1 className="mind-result-text">
-        {won ? 'VITTORIA! 🧠' : 'Game Over 💀'}
+        {won ? 'VITTORIA!' : 'Game Over'}
       </h1>
-      
-      <div className="stats">
-        <p>Livello raggiunto: {level}/{totalLevels}</p>
+
+      <div style={{ marginBottom: '2rem', color: 'var(--text-muted)' }}>
+        <p style={{ fontSize: '1.2rem' }}>Livello raggiunto: <strong>{level}/{totalLevels}</strong></p>
         <p>Modalità: {mode === 'classic' ? 'Classic' : 'Extreme'}</p>
       </div>
 
-      <div className="actions">
-        {isHost && (
-          <button className="new-game-btn" onClick={onNewGame}>
-            Nuova Partita
-          </button>
-        )}
-        <button className="go-home-btn" onClick={onGoHome}>
-          Torna ai Giochi
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+        {/* Restart button — always visible, host triggers it */}
+        <button
+          className="btn btn-primary"
+          style={{ width: '100%', maxWidth: '300px' }}
+          onClick={onNewGame}
+        >
+          🔄 {won ? 'Gioca Ancora' : 'Ricomincia'}
+        </button>
+
+        <button
+          className="btn btn-secondary"
+          style={{ width: '100%', maxWidth: '300px' }}
+          onClick={onGoHome}
+        >
+          🏠 Torna ai Giochi
         </button>
       </div>
     </div>

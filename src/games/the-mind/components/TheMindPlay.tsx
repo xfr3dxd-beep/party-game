@@ -40,31 +40,46 @@ const TheMindPlay: React.FC<TheMindPlayProps> = ({
       )}
 
       <div className="mind-pile-area">
-        <div className={`pile white-pile ${topWhite === null ? 'empty' : ''}`} style={topWhite === null ? { border: '2px dashed #ccc' } : {}}>
-          {topWhite !== null && (
-            <div key={topWhite} className="mind-pile-card white">
+        <div className="mind-pile mind-pile-white">
+          <span className="mind-pile-label">⬆ ASC</span>
+          {topWhite !== null ? (
+            <div key={topWhite} className="mind-pile-card">
               {topWhite}
             </div>
+          ) : (
+            <div className="mind-pile-empty">—</div>
           )}
         </div>
 
         {state.mode === 'extreme' && (
-          <div className={`pile red-pile ${topRed === null ? 'empty' : ''}`} style={topRed === null ? { border: '2px dashed #ccc' } : {}}>
-            {topRed !== null && (
-              <div key={topRed} className="mind-pile-card red">
+          <div className="mind-pile mind-pile-red">
+            <span className="mind-pile-label">⬇ DESC</span>
+            {topRed !== null ? (
+              <div key={topRed} className="mind-pile-card">
                 {topRed}
               </div>
+            ) : (
+              <div className="mind-pile-empty">—</div>
             )}
           </div>
         )}
       </div>
 
       <div className="mind-hand-container">
-        <div className="mind-hand">
+        <div className="mind-hand" style={{
+          flexWrap: 'wrap',
+          gap: '0.4rem',
+          justifyContent: 'center',
+        }}>
           {myHand.map((card, idx) => (
             <div
               key={`${card.deck}-${card.value}-${idx}`}
               className={`mind-card ${card.deck}`}
+              style={{
+                width: myHand.length > 8 ? '55px' : myHand.length > 5 ? '65px' : '75px',
+                height: myHand.length > 8 ? '80px' : myHand.length > 5 ? '95px' : '110px',
+                fontSize: myHand.length > 8 ? '1.2rem' : myHand.length > 5 ? '1.5rem' : '1.7rem',
+              }}
               onClick={() => onPlayCard(card)}
             >
               {card.value}
@@ -77,8 +92,9 @@ const TheMindPlay: React.FC<TheMindPlayProps> = ({
         className="mind-shuriken-fab"
         onClick={onRequestShuriken}
         disabled={state.stars === 0}
+        title="Usa Shuriken"
       >
-        ⭐ Usa Shuriken
+        ⭐
       </button>
     </div>
   );

@@ -1893,15 +1893,15 @@ input, textarea, select {
   display: flex;
   justify-content: center;
   gap: var(--space-xl);
-  padding: var(--space-2xl) 0;
-  min-height: 35vh;
+  padding: var(--space-lg) 0;
+  min-height: 20vh;
   align-items: center;
 }
 
 .mind-pile {
   position: relative;
-  width: 140px;
-  height: 200px;
+  width: 100px;
+  height: 140px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1909,8 +1909,8 @@ input, textarea, select {
 
 .mind-pile-label {
   position: absolute;
-  top: -28px;
-  font-size: 0.85rem;
+  top: -24px;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
@@ -1927,7 +1927,7 @@ input, textarea, select {
   align-items: center;
   justify-content: center;
   font-family: var(--font-heading);
-  font-size: 3rem;
+  font-size: 2.2rem;
   font-weight: 800;
   color: var(--text-primary);
   box-shadow: var(--shadow-lg);
@@ -2251,12 +2251,12 @@ input, textarea, select {
   }
 
   .mind-pile {
-    width: 100px;
-    height: 150px;
+    width: 80px;
+    height: 110px;
   }
 
   .mind-pile-card {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
   }
 
   .mind-card {
