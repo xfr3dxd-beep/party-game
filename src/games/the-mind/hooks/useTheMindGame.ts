@@ -5,7 +5,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
   TheMindState, TheMindMode, TheMindPhase, TheMindPlayer,
-  TheMindCard, TheMindBroadcast, ConflictInfo, ShurikenVote,
+  TheMindCard, TheMindBroadcast, ConflictInfo, ShurikenVote, DeckColor,
 } from '../types';
 import {
   getPlayerConfig, getLevelConfig, dealCards,
@@ -287,15 +287,51 @@ export function useTheMindGame({
       return;
     }
 
-    // Check if all voted
+    // Check if all voted yes
     const allVoted = s.players.every(p => newVotes[p.id] === true);
 
     if (allVoted) {
-      // Execute shuriken
-      const result = s.mode === 'extreme'
-        ? executeShurikenExtreme(s.players)
-        : executeShurikenClassic(s.players);
+      if (s.mode === 'extreme') {
+        // Extreme: go to choice phase — each player picks white or red
+        syncState({
+          ...s,
+          phase: 'shuriken-choose',
+          shurikenVote: { ...s.shurikenVote, votes: newVotes, choices: {} },
+        });
+      } else {
+        // Classic: execute immediately (always discard lowest white)
+        const result = executeShurikenClassic(s.players);
+        syncState({
+          ...s,
+          phase: 'playing',
+          stars: s.stars - 1,
+          players: result.players,
+          shurikenVote: null,
+        });
+      }
+    } else {
+      // Update votes, keep waiting
+      syncState({
+        ...s,
+        shurikenVote: { ...s.shurikenVote, votes: newVotes },
+      });
+    }
+  }, [isHost, syncState]);
 
+  // ---- HOST: Handle shuriken choice (Extreme mode) ----
+  const handleShurikenChoice = useCallback((chooserId: string, deckChoice: DeckColor) => {
+    if (!isHost) return;
+    const s = stateRef.current;
+    if (!s.shurikenVote) return;
+
+    const newChoices = { ...(s.shurikenVote.choices || {}), [chooserId]: deckChoice };
+
+    // Check if all players have chosen
+    const allChosen = s.players.every(p => newChoices[p.id] !== undefined);
+
+    if (allChosen) {
+      // Execute shuriken with individual choices
+      const result = executeShurikenExtreme(s.players, newChoices);
       syncState({
         ...s,
         phase: 'playing',
@@ -304,10 +340,10 @@ export function useTheMindGame({
         shurikenVote: null,
       });
     } else {
-      // Update votes, keep waiting
+      // Update choices, keep waiting
       syncState({
         ...s,
-        shurikenVote: { ...s.shurikenVote, votes: newVotes },
+        shurikenVote: { ...s.shurikenVote, choices: newChoices },
       });
     }
   }, [isHost, syncState]);
@@ -339,6 +375,9 @@ export function useTheMindGame({
           case 'shuriken:vote':
             handleShurikenVote(event.playerId, event.accept);
             break;
+          case 'shuriken:choose':
+            handleShurikenChoice(event.playerId, event.deckChoice);
+            break;
           case 'next-level':
             nextLevel();
             break;
@@ -350,7 +389,7 @@ export function useTheMindGame({
         }
       }
     });
-  }, [isHost, handlePlay, proposeShuriken, handleShurikenVote, nextLevel, onBroadcast]);
+  }, [isHost, handlePlay, proposeShuriken, handleShurikenVote, handleShurikenChoice, nextLevel, onBroadcast]);
 
   // ---- Player actions (sends broadcast, doesn't modify state directly) ----
   const playCard = useCallback((card: TheMindCard) => {
@@ -377,6 +416,14 @@ export function useTheMindGame({
     }
   }, [isHost, playerId, broadcast, handleShurikenVote]);
 
+  const chooseShurikenDeck = useCallback((deckChoice: DeckColor) => {
+    if (isHost) {
+      handleShurikenChoice(playerId, deckChoice);
+    } else {
+      broadcast({ type: 'shuriken:choose', playerId, deckChoice });
+    }
+  }, [isHost, playerId, broadcast, handleShurikenChoice]);
+
   const requestNextLevel = useCallback(() => {
     if (isHost) {
       nextLevel();
@@ -395,6 +442,7 @@ export function useTheMindGame({
     playCard,
     requestShuriken,
     voteShuriken,
+    chooseShurikenDeck,
     resumeAfterConflict,
     requestNextLevel,
     newGame,

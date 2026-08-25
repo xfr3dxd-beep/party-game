@@ -1,4 +1,4 @@
-import { TheMindMode, LevelConfig, TheMindCard, TheMindPlayer } from './types';
+import { TheMindMode, LevelConfig, TheMindCard, TheMindPlayer, DeckColor } from './types';
 
 export function getPlayerConfig(playerCount: number) {
   if (playerCount === 2) return { totalLevels: 12, startingLives: 2, startingStars: 1 };
@@ -136,32 +136,39 @@ export function executeShurikenClassic(players: TheMindPlayer[]): { players: The
   return { players: updatedPlayers, discardedCards };
 }
 
-export function executeShurikenExtreme(players: TheMindPlayer[]): { players: TheMindPlayer[]; discardedCards: { playerId: string; card: TheMindCard }[] } {
+export function executeShurikenExtreme(
+  players: TheMindPlayer[],
+  choices: Record<string, DeckColor>
+): { players: TheMindPlayer[]; discardedCards: { playerId: string; card: TheMindCard }[] } {
   const discardedCards: { playerId: string; card: TheMindCard }[] = [];
   
   const updatedPlayers = players.map(player => {
     if (player.hand.length === 0) return player;
     
-    let cardsToRemove: TheMindCard[] = [];
-    
-    const whiteCards = player.hand.filter(c => c.deck === 'white');
-    if (whiteCards.length > 0) {
-      cardsToRemove.push(whiteCards[0]); 
+    const choice = choices[player.id];
+    if (!choice) return player;
+
+    let cardToRemove: TheMindCard | null = null;
+
+    if (choice === 'white') {
+      // Discard lowest white card
+      const whiteCards = player.hand.filter(c => c.deck === 'white');
+      if (whiteCards.length > 0) cardToRemove = whiteCards[0]; // already sorted ascending
+    } else {
+      // Discard highest red card
+      const redCards = player.hand.filter(c => c.deck === 'red');
+      if (redCards.length > 0) cardToRemove = redCards[0]; // already sorted descending
     }
     
-    const redCards = player.hand.filter(c => c.deck === 'red');
-    if (redCards.length > 0) {
-      cardsToRemove.push(redCards[0]); 
+    if (cardToRemove) {
+      discardedCards.push({ playerId: player.id, card: cardToRemove });
+      return {
+        ...player,
+        hand: player.hand.filter(c => !(c.value === cardToRemove!.value && c.deck === cardToRemove!.deck))
+      };
     }
     
-    cardsToRemove.forEach(card => {
-      discardedCards.push({ playerId: player.id, card });
-    });
-    
-    return {
-      ...player,
-      hand: player.hand.filter(c => !cardsToRemove.some(r => r.value === c.value && r.deck === c.deck))
-    };
+    return player;
   });
   
   return { players: updatedPlayers, discardedCards };

@@ -40,6 +40,7 @@ export default function TheMindPage() {
     playCard,
     requestShuriken,
     voteShuriken,
+    chooseShurikenDeck,
     resumeAfterConflict,
     requestNextLevel,
     newGame,
@@ -122,8 +123,8 @@ export default function TheMindPage() {
           />
         )}
 
-        {/* Playing / Conflict / Shuriken-vote */}
-        {(currentPhase === 'playing' || currentPhase === 'conflict' || currentPhase === 'shuriken-vote') && (
+        {/* Playing / Conflict / Shuriken-vote / Shuriken-choose */}
+        {(currentPhase === 'playing' || currentPhase === 'conflict' || currentPhase === 'shuriken-vote' || currentPhase === 'shuriken-choose') && (
           <>
             <TheMindPlay
               state={state}
@@ -144,6 +145,68 @@ export default function TheMindPage() {
               />
             )}
 
+            {/* Shuriken choose modal (Extreme only) */}
+            {currentPhase === 'shuriken-choose' && state.shurikenVote && (() => {
+              const choices = state.shurikenVote.choices || {};
+              const hasChosen = choices[playerId] !== undefined;
+              const myWhiteCards = myHand.filter(c => c.deck === 'white');
+              const myRedCards = myHand.filter(c => c.deck === 'red');
+              const lowestWhite = myWhiteCards.length > 0 ? myWhiteCards[0].value : null;
+              const highestRed = myRedCards.length > 0 ? myRedCards[0].value : null;
+
+              return (
+                <div className="mind-shuriken-modal">
+                  <div className="mind-shuriken-content">
+                    <div style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>⭐</div>
+                    <h3 style={{ marginBottom: '0.5rem' }}>Scegli quale carta scartare</h3>
+                    <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+                      Scarta la carta blu più bassa oppure la carta rossa più alta.
+                    </p>
+
+                    {!hasChosen ? (
+                      <div className="mind-shuriken-actions" style={{ flexDirection: 'column', gap: '0.75rem' }}>
+                        {lowestWhite !== null && (
+                          <button
+                            className="btn btn-primary"
+                            style={{ width: '100%' }}
+                            onClick={() => chooseShurikenDeck('white')}
+                          >
+                            ⬆ Scarta Blu più bassa ({lowestWhite})
+                          </button>
+                        )}
+                        {highestRed !== null && (
+                          <button
+                            className="btn btn-primary"
+                            style={{ width: '100%', background: 'linear-gradient(135deg, #f43f5e 0%, #f59e0b 100%)' }}
+                            onClick={() => chooseShurikenDeck('red')}
+                          >
+                            ⬇ Scarta Rossa più alta ({highestRed})
+                          </button>
+                        )}
+                        {lowestWhite === null && highestRed === null && (
+                          <p style={{ color: 'var(--text-muted)' }}>Non hai carte da scartare.</p>
+                        )}
+                      </div>
+                    ) : (
+                      <p style={{ color: 'var(--accent-green-light)' }}>
+                        Hai scelto ✓ — In attesa degli altri...
+                      </p>
+                    )}
+
+                    {/* Show who has chosen */}
+                    <div style={{ marginTop: '1rem' }}>
+                      {state.players.map(p => (
+                        <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                          <span>{p.name}</span>
+                          <span>{choices[p.id] ? '✓' : '...'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Conflict overlay */}
             {currentPhase === 'conflict' && state.conflict && (
               <>
@@ -154,7 +217,7 @@ export default function TheMindPage() {
                     <h2 style={{ color: 'var(--accent-rose-light)', marginBottom: '0.5rem' }}>Conflitto!</h2>
                     <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
                       {state.players.find(p => p.id === state.conflict!.playerId)?.name || 'Qualcuno'} ha giocato <strong>{state.conflict.playedCard.value}</strong>,
-                      ma c'erano carte più basse:
+                      ma c'erano carte {state.conflict.playedCard.deck === 'white' ? 'più basse' : 'più alte'}:
                     </p>
                     <div className="mind-conflict-cards">
                       {state.conflict.lowerCards.map((lc, i) => (

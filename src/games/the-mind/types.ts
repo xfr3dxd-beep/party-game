@@ -9,6 +9,7 @@ export type TheMindPhase =
   | 'level-complete'// brief celebration
   | 'conflict'      // someone played out of order
   | 'shuriken-vote' // voting on using a throwing star
+  | 'shuriken-choose' // extreme: each player picks which card to discard
   | 'game-over';    // win or lose
 
 export type DeckColor = 'white' | 'red';
@@ -35,6 +36,7 @@ export interface ConflictInfo {
 export interface ShurikenVote {
   proposerId: string;
   votes: Record<string, boolean>; // playerId -> accepted
+  choices?: Record<string, DeckColor>; // extreme: playerId -> which deck to discard from
 }
 
 export interface TheMindState {
@@ -98,11 +100,18 @@ export interface NextLevelEvent {
   type: 'next-level';
 }
 
+export interface ShurikenChooseEvent {
+  type: 'shuriken:choose';
+  playerId: string;
+  deckChoice: DeckColor; // 'white' = discard lowest white, 'red' = discard highest red
+}
+
 export type TheMindBroadcast =
   | SyncEvent
   | PlayEvent
   | ShurikenProposeEvent
   | ShurikenVoteEvent
+  | ShurikenChooseEvent
   | ConflictEvent
   | StartGameEvent
   | NextLevelEvent;
