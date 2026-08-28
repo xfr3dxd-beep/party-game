@@ -12,10 +12,11 @@ interface TheMindPlayProps {
 // Generate dynamic card styles based on value and deck
 function getCardStyle(card: TheMindCard, mode: TheMindMode): React.CSSProperties {
   const maxVal = mode === 'classic' ? 100 : 50;
-  const ratio = Math.max(0, Math.min(1, (card.value - 1) / (maxVal - 1)));
+  const blueRatio = Math.max(0, Math.min(1, (card.value - 1) / (maxVal - 1)));
 
   if (card.deck === 'white') {
     // Blue gradient: light cyan → deep ocean blue
+    const ratio = blueRatio;
     const h = 195 + ratio * 25;         // 195 → 220
     const s = 75 + ratio * 15;          // 75% → 90%
     const l = 68 - ratio * 45;          // 68% → 23%
@@ -32,7 +33,9 @@ function getCardStyle(card: TheMindCard, mode: TheMindMode): React.CSSProperties
       border: `1px solid ${borderColor}`,
     };
   } else {
-    // Red gradient: soft pink → dark crimson + fire glow
+    // Red gradient INVERTED: value 50 = lightest pink, value 1 = darkest crimson
+    // Because red deck is played descending (50 → 1)
+    const ratio = 1 - blueRatio; // invert: low value = high ratio = darker
     const h = 355 - ratio * 15;         // 355 → 340
     const s = 75 + ratio * 15;          // 75% → 90%
     const l = 65 - ratio * 40;          // 65% → 25%
@@ -197,9 +200,13 @@ const TheMindPlay: React.FC<TheMindPlayProps> = ({
                   {/* Decorative corner marks */}
                   <span className="mind-card-corner top-left">{card.value}</span>
                   <span className="mind-card-corner bottom-right">{card.value}</span>
-                  {/* Fire embers for red cards with high values */}
-                  {card.deck === 'red' && card.value > 30 && (
+                  {/* Fire embers for dark red cards (low values = darkest in descending) */}
+                  {card.deck === 'red' && card.value < 20 && (
                     <div className="mind-card-ember" />
+                  )}
+                  {/* Wave effect for blue cards */}
+                  {card.deck === 'white' && (
+                    <div className="mind-card-wave" />
                   )}
                 </div>
               );
