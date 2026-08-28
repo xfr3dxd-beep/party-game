@@ -293,21 +293,51 @@ export function useTheMindGame({
     if (allVoted) {
       if (s.mode === 'extreme') {
         // Extreme: go to choice phase — each player picks white or red
-        syncState({
-          ...s,
-          phase: 'shuriken-choose',
-          shurikenVote: { ...s.shurikenVote, votes: newVotes, choices: {} },
+        // Auto-skip players with empty hands
+        const autoChoices: Record<string, DeckColor> = {};
+        s.players.forEach(p => {
+          if (p.hand.length === 0) {
+            autoChoices[p.id] = 'white'; // dummy choice, no card to discard
+          }
         });
+
+        // If all players have empty hands, skip the choice phase entirely
+        const allEmpty = s.players.every(p => p.hand.length === 0);
+        if (allEmpty) {
+          finishShurikenAndCheckLevel(s, autoChoices);
+        } else {
+          syncState({
+            ...s,
+            phase: 'shuriken-choose',
+            shurikenVote: { ...s.shurikenVote, votes: newVotes, choices: autoChoices },
+          });
+        }
       } else {
         // Classic: execute immediately (always discard lowest white)
         const result = executeShurikenClassic(s.players);
-        syncState({
-          ...s,
-          phase: 'playing',
-          stars: s.stars - 1,
-          players: result.players,
-          shurikenVote: null,
-        });
+        const newStars = s.stars - 1;
+
+        // Check if level is now complete after shuriken
+        if (checkLevelComplete(result.players)) {
+          const levelCfg = getLevelConfig(s.level, s.players.length, s.mode);
+          let newLives = s.lives;
+          if (levelCfg.rewardLife) newLives = Math.min(newLives + 1, s.maxLives);
+          const finalStars = newStars + (levelCfg.rewardStar ? 1 : 0);
+
+          if (s.level >= s.totalLevels) {
+            syncState({ ...s, phase: 'game-over', players: result.players, stars: finalStars, lives: newLives, won: true, shurikenVote: null });
+          } else {
+            syncState({ ...s, phase: 'level-complete', players: result.players, stars: finalStars, lives: newLives, shurikenVote: null, conflict: null });
+          }
+        } else {
+          syncState({
+            ...s,
+            phase: 'playing',
+            stars: newStars,
+            players: result.players,
+            shurikenVote: null,
+          });
+        }
       }
     } else {
       // Update votes, keep waiting
@@ -317,6 +347,33 @@ export function useTheMindGame({
       });
     }
   }, [isHost, syncState]);
+
+  // ---- Helper: finish shuriken discard and check level complete ----
+  const finishShurikenAndCheckLevel = useCallback((s: TheMindState, choices: Record<string, DeckColor>) => {
+    const result = executeShurikenExtreme(s.players, choices);
+    const newStars = s.stars - 1;
+
+    if (checkLevelComplete(result.players)) {
+      const levelCfg = getLevelConfig(s.level, s.players.length, s.mode);
+      let newLives = s.lives;
+      if (levelCfg.rewardLife) newLives = Math.min(newLives + 1, s.maxLives);
+      const finalStars = newStars + (levelCfg.rewardStar ? 1 : 0);
+
+      if (s.level >= s.totalLevels) {
+        syncState({ ...s, phase: 'game-over', players: result.players, stars: finalStars, lives: newLives, won: true, shurikenVote: null });
+      } else {
+        syncState({ ...s, phase: 'level-complete', players: result.players, stars: finalStars, lives: newLives, shurikenVote: null, conflict: null });
+      }
+    } else {
+      syncState({
+        ...s,
+        phase: 'playing',
+        stars: newStars,
+        players: result.players,
+        shurikenVote: null,
+      });
+    }
+  }, [syncState]);
 
   // ---- HOST: Handle shuriken choice (Extreme mode) ----
   const handleShurikenChoice = useCallback((chooserId: string, deckChoice: DeckColor) => {
@@ -330,15 +387,7 @@ export function useTheMindGame({
     const allChosen = s.players.every(p => newChoices[p.id] !== undefined);
 
     if (allChosen) {
-      // Execute shuriken with individual choices
-      const result = executeShurikenExtreme(s.players, newChoices);
-      syncState({
-        ...s,
-        phase: 'playing',
-        stars: s.stars - 1,
-        players: result.players,
-        shurikenVote: null,
-      });
+      finishShurikenAndCheckLevel(s, newChoices);
     } else {
       // Update choices, keep waiting
       syncState({
@@ -346,7 +395,7 @@ export function useTheMindGame({
         shurikenVote: { ...s.shurikenVote, choices: newChoices },
       });
     }
-  }, [isHost, syncState]);
+  }, [isHost, syncState, finishShurikenAndCheckLevel]);
 
   // ---- HOST: New game ----
   const newGame = useCallback(() => {
