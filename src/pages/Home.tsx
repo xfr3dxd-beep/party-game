@@ -101,6 +101,33 @@ export default function Home() {
               <span className="card-role undercover">Extreme</span>
             </div>
           </div>
+
+          {/* Pili Pili Card */}
+          <div
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/pili-pili')}
+            id="game-card-pili-pili"
+            style={{ animationDelay: '0.4s' }}
+          >
+            <span className="game-card-badge badge-live">Giocabile</span>
+            <div className="game-card-icon" style={{ fontSize: '3.5rem' }}>
+              🌶️
+            </div>
+            <h2 className="game-card-title">Pili Pili</h2>
+            <p className="game-card-desc">
+              Scommetti sulle prese e gioca le carte giuste! Un gioco di prese con missioni che cambiano ogni round.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="mind-players-badge" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#fb923c', borderColor: 'rgba(249, 115, 22, 0.3)' }}>👥 2-8 giocatori</span>
+              <span className="mind-players-badge" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#fb923c', borderColor: 'rgba(249, 115, 22, 0.3)' }}>📱 Multiplayer online</span>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

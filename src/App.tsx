@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import ImpostorePage from './games/impostore/ImpostorePage';
 import SciaradaPage from './games/sciarada/SciaradaPage';
 import TheMindPage from './games/the-mind/TheMindPage';
+import PiliPiliPage from './games/pili-pili/PiliPiliPage';
 
 export default function App() {
   return (
@@ -43,6 +44,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <TheMindPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pili-pili"
+            element={
+              <ProtectedRoute>
+                <PiliPiliPage />
               </ProtectedRoute>
             }
           />
