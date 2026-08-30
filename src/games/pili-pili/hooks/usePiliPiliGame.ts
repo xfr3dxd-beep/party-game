@@ -115,14 +115,12 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
             newState.phase = 'round-result';
             newState.players = newState.players.map(p => {
               const diff = Math.abs((p.bet || 0) - p.tricksWon);
-              let multiplier = 1;
-              if (newState.currentMission?.doublePenalty) multiplier = 2;
-              if (newState.currentMission?.triplePenalty) multiplier = 3;
-              if (newState.currentMission?.noPenalty) multiplier = 0;
+              let piliPenalty = diff;
               
-              let newPilis = p.pilis + (diff * multiplier);
+              let newPilis = p.pilis + piliPenalty;
               if (diff === 0 && newState.currentMission?.bonusPrecise) {
-                newPilis = Math.max(0, newPilis - 1);
+                const removeAmount = newState.currentMission.bonusPreciseAmount === 'bet-value' ? (p.bet || 0) : 1;
+                newPilis = Math.max(0, newPilis - removeAmount);
               }
               
               return { ...p, pilis: newPilis };

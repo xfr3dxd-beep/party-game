@@ -1,5 +1,5 @@
-import { PiliPiliState, PlayedCard, Mission, PiliPiliPlayer } from './types';
-import { missions } from './missions';
+import { PlayedCard, Mission, PiliPiliPlayer } from './types';
+import { getRandomMission } from './missions';
 
 export const JOKER_VALUE = 56;
 
@@ -19,11 +19,7 @@ export function shuffle<T>(array: T[]): T[] {
 }
 
 export function drawMission(usedIds: number[]): Mission {
-  const available = missions.filter(m => !usedIds.includes(m.id));
-  if (available.length === 0) {
-    return missions[0]; // fallback
-  }
-  return available[Math.floor(Math.random() * available.length)];
+  return getRandomMission(usedIds);
 }
 
 export function dealCards(players: PiliPiliPlayer[], cardsPerPlayer: number, includeJoker: boolean): PiliPiliPlayer[] {
@@ -41,7 +37,7 @@ export function dealCards(players: PiliPiliPlayer[], cardsPerPlayer: number, inc
 
 export function resolveTrick(trick: PlayedCard[], invertWinner: boolean = false): string {
   let winner = trick[0];
-  
+
   for (let i = 1; i < trick.length; i++) {
     const card = trick[i];
     if (card.card === JOKER_VALUE) {
@@ -50,7 +46,7 @@ export function resolveTrick(trick: PlayedCard[], invertWinner: boolean = false)
     if (winner.card === JOKER_VALUE) {
       continue; // Winner is Joker, skip
     }
-    
+
     if (invertWinner) {
       if (card.card < winner.card) {
         winner = card;
@@ -61,11 +57,19 @@ export function resolveTrick(trick: PlayedCard[], invertWinner: boolean = false)
       }
     }
   }
-  
+
   return winner.playerId;
 }
 
-export function isBetValid(bet: number, totalBets: number, isLastToBet: boolean, totalTricks: number): boolean {
+export function isBetValid(
+  bet: number,
+  totalBets: number,
+  isLastToBet: boolean,
+  totalTricks: number,
+  mission: Mission | null
+): boolean {
+  if (mission?.noZeroBet && bet === 0) return false;
+  if (mission?.noOneBet && bet === 1) return false;
   if (isLastToBet) {
     return totalBets + bet !== totalTricks;
   }

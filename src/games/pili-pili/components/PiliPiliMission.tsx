@@ -9,25 +9,45 @@ export default function PiliPiliMission({ mission }: PiliPiliMissionProps) {
   if (!mission) return null;
 
   return (
-    <div className="animate-fade-in flex flex-col items-center justify-center min-h-[50vh]">
-      <h2 className="mb-lg" style={{ color: '#ea580c' }}>Nuova Missione!</h2>
-      
-      <div className="pili-mission-card p-xl text-center" style={{ 
-        background: 'linear-gradient(135deg, rgba(234, 88, 12, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)',
-        border: '2px solid #ea580c',
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: '1rem' }}>
+      <h2 style={{ color: '#ea580c', marginBottom: '1rem', fontSize: '1.6rem' }}>🎴 Missione #{mission.id}</h2>
+
+      {/* Mission card image */}
+      <div style={{
         borderRadius: '16px',
-        maxWidth: '400px',
-        boxShadow: '0 8px 32px rgba(234, 88, 12, 0.3)'
+        overflow: 'hidden',
+        boxShadow: '0 8px 32px rgba(234, 88, 12, 0.4), 0 0 60px rgba(234, 88, 12, 0.15)',
+        maxWidth: '320px',
+        width: '100%',
+        marginBottom: '1.5rem',
+        border: '2px solid rgba(234, 88, 12, 0.5)',
       }}>
-        <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>📜</div>
-        <h3 style={{ fontSize: '1.8rem', marginBottom: '1rem' }}>{mission.name}</h3>
-        <p style={{ fontSize: '1.2rem', lineHeight: '1.5' }}>
-          {mission.description}
-        </p>
-        
-        <div className="mt-xl text-muted">
-          <em>Preparatevi a scommettere...</em>
-        </div>
+        <img
+          src={mission.image}
+          alt={mission.name}
+          style={{ width: '100%', height: 'auto', display: 'block' }}
+        />
+      </div>
+
+      {/* Mission name and description */}
+      <h3 style={{ fontSize: '1.4rem', marginBottom: '0.5rem', textAlign: 'center' }}>{mission.name}</h3>
+      <p style={{
+        fontSize: '1rem',
+        lineHeight: 1.5,
+        textAlign: 'center',
+        maxWidth: '400px',
+        color: 'var(--text-secondary)',
+        marginBottom: '0.5rem',
+      }}>
+        {mission.description}
+      </p>
+
+      <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+        🃏 {mission.cardsPerPlayer} carte a testa
+      </div>
+
+      <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '1rem' }}>
+        <em>Preparatevi a scommettere...</em>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 import React from 'react';
 import { PiliPiliState, PiliPiliPlayer } from '../types';
+import { getCardImage } from '../missions';
 
 interface PiliPiliPlayProps {
   state: PiliPiliState;
@@ -10,66 +11,68 @@ interface PiliPiliPlayProps {
 export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPlayProps) {
   const isMyTurn = state.currentTurnId === myPlayer.id;
 
-  const getCardColor = (value: number) => {
-    if (value === 56) return 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)';
-    return 'linear-gradient(135deg, #fbbf24 0%, #ea580c 100%)';
-  };
-
   return (
-    <div className="animate-fade-in flex flex-col h-full" style={{ minHeight: '70vh' }}>
-      
-      {/* Top area - Other players info */}
-      <div className="mb-md" style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', justifyContent: 'center' }}>
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', minHeight: '70vh' }}>
+
+      {/* Top - Players info */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', justifyContent: 'center', marginBottom: '1rem' }}>
         {state.players.map(p => {
           const isTurn = state.currentTurnId === p.id;
           return (
-            <div key={p.id} className="p-sm" style={{ 
+            <div key={p.id} style={{
               background: isTurn ? 'rgba(234, 88, 12, 0.2)' : 'rgba(255,255,255,0.05)',
-              borderRadius: '8px', 
-              border: isTurn ? '1px solid #ea580c' : '1px solid transparent',
-              textAlign: 'center', minWidth: '100px'
+              borderRadius: '8px',
+              border: isTurn ? '2px solid #ea580c' : '1px solid rgba(255,255,255,0.1)',
+              textAlign: 'center', minWidth: '90px', padding: '0.4rem 0.6rem',
             }}>
-              <div style={{ fontWeight: 600 }}>{p.name}</div>
-              <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                Scom: <strong style={{color: '#ea580c'}}>{p.bet}</strong> | Pres: <strong>{p.tricksWon}</strong>
+              <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{p.name}</div>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                🎯{p.bet} ✅{p.tricksWon}
               </div>
-              <div style={{ fontSize: '0.8rem', color: '#ef4444' }}>🌶️ {p.pilis}</div>
+              <div style={{ fontSize: '0.75rem', color: '#ef4444' }}>🌶️ {p.pilis}</div>
             </div>
           );
         })}
       </div>
 
-      {/* Middle area - Play field */}
-      <div className="flex-1 flex flex-col items-center justify-center p-xl mb-md glass-panel" style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <h3 className="mb-lg" style={{ color: '#ea580c' }}>Tavolo</h3>
-        
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', minHeight: '150px', alignItems: 'center' }}>
+      {/* Middle - Play field with cards on table */}
+      <div style={{
+        flex: 1, display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '1rem', marginBottom: '1rem',
+        background: 'rgba(0,0,0,0.2)', borderRadius: '16px',
+        border: '1px solid rgba(255,255,255,0.1)', minHeight: '200px',
+      }}>
+        <div style={{ fontSize: '0.85rem', color: '#ea580c', fontWeight: 600, marginBottom: '0.8rem' }}>
+          Presa {state.trickNumber}/{state.totalTricks}
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'flex-end' }}>
           {state.currentTrick.map((played, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.8rem', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '0.75rem', marginBottom: '0.3rem', color: 'var(--text-muted)' }}>
                 {state.players.find(p => p.id === played.playerId)?.name}
               </div>
-              <div style={{
-                width: '80px', height: '120px', 
-                background: getCardColor(played.card),
-                borderRadius: '8px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '2rem', fontWeight: 'bold', color: 'white',
-                boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
-                border: '2px solid rgba(255,255,255,0.3)'
-              }}>
-                {played.card === 56 ? 'J' : played.card}
-              </div>
+              <img
+                src={getCardImage(played.card)}
+                alt={`Carta ${played.card}`}
+                style={{
+                  width: '70px', height: 'auto',
+                  borderRadius: '6px',
+                  boxShadow: '0 6px 16px rgba(0,0,0,0.4)',
+                  border: '2px solid rgba(255,255,255,0.2)',
+                }}
+              />
             </div>
           ))}
           {state.currentTrick.length === 0 && (
-            <div className="text-muted" style={{ fontStyle: 'italic' }}>Tavolo vuoto</div>
+            <div style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>Tavolo vuoto</div>
           )}
         </div>
-        
-        <div className="mt-xl text-center">
+
+        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
           {isMyTurn ? (
-            <div style={{ color: '#ea580c', fontSize: '1.2rem', fontWeight: 600 }}>È il tuo turno! Gioca una carta.</div>
+            <div style={{ color: '#ea580c', fontSize: '1.1rem', fontWeight: 600 }}>È il tuo turno! Gioca una carta.</div>
           ) : (
             <div style={{ color: 'var(--text-muted)' }}>
               Turno di {state.players.find(p => p.id === state.currentTurnId)?.name}...
@@ -78,37 +81,39 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
         </div>
       </div>
 
-      {/* Bottom area - My hand */}
-      <div className="text-center">
-        <h4 className="mb-sm">Le tue carte:</h4>
-        <div className="pili-hand" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+      {/* Bottom - My hand with card images */}
+      <div style={{ textAlign: 'center' }}>
+        <h4 style={{ marginBottom: '0.5rem', fontSize: '0.9rem' }}>Le tue carte:</h4>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
           {myPlayer.hand.map((card, i) => (
             <button
               key={i}
-              onClick={() => {
-                if (isMyTurn) onPlayCard(card);
-              }}
+              onClick={() => { if (isMyTurn) onPlayCard(card); }}
               disabled={!isMyTurn}
               style={{
-                width: '70px', height: '100px', 
-                background: getCardColor(card),
-                borderRadius: '8px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.5rem', fontWeight: 'bold', color: 'white',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                border: 'none',
+                padding: 0, border: 'none', background: 'none',
                 cursor: isMyTurn ? 'pointer' : 'default',
-                transform: isMyTurn ? 'translateY(-10px)' : 'none',
-                transition: 'transform 0.2s',
-                opacity: isMyTurn ? 1 : 0.8
+                transform: isMyTurn ? 'translateY(-6px)' : 'none',
+                transition: 'transform 0.2s, filter 0.2s',
+                opacity: isMyTurn ? 1 : 0.7,
+                filter: isMyTurn ? 'none' : 'grayscale(0.3)',
               }}
             >
-              {card === 56 ? 'J' : card}
+              <img
+                src={getCardImage(card)}
+                alt={`Carta ${card}`}
+                style={{
+                  width: myPlayer.hand.length > 6 ? '55px' : '68px',
+                  height: 'auto',
+                  borderRadius: '6px',
+                  boxShadow: isMyTurn ? '0 6px 20px rgba(234, 88, 12, 0.3)' : '0 2px 6px rgba(0,0,0,0.2)',
+                  border: isMyTurn ? '2px solid rgba(234, 88, 12, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+                }}
+              />
             </button>
           ))}
         </div>
       </div>
-      
     </div>
   );
 }
