@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { PiliPiliState, PiliPiliBroadcast, PiliPiliPlayer, PlayedCard } from '../types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { PiliPiliState, PiliPiliBroadcast, PiliPiliPlayer } from '../types';
 import { RoomPlayer } from './usePiliPiliRoom';
 import { dealCards, drawMission, getNextPlayerId, resolveTrick } from '../gameLogic';
 
@@ -28,19 +28,25 @@ const initialState: PiliPiliState = {
 
 export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadcast }: UsePiliPiliGameProps) {
   const [state, setState] = useState<PiliPiliState>(initialState);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  const broadcastRef = useRef(broadcast);
+  broadcastRef.current = broadcast;
 
   const syncState = useCallback((newState: PiliPiliState) => {
     setState(newState);
+    stateRef.current = newState;
     if (isHost) {
-      broadcast({ type: 'sync', payload: newState });
+      broadcastRef.current({ type: 'sync', payload: newState });
     }
-  }, [isHost, broadcast]);
+  }, [isHost]);
 
+  // Initialize players when they join
   useEffect(() => {
-    if (isHost && state.phase === 'create' && players.length > 0) {
-      // Initialize players
-      const newPlayers = players.map(p => {
-        const existing = state.players.find(ep => ep.id === p.id);
+    if (isHost && stateRef.current.phase === 'create' && players.length > 0) {
+      const newPlayers: PiliPiliPlayer[] = players.map(p => {
+        const existing = stateRef.current.players.find(ep => ep.id === p.id);
         return existing || {
           id: p.id,
           name: p.name,
@@ -50,180 +56,213 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
           tricksWon: 0,
         };
       });
-      if (newPlayers.length !== state.players.length) {
-        syncState({ ...state, players: newPlayers });
+      if (newPlayers.length !== stateRef.current.players.length) {
+        syncState({ ...stateRef.current, players: newPlayers });
       }
     }
-  }, [isHost, players, state.phase, state.players, syncState]);
+  }, [isHost, players, syncState]);
 
+  // Process actions from host perspective
+  const processAction = useCallback((action: string, payload: any) => {
+    if (!isHost) return;
+
+    const st = { ...stateRef.current };
+
+    if (action === 'start' || action === 'next-round') {
+      // Start a new round: Mission → show mission screen
+      st.roundNumber += 1;
+      st.dealerId = st.dealerId ? getNextPlayerId(st.players, st.dealerId) : st.players[0].id;
+
+      const mission = drawMission(st.usedMissionIds);
+      st.currentMission = mission;
+      st.usedMissionIds = [...st.usedMissionIds, mission.id];
+
+      // Deal cards
+      st.players = dealCards(st.players, mission.cardsPerPlayer, !!mission.jokerInPlay);
+      st.totalTricks = mission.cardsPerPlayer;
+      st.trickNumber = 0;
+      st.currentTrick = [];
+
+      // Phase 1: Show mission card
+      st.phase = 'mission';
+      st.currentTurnId = null;
+      syncState(st);
+
+    } else if (action === 'proceed-to-betting') {
+      // After mission is shown, move to betting
+      st.phase = 'betting';
+      st.currentTurnId = getNextPlayerId(st.players, st.dealerId!);
+      syncState(st);
+
+    } else if (action === 'bet') {
+      const { pId, bet } = payload;
+      const pIndex = st.players.findIndex(p => p.id === pId);
+      if (pIndex === -1 || st.currentTurnId !== pId) return;
+
+      st.players = [...st.players];
+      st.players[pIndex] = { ...st.players[pIndex], bet };
+
+      // Check if everyone has bet
+      if (st.players.every(p => p.bet !== null)) {
+        st.phase = 'play';
+        st.currentTurnId = getNextPlayerId(st.players, st.dealerId!);
+        st.leadPlayerId = st.currentTurnId;
+        st.currentTrick = [];
+      } else {
+        st.currentTurnId = getNextPlayerId(st.players, pId);
+      }
+
+      syncState(st);
+
+    } else if (action === 'play') {
+      const { pId, card } = payload;
+      if (st.currentTurnId !== pId) return;
+
+      const pIndex = st.players.findIndex(p => p.id === pId);
+      st.players = [...st.players];
+      st.players[pIndex] = {
+        ...st.players[pIndex],
+        hand: st.players[pIndex].hand.filter(c => c !== card),
+      };
+
+      st.currentTrick = [...st.currentTrick, { playerId: pId, card }];
+
+      if (st.currentTrick.length === st.players.length) {
+        // Trick complete — resolve winner
+        const winnerId = resolveTrick(st.currentTrick, st.currentMission?.invertWinner);
+        const wIndex = st.players.findIndex(p => p.id === winnerId);
+        st.players[wIndex] = { ...st.players[wIndex], tricksWon: st.players[wIndex].tricksWon + 1 };
+
+        st.trickNumber += 1;
+
+        if (st.trickNumber >= st.totalTricks) {
+          // Round over — calculate penalties
+          st.players = st.players.map(p => {
+            const diff = Math.abs((p.bet || 0) - p.tricksWon);
+            let newPilis = p.pilis + diff;
+
+            // Bonus: exact bet removes Pilis
+            if (diff === 0 && st.currentMission?.bonusPrecise) {
+              const removeAmount = st.currentMission.bonusPreciseAmount === 'bet-value' ? (p.bet || 0) : 1;
+              newPilis = Math.max(0, newPilis - removeAmount);
+            }
+
+            // Penalty for first/last trick (handled per-trick above if needed)
+            return { ...p, pilis: newPilis };
+          });
+
+          // Check game over
+          if (st.players.some(p => p.pilis >= 7)) {
+            st.phase = 'game-over';
+          } else {
+            st.phase = 'round-result';
+          }
+        } else {
+          // Next trick
+          st.leadPlayerId = winnerId;
+          st.currentTurnId = winnerId;
+          st.currentTrick = [];
+        }
+      } else {
+        // Next player in this trick
+        st.currentTurnId = getNextPlayerId(st.players, pId);
+      }
+
+      syncState(st);
+
+    } else if (action === 'new-game') {
+      const resetPlayers = st.players.map(p => ({ ...p, pilis: 0, bet: null, hand: [] as number[], tricksWon: 0 }));
+      const newSt: PiliPiliState = {
+        ...initialState,
+        players: resetPlayers,
+        roomCode: st.roomCode,
+        dealerId: null,
+      };
+      // Start first round immediately
+      newSt.roundNumber = 1;
+      newSt.dealerId = newSt.players[0].id;
+      const mission = drawMission([]);
+      newSt.currentMission = mission;
+      newSt.usedMissionIds = [mission.id];
+      newSt.players = dealCards(newSt.players, mission.cardsPerPlayer, !!mission.jokerInPlay);
+      newSt.totalTricks = mission.cardsPerPlayer;
+      newSt.phase = 'mission';
+      syncState(newSt);
+    }
+  }, [isHost, syncState]);
+
+  // Listen for broadcasts
   useEffect(() => {
     onBroadcast((event) => {
       if (!isHost && event.type === 'sync') {
         setState(event.payload);
+        stateRef.current = event.payload;
       } else if (isHost && event.type === 'action') {
-        handleClientAction(event.action!, event.payload);
+        processAction(event.action!, event.payload);
       }
     });
-  }, [onBroadcast, isHost]);
+  }, [onBroadcast, isHost, processAction]);
 
-  const handleClientAction = (action: string, payload: any) => {
-    if (!isHost) return;
-    
-    let newState = { ...state };
-    
-    if (action === 'start') {
-      newState = startRound(newState);
-    } else if (action === 'bet') {
-      const { pId, bet } = payload;
-      const pIndex = newState.players.findIndex(p => p.id === pId);
-      if (pIndex !== -1 && newState.currentTurnId === pId) {
-        newState.players[pIndex].bet = bet;
-        
-        // Next better
-        newState.currentTurnId = getNextPlayerId(newState.players, pId);
-        
-        // If everyone bet, go to play phase
-        if (newState.players.every(p => p.bet !== null)) {
-          newState.phase = 'play';
-          newState.currentTurnId = getNextPlayerId(newState.players, newState.dealerId!);
-          newState.leadPlayerId = newState.currentTurnId;
-          newState.currentTrick = [];
-        }
-        syncState(newState);
-      }
-    } else if (action === 'play') {
-      const { pId, card } = payload;
-      if (newState.currentTurnId === pId) {
-        const pIndex = newState.players.findIndex(p => p.id === pId);
-        
-        // Remove card from hand
-        newState.players[pIndex].hand = newState.players[pIndex].hand.filter(c => c !== card);
-        
-        // Add to trick
-        newState.currentTrick.push({ playerId: pId, card });
-        
-        if (newState.currentTrick.length === newState.players.length) {
-          // Trick is complete
-          const winnerId = resolveTrick(newState.currentTrick, newState.currentMission?.invertWinner);
-          const wIndex = newState.players.findIndex(p => p.id === winnerId);
-          newState.players[wIndex].tricksWon += 1;
-          
-          newState.trickNumber += 1;
-          
-          if (newState.trickNumber >= newState.totalTricks) {
-            // Round over
-            newState.phase = 'round-result';
-            newState.players = newState.players.map(p => {
-              const diff = Math.abs((p.bet || 0) - p.tricksWon);
-              let piliPenalty = diff;
-              
-              let newPilis = p.pilis + piliPenalty;
-              if (diff === 0 && newState.currentMission?.bonusPrecise) {
-                const removeAmount = newState.currentMission.bonusPreciseAmount === 'bet-value' ? (p.bet || 0) : 1;
-                newPilis = Math.max(0, newPilis - removeAmount);
-              }
-              
-              return { ...p, pilis: newPilis };
-            });
-            
-            // Check game over
-            if (newState.players.some(p => p.pilis >= 7)) {
-              newState.phase = 'game-over';
-            }
-          } else {
-            newState.leadPlayerId = winnerId;
-            newState.currentTurnId = winnerId;
-            newState.currentTrick = [];
-          }
-        } else {
-          // Next player
-          newState.currentTurnId = getNextPlayerId(newState.players, pId);
-        }
-        
-        syncState(newState);
-      }
-    } else if (action === 'next-round') {
-      newState = startRound(newState);
-    } else if (action === 'new-game') {
-      newState = { ...initialState, players: newState.players.map(p => ({ ...p, pilis: 0, bet: null, hand: [], tricksWon: 0 })), roomCode: newState.roomCode, dealerId: null };
-      newState = startRound(newState);
-    }
-  };
-
-  const startRound = (currentState: PiliPiliState) => {
-    let st = { ...currentState };
-    st.roundNumber += 1;
-    st.dealerId = st.dealerId ? getNextPlayerId(st.players, st.dealerId) : st.players[0].id;
-    
-    const mission = drawMission(st.usedMissionIds);
-    st.currentMission = mission;
-    st.usedMissionIds.push(mission.id);
-    
-    st.players = dealCards(st.players, mission.cardsPerPlayer, !!mission.jokerInPlay);
-    st.totalTricks = mission.cardsPerPlayer;
-    st.trickNumber = 0;
-    st.currentTrick = [];
-    st.phase = 'mission'; // Host will show mission, then wait to proceed to betting
-    
-    // Auto proceed to betting after showing mission
-    st.phase = 'betting';
-    st.currentTurnId = getNextPlayerId(st.players, st.dealerId); // Player after dealer bets first
-    
-    syncState(st);
-    return st;
-  };
-
-  const startGame = () => {
-    if (!isHost) {
-      broadcast({ type: 'action', action: 'start' });
-    } else {
-      startRound(state);
-    }
-  };
-
-  const playCard = (card: number) => {
+  // === Player actions ===
+  const startGame = useCallback(() => {
     if (isHost) {
-      handleClientAction('play', { pId: playerId, card });
+      processAction('start', null);
     } else {
-      broadcast({ type: 'action', action: 'play', payload: { pId: playerId, card } });
+      broadcastRef.current({ type: 'action', action: 'start' });
     }
-  };
+  }, [isHost, processAction]);
 
-  const placeBet = (bet: number) => {
+  const proceedToBetting = useCallback(() => {
     if (isHost) {
-      handleClientAction('bet', { pId: playerId, bet });
+      processAction('proceed-to-betting', null);
     } else {
-      broadcast({ type: 'action', action: 'bet', payload: { pId: playerId, bet } });
+      broadcastRef.current({ type: 'action', action: 'proceed-to-betting' });
     }
-  };
+  }, [isHost, processAction]);
 
-  const nextRound = () => {
+  const placeBet = useCallback((bet: number) => {
     if (isHost) {
-      handleClientAction('next-round', null);
+      processAction('bet', { pId: playerId, bet });
     } else {
-      broadcast({ type: 'action', action: 'next-round' });
+      broadcastRef.current({ type: 'action', action: 'bet', payload: { pId: playerId, bet } });
     }
-  };
-  
-  const newGame = () => {
+  }, [isHost, playerId, processAction]);
+
+  const playCard = useCallback((card: number) => {
     if (isHost) {
-      handleClientAction('new-game', null);
+      processAction('play', { pId: playerId, card });
     } else {
-      broadcast({ type: 'action', action: 'new-game' });
+      broadcastRef.current({ type: 'action', action: 'play', payload: { pId: playerId, card } });
     }
-  }
+  }, [isHost, playerId, processAction]);
+
+  const nextRound = useCallback(() => {
+    if (isHost) {
+      processAction('next-round', null);
+    } else {
+      broadcastRef.current({ type: 'action', action: 'next-round' });
+    }
+  }, [isHost, processAction]);
+
+  const newGame = useCallback(() => {
+    if (isHost) {
+      processAction('new-game', null);
+    } else {
+      broadcastRef.current({ type: 'action', action: 'new-game' });
+    }
+  }, [isHost, processAction]);
 
   const myPlayer = state.players.find(p => p.id === playerId);
-  const myHand = myPlayer?.hand || [];
 
   return {
     state,
     myPlayer,
-    myHand,
+    myHand: myPlayer?.hand || [],
     startGame,
+    proceedToBetting,
     playCard,
     placeBet,
     nextRound,
-    newGame
+    newGame,
   };
 }

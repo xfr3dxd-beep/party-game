@@ -36,6 +36,7 @@ export default function PiliPiliPage() {
     myPlayer,
     myHand,
     startGame,
+    proceedToBetting,
     playCard,
     placeBet,
     nextRound,
@@ -99,7 +100,11 @@ export default function PiliPiliPage() {
         )}
 
         {currentPhase === 'mission' && (
-          <PiliPiliMission mission={state.currentMission} />
+          <PiliPiliMission
+            mission={state.currentMission}
+            isHost={isHost}
+            onProceed={proceedToBetting}
+          />
         )}
 
         {currentPhase === 'betting' && (

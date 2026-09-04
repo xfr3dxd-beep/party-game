@@ -3,9 +3,11 @@ import { Mission } from '../types';
 
 interface PiliPiliMissionProps {
   mission: Mission | null;
+  isHost: boolean;
+  onProceed: () => void;
 }
 
-export default function PiliPiliMission({ mission }: PiliPiliMissionProps) {
+export default function PiliPiliMission({ mission, isHost, onProceed }: PiliPiliMissionProps) {
   if (!mission) return null;
 
   return (
@@ -42,13 +44,33 @@ export default function PiliPiliMission({ mission }: PiliPiliMissionProps) {
         {mission.description}
       </p>
 
-      <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+      <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.5rem', marginBottom: '1.5rem' }}>
         🃏 {mission.cardsPerPlayer} carte a testa
       </div>
 
-      <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '1rem' }}>
-        <em>Preparatevi a scommettere...</em>
-      </div>
+      {/* Proceed button */}
+      {isHost ? (
+        <button
+          onClick={onProceed}
+          style={{
+            padding: '0.8rem 2.5rem',
+            fontSize: '1.1rem',
+            fontWeight: 700,
+            color: '#fff',
+            background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)',
+            border: 'none',
+            borderRadius: '12px',
+            cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(234, 88, 12, 0.3)',
+          }}
+        >
+          Inizia Scommesse →
+        </button>
+      ) : (
+        <div style={{ color: 'var(--text-muted)', fontSize: '1rem' }}>
+          <em>In attesa dell'host...</em>
+        </div>
+      )}
     </div>
   );
 }
