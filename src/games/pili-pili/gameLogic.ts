@@ -64,14 +64,11 @@ export function resolveTrick(trick: PlayedCard[], invertWinner: boolean = false)
 export function isBetValid(
   bet: number,
   totalBets: number,
-  isLastToBet: boolean,
-  totalTricks: number,
+  _isLastToBet: boolean,
+  _totalTricks: number,
   mission: Mission | null
 ): boolean {
   if (mission?.noZeroBet && bet === 0) return false;
   if (mission?.noOneBet && bet === 1) return false;
-  if (isLastToBet) {
-    return totalBets + bet !== totalTricks;
-  }
   return true;
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PiliPiliState, PiliPiliPlayer } from '../types';
 import { getCardImage, getPiliImage } from '../missions';
 
@@ -10,6 +10,7 @@ interface PiliPiliPlayProps {
 
 export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPlayProps) {
   const isMyTurn = state.currentTurnId === myPlayer.id;
+  const [showMission, setShowMission] = useState(false);
 
   return (
     <div className="animate-fade-in" style={{
@@ -39,6 +40,7 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
             src={state.currentMission.image}
             alt={state.currentMission.name}
             title={`Missione: ${state.currentMission.name}`}
+            onClick={() => setShowMission(true)}
             style={{
               width: '80px',
               height: 'auto',
@@ -288,6 +290,41 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
           ))}
         </div>
       </div>
+      {/* Mission fullscreen modal */}
+      {showMission && state.currentMission && (
+        <div
+          onClick={() => setShowMission(false)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000, padding: '1rem', cursor: 'pointer',
+          }}
+        >
+          <img
+            src={state.currentMission.image}
+            alt={state.currentMission.name}
+            style={{
+              maxWidth: '90vw', maxHeight: '60vh', borderRadius: '16px',
+              boxShadow: '0 12px 40px rgba(234, 88, 12, 0.5)',
+              border: '2px solid rgba(234, 88, 12, 0.5)',
+              marginBottom: '1rem',
+            }}
+          />
+          <h3 style={{ color: '#fbbf24', fontSize: '1.3rem', marginBottom: '0.5rem' }}>
+            Missione #{state.currentMission.id}: {state.currentMission.name}
+          </h3>
+          <p style={{
+            color: 'rgba(255,255,255,0.8)', fontSize: '1rem', textAlign: 'center',
+            maxWidth: '400px', lineHeight: 1.5,
+          }}>
+            {state.currentMission.description}
+          </p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '1.5rem' }}>
+            Tocca per chiudere
+          </p>
+        </div>
+      )}
     </div>
   );
 }

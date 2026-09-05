@@ -10,6 +10,7 @@ import PiliPiliMission from './components/PiliPiliMission';
 import PiliPiliBet from './components/PiliPiliBet';
 import PiliPiliSwap from './components/PiliPiliSwap';
 import PiliPiliPlay from './components/PiliPiliPlay';
+import PiliPiliTrickResult from './components/PiliPiliTrickResult';
 import PiliPiliSwapTrick from './components/PiliPiliSwapTrick';
 import PiliPiliRoundResult from './components/PiliPiliRoundResult';
 import PiliPiliResult from './components/PiliPiliResult';
@@ -20,39 +21,17 @@ export default function PiliPiliPage() {
   const [isConnecting, setIsConnecting] = useState(false);
 
   const {
-    roomCode,
-    playerId,
-    playerName,
-    players,
-    isHost,
-    isConnected,
-    createRoom,
-    joinRoom,
-    broadcast,
-    onBroadcast,
-    disconnect,
+    roomCode, playerId, playerName, players, isHost, isConnected,
+    createRoom, joinRoom, broadcast, onBroadcast, disconnect,
   } = usePiliPiliRoom();
 
   const {
-    state,
-    myPlayer,
-    myHand,
-    startGame,
-    proceedToBetting,
-    playCard,
-    placeBet,
-    swapSelect,
-    swapTrickTarget,
-    swapTrickCard,
-    nextRound,
-    newGame,
-  } = usePiliPiliGame({
-    playerId,
-    isHost,
-    players,
-    broadcast,
-    onBroadcast,
-  });
+    state, myPlayer, myHand,
+    startGame, proceedToBetting, autoProceedTimed,
+    playCard, placeBet, forceBets, dismissTrickResult,
+    swapSelect, swapTrickTarget, swapTrickCard,
+    nextRound, newGame,
+  } = usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadcast });
 
   const currentPhase = state.phase !== 'create' ? state.phase : localPhase;
 
@@ -75,33 +54,17 @@ export default function PiliPiliPage() {
     <Layout>
       <div className="container container-md">
         {(currentPhase === 'create' || currentPhase === 'lobby') && (
-          <button
-            className="btn btn-secondary mb-lg pili-back-btn"
-            onClick={() => {
-              disconnect();
-              navigate('/');
-            }}
-          >
-            <ArrowLeft size={16} />
-            Torna ai Giochi
+          <button className="btn btn-secondary mb-lg pili-back-btn" onClick={() => { disconnect(); navigate('/'); }}>
+            <ArrowLeft size={16} /> Torna ai Giochi
           </button>
         )}
 
         {currentPhase === 'create' && (
-          <PiliPiliCreate
-            onCreateRoom={handleCreateRoom}
-            onJoinRoom={handleJoinRoom}
-            isConnecting={isConnecting}
-          />
+          <PiliPiliCreate onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} isConnecting={isConnecting} />
         )}
 
         {currentPhase === 'lobby' && roomCode && (
-          <PiliPiliLobby
-            roomCode={roomCode}
-            players={players}
-            isHost={isHost}
-            onStartGame={startGame}
-          />
+          <PiliPiliLobby roomCode={roomCode} players={players} isHost={isHost} onStartGame={startGame} />
         )}
 
         {currentPhase === 'mission' && (
@@ -109,60 +72,36 @@ export default function PiliPiliPage() {
             mission={state.currentMission}
             isHost={isHost}
             onProceed={proceedToBetting}
+            onAutoProceedTimed={autoProceedTimed}
           />
         )}
 
         {currentPhase === 'betting' && myPlayer && (
-          <PiliPiliBet
-            state={state}
-            myPlayer={myPlayer}
-            onBet={placeBet}
-          />
+          <PiliPiliBet state={state} myPlayer={myPlayer} onBet={placeBet} onForceBets={forceBets} />
         )}
 
         {currentPhase === 'swapping' && myPlayer && (
-          <PiliPiliSwap
-            state={state}
-            myPlayer={myPlayer}
-            onSwapSelect={swapSelect}
-          />
+          <PiliPiliSwap state={state} myPlayer={myPlayer} onSwapSelect={swapSelect} />
         )}
 
         {currentPhase === 'play' && myPlayer && (
-          <PiliPiliPlay
-            state={state}
-            myPlayer={myPlayer}
-            onPlayCard={playCard}
-          />
+          <PiliPiliPlay state={state} myPlayer={myPlayer} onPlayCard={playCard} />
+        )}
+
+        {currentPhase === 'trick-result' && (
+          <PiliPiliTrickResult state={state} isHost={isHost} onDismiss={dismissTrickResult} />
         )}
 
         {currentPhase === 'swap-after-trick' && myPlayer && (
-          <PiliPiliSwapTrick
-            state={state}
-            myPlayer={myPlayer}
-            onPickTarget={swapTrickTarget}
-            onPickCard={swapTrickCard}
-          />
+          <PiliPiliSwapTrick state={state} myPlayer={myPlayer} onPickTarget={swapTrickTarget} onPickCard={swapTrickCard} />
         )}
 
         {currentPhase === 'round-result' && (
-          <PiliPiliRoundResult
-            state={state}
-            isHost={isHost}
-            onNextRound={nextRound}
-          />
+          <PiliPiliRoundResult state={state} isHost={isHost} onNextRound={nextRound} />
         )}
 
         {currentPhase === 'game-over' && (
-          <PiliPiliResult
-            state={state}
-            isHost={isHost}
-            onNewGame={newGame}
-            onGoHome={() => {
-              disconnect();
-              navigate('/');
-            }}
-          />
+          <PiliPiliResult state={state} isHost={isHost} onNewGame={newGame} onGoHome={() => { disconnect(); navigate('/'); }} />
         )}
       </div>
     </Layout>
