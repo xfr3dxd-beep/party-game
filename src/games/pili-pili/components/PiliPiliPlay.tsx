@@ -40,7 +40,7 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
             alt={state.currentMission.name}
             title={`Missione: ${state.currentMission.name}`}
             style={{
-              width: '60px',
+              width: '80px',
               height: 'auto',
               borderRadius: '8px',
               border: '2px solid rgba(234, 88, 12, 0.6)',
@@ -75,7 +75,7 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
           src={getPiliImage()}
           alt="Pili"
           style={{
-            width: '50px',
+            width: '70px',
             height: 'auto',
             borderRadius: '6px',
             border: '2px solid rgba(239, 68, 68, 0.6)',
@@ -147,8 +147,8 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
         justifyContent: 'center',
         padding: '1rem',
         marginBottom: '0.8rem',
-        background: 'rgba(0,0,0,0.25)',
-        backdropFilter: 'blur(4px)',
+        background: 'rgba(0,0,0,0.12)',
+        backdropFilter: 'blur(2px)',
         borderRadius: '16px',
         border: '1px solid rgba(255,255,255,0.08)',
         minHeight: '250px',

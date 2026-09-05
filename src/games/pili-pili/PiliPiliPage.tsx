@@ -8,7 +8,9 @@ import PiliPiliCreate from './components/PiliPiliCreate';
 import PiliPiliLobby from './components/PiliPiliLobby';
 import PiliPiliMission from './components/PiliPiliMission';
 import PiliPiliBet from './components/PiliPiliBet';
+import PiliPiliSwap from './components/PiliPiliSwap';
 import PiliPiliPlay from './components/PiliPiliPlay';
+import PiliPiliSwapTrick from './components/PiliPiliSwapTrick';
 import PiliPiliRoundResult from './components/PiliPiliRoundResult';
 import PiliPiliResult from './components/PiliPiliResult';
 
@@ -39,6 +41,9 @@ export default function PiliPiliPage() {
     proceedToBetting,
     playCard,
     placeBet,
+    swapSelect,
+    swapTrickTarget,
+    swapTrickCard,
     nextRound,
     newGame,
   } = usePiliPiliGame({
@@ -107,19 +112,36 @@ export default function PiliPiliPage() {
           />
         )}
 
-        {currentPhase === 'betting' && (
+        {currentPhase === 'betting' && myPlayer && (
           <PiliPiliBet
             state={state}
-            myPlayer={myPlayer!}
+            myPlayer={myPlayer}
             onBet={placeBet}
           />
         )}
 
-        {currentPhase === 'play' && (
+        {currentPhase === 'swapping' && myPlayer && (
+          <PiliPiliSwap
+            state={state}
+            myPlayer={myPlayer}
+            onSwapSelect={swapSelect}
+          />
+        )}
+
+        {currentPhase === 'play' && myPlayer && (
           <PiliPiliPlay
             state={state}
-            myPlayer={myPlayer!}
+            myPlayer={myPlayer}
             onPlayCard={playCard}
+          />
+        )}
+
+        {currentPhase === 'swap-after-trick' && myPlayer && (
+          <PiliPiliSwapTrick
+            state={state}
+            myPlayer={myPlayer}
+            onPickTarget={swapTrickTarget}
+            onPickCard={swapTrickCard}
           />
         )}
 

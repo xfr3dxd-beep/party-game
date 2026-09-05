@@ -1,4 +1,4 @@
-export type PiliPiliPhase = 'create' | 'lobby' | 'mission' | 'betting' | 'play' | 'round-result' | 'game-over';
+export type PiliPiliPhase = 'create' | 'lobby' | 'mission' | 'betting' | 'swapping' | 'play' | 'swap-after-trick' | 'round-result' | 'game-over';
 
 export interface Mission {
   id: number;
@@ -66,6 +66,12 @@ export interface PiliPiliState {
   currentTurnId: string | null;
   usedMissionIds: number[];
   dealerId: string | null;
+  // Swap tracking
+  swapSelections: Record<string, number[]>; // playerId -> cards they chose to pass
+  swapTrickWinnerId: string | null; // for swap-after-trick: who won
+  swapTrickTargetId: string | null; // who they chose to swap with
+  swapTrickWinnerCard: number | null; // card winner gives
+  swapTrickTargetCard: number | null; // card target gives
 }
 
 export interface PiliPiliBroadcast {
