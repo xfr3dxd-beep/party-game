@@ -1,4 +1,4 @@
-export type PiliPiliPhase = 'create' | 'lobby' | 'mission' | 'betting' | 'swapping' | 'play' | 'trick-result' | 'swap-after-trick' | 'round-result' | 'game-over';
+export type PiliPiliPhase = 'create' | 'lobby' | 'mission' | 'forehead-select' | 'pili-transfer-select' | 'betting' | 'swapping' | 'play' | 'trick-result' | 'swap-after-trick' | 'round-result' | 'game-over';
 
 export interface Mission {
   id: number;
@@ -13,6 +13,7 @@ export interface Mission {
   noOneBet?: boolean;
   noCopyBet?: boolean;
   foreheadCards?: boolean;
+  foreheadCount?: number; // how many cards to reveal
   openHands?: boolean;
   timedView?: number;
   blindAfterView?: boolean;
@@ -70,6 +71,21 @@ export interface PiliPiliState {
   timedBetSeconds: number;
   // Extra deck for drawAfterBet
   extraDeck: number[];
+  // Forehead cards: which cards each player revealed
+  foreheadRevealed: Record<string, number[]>;
+  foreheadSelectDone: Record<string, boolean>;
+  // Pili transfer: who each player chose
+  piliTransferTargets: Record<string, string>;
+  // Simultaneous play: cards chosen but not yet revealed
+  simultaneousCards: Record<string, number>;
+  // Blind play (missions 19, 32)
+  blindPlay: boolean;
+  // Open hands: all cards visible
+  allHandsVisible: boolean;
+  // Previous bet for noCopyBet
+  previousBetValue: number | null;
+  // Pili earned this round (for transfer calc)
+  piliEarnedThisRound: Record<string, number>;
 }
 
 export interface PiliPiliBroadcast {

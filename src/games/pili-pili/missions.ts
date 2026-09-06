@@ -94,18 +94,20 @@ export const ALL_MISSIONS: Mission[] = [
   {
     id: 10,
     name: 'Carta sulla fronte',
-    description: 'Prima della scommessa il giocatore non può guardare la propria carta: la tiene sulla fronte. La scopre solo dopo aver effettuato la scommessa.',
-    cardsPerPlayer: 1,
+    description: 'Ogni giocatore sceglie 1 carta da mostrare a tutti (sulla fronte). Le altre 2 restano coperte. Si scommette dopo aver visto le carte degli altri.',
+    cardsPerPlayer: 3,
     image: '/Pili Pili/Missioni/MISSIONE_10.png',
     foreheadCards: true,
+    foreheadCount: 1,
   },
   {
     id: 11,
     name: 'Due carte sulla fronte',
-    description: 'Prima della scommessa non si possono guardare le carte: vengono tenute sulla fronte. Dopo la scommessa si possono vedere.',
-    cardsPerPlayer: 2,
+    description: 'Ogni giocatore sceglie 2 carte da mostrare a tutti (sulla fronte). Le altre 2 restano coperte. Si scommette dopo aver visto le carte degli altri.',
+    cardsPerPlayer: 4,
     image: '/Pili Pili/Missioni/MISSIONE_11.png',
     foreheadCards: true,
+    foreheadCount: 2,
   },
   {
     id: 12,
@@ -336,4 +338,9 @@ export function getCardImage(value: number): string {
 // Get Pili token image
 export function getPiliImage(): string {
   return '/Pili Pili/Carte/Pili.jpg';
+}
+
+// Get card back (Dorso) image
+export function getCardBack(): string {
+  return '/Pili Pili/Carte/Dorso.jpg';
 }
