@@ -12,6 +12,7 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
   const isSimultaneous = !!state.currentMission?.simultaneousPlay;
   const isMyTurn = isSimultaneous ? !state.simultaneousCards[myPlayer.id] : state.currentTurnId === myPlayer.id;
   const [showMission, setShowMission] = useState(false);
+  const [showPili, setShowPili] = useState(false);
   const [selectedSimCard, setSelectedSimCard] = useState<number | null>(null);
 
   // For mustPlayHighLow: only lowest and highest are playable
@@ -68,7 +69,11 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
 
       {/* Bottom-left: Pili count */}
       <div style={{ position: 'absolute', bottom: '10px', left: '10px', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-        <img src={getPiliImage()} alt="Pili" style={{ width: '70px', height: 'auto', borderRadius: '6px', border: '2px solid rgba(239,68,68,0.6)', boxShadow: '0 4px 12px rgba(0,0,0,0.5)' }} />
+        <img src={getPiliImage()} alt="Pili" onClick={() => setShowPili(true)} style={{
+          width: '105px', height: 'auto', transform: 'scaleY(1.33)', transformOrigin: 'bottom',
+          borderRadius: '6px', border: '2px solid rgba(239,68,68,0.6)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.5)', cursor: 'pointer',
+        }} />
         <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#ef4444', textShadow: '0 1px 4px rgba(0,0,0,0.8)', background: 'rgba(0,0,0,0.5)', borderRadius: '6px', padding: '2px 8px' }}>
           🌶️ {myPlayer.pilis}
         </div>
@@ -251,6 +256,24 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
           <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1rem', textAlign: 'center', maxWidth: '400px', lineHeight: 1.5 }}>
             {state.currentMission.description}
           </p>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '1.5rem' }}>Tocca per chiudere</p>
+        </div>
+      )}
+      {/* Pili fullscreen modal */}
+      {showPili && (
+        <div onClick={() => setShowPili(false)} style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: '1rem', cursor: 'pointer',
+        }}>
+          <img src={getPiliImage()} alt="Pili" style={{
+            maxWidth: '90vw', maxHeight: '70vh', borderRadius: '16px',
+            boxShadow: '0 12px 40px rgba(239,68,68,0.5)', border: '2px solid rgba(239,68,68,0.5)', marginBottom: '1rem',
+          }} />
+          <div style={{ color: '#ef4444', fontSize: '1.5rem', fontWeight: 900 }}>
+            🌶️ I tuoi Pili: {myPlayer.pilis}
+          </div>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '1.5rem' }}>Tocca per chiudere</p>
         </div>
       )}
