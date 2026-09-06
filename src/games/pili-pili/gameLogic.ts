@@ -22,11 +22,10 @@ export function drawMission(usedIds: number[]): Mission {
   return getRandomMission(usedIds);
 }
 
-export function dealCards(players: PiliPiliPlayer[], cardsPerPlayer: number, includeJoker: boolean): PiliPiliPlayer[] {
+export function dealCards(players: PiliPiliPlayer[], cardsPerPlayer: number, _includeJoker: boolean): PiliPiliPlayer[] {
+  // 56 cards: 1-55 numbered + Joker (56) — always in the pool
   let deck = Array.from({ length: 55 }, (_, i) => i + 1);
-  if (includeJoker) {
-    deck.push(JOKER_VALUE);
-  }
+  deck.push(JOKER_VALUE); // Joker always in the deck
   deck = shuffle(deck);
 
   return players.map(p => {
