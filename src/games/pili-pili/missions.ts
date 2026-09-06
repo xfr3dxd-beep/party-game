@@ -337,7 +337,7 @@ export function getCardImage(value: number): string {
 
 // Get Pili token image
 export function getPiliImage(): string {
-  return '/Pili Pili/Carte/Pili.jpg';
+  return '/Pili Pili/Carte/Pili.png';
 }
 
 // Get card back (Dorso) image
