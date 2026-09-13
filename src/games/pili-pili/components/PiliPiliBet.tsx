@@ -134,22 +134,6 @@ export default function PiliPiliBet({ state, myPlayer, onBet, onForceBets }: Pil
         </div>
       )}
 
-      {/* Open hands: show all players' cards (missions 13, 27) */}
-      {state.currentMission?.openHands && (
-        <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ fontSize: '0.85rem', color: '#fbbf24', marginBottom: '0.5rem' }}>📖 Carte di tutti i giocatori:</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'center' }}>
-            {state.players.filter(p => p.id !== myPlayer.id).map(p => (
-              <div key={p.id} style={{ textAlign: 'center', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', padding: '0.4rem' }}>
-                <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginBottom: '0.2rem' }}>{p.name}</div>
-                <div style={{ display: 'flex', gap: '0.2rem' }}>
-                  {p.hand.map((c, i) => <img key={i} src={getCardImage(c)} alt={`${c}`} style={{ width: '40px', borderRadius: '3px' }} />)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Bets overview */}
       <div style={{ maxWidth: '500px', margin: '0 auto', padding: '1rem', background: 'rgba(255,237,213,0.05)', borderRadius: '12px', marginBottom: '1.5rem' }}>

@@ -1,5 +1,14 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Mission, PiliPiliState } from '../types';
+import { getCardImage, getCardBack } from '../missions';
+
+// Preload card images so timed missions (3-4s) don't waste time loading
+function preloadImages(state: PiliPiliState) {
+  const imgs = new Set<string>();
+  imgs.add(getCardBack());
+  state.players.forEach(p => p.hand.forEach(c => imgs.add(getCardImage(c))));
+  imgs.forEach(src => { const img = new Image(); img.src = src; });
+}
 
 interface PiliPiliMissionProps {
   mission: Mission | null;
@@ -11,6 +20,9 @@ interface PiliPiliMissionProps {
 
 export default function PiliPiliMission({ mission, state, isHost, onProceed, onAutoProceedTimed }: PiliPiliMissionProps) {
   if (!mission) return null;
+
+  // Preload all card images while players read the mission
+  useEffect(() => { preloadImages(state); }, []);
 
   const isTimed = !!mission.timedView;
   const isSpicy = state.spicyMode;

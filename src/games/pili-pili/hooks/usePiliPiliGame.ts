@@ -131,23 +131,46 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
       });
       s.totalTricks = s.players[0].hand.length;
     }
-    if (m?.swapDirection && m.swapTiming === 'after-bet') {
-      if (m.swapCount === -1) {
-        const sel: Record<string, number[]> = {};
-        for (const p of s.players) sel[p.id] = [...p.hand];
-        s.swapSelections = sel;
-        const sw = doDirectionalSwap(s);
-        Object.assign(s, { players: sw.players, swapSelections: {} });
-        s.phase = 'play'; s.currentTurnId = getNextPlayerId(s.players, s.dealerId!);
-        s.leadPlayerId = s.currentTurnId; s.currentTrick = [];
-      } else { s.phase = 'swapping'; s.swapSelections = {}; }
+
+    // Collect ALL swap missions from drawnMissions (spicy mode) or just current
+    const swapMissions = (s.drawnMissions || []).filter(
+      dm => dm.swapDirection && dm.swapTiming === 'after-bet'
+    );
+    // If no drawn missions, use current mission
+    if (swapMissions.length === 0 && m?.swapDirection && m.swapTiming === 'after-bet') {
+      swapMissions.push(m);
+    }
+
+    // Sort: manual swaps first (swapCount > 0), then auto (swapCount === -1)
+    const manualSwaps = swapMissions.filter(sw => sw.swapCount !== -1);
+    const autoSwaps = swapMissions.filter(sw => sw.swapCount === -1);
+
+    if (manualSwaps.length > 0) {
+      // Use the manual swap with most cards
+      const best = manualSwaps.reduce((a, b) => ((b.swapCount || 0) > (a.swapCount || 0) ? b : a));
+      // Store pending auto swaps in the merged mission for after manual swap completes
+      s.currentMission = { ...m!, swapDirection: best.swapDirection, swapCount: best.swapCount, swapTiming: 'after-bet' };
+      // Save auto swap info for later
+      if (autoSwaps.length > 0) {
+        s.piliEarnedThisRound = { ...s.piliEarnedThisRound, __pendingAutoSwapDir: autoSwaps[0].swapDirection === 'left' ? 1 : 0 } as any;
+      }
+      s.phase = 'swapping'; s.swapSelections = {};
+    } else if (autoSwaps.length > 0) {
+      // Only auto swaps — execute immediately
+      const autoM = autoSwaps[0];
+      s.currentMission = { ...m!, swapDirection: autoM.swapDirection, swapCount: -1 };
+      const sel: Record<string, number[]> = {};
+      for (const p of s.players) sel[p.id] = [...p.hand];
+      s.swapSelections = sel;
+      const sw = doDirectionalSwap(s);
+      Object.assign(s, { players: sw.players, swapSelections: {} });
+      s.phase = 'play'; s.currentTurnId = getNextPlayerId(s.players, s.dealerId!);
+      s.leadPlayerId = s.currentTurnId; s.currentTrick = [];
     } else {
       s.phase = 'play'; s.currentTurnId = getNextPlayerId(s.players, s.dealerId!);
       s.leadPlayerId = s.currentTurnId; s.currentTrick = [];
     }
-    // Set blind play for missions 19, 32
     if (m?.blindAfterView) s.blindPlay = true;
-    // Set all hands visible for missions 13, 27
     if (m?.openHands) s.allHandsVisible = true;
     return s;
   };
@@ -192,8 +215,6 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
       sync(s);
 
     } else if (action === 'proceed-to-betting') {
-      // openHands: show all cards from betting phase onwards
-      if (s.currentMission?.openHands) s.allHandsVisible = true;
       // Check if pili transfer mission: need transfer select first
       if (s.currentMission?.transferPili) {
         s.phase = 'pili-transfer-select'; s.piliTransferTargets = {};
@@ -249,6 +270,18 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
       if (Object.keys(s.swapSelections).length === s.players.length) {
         const sw = doDirectionalSwap(s);
         Object.assign(s, { players: sw.players, swapSelections: {} });
+        // Check for pending auto swap (spicy mode: mission 2 + mission 6)
+        const pendingDir = (s.piliEarnedThisRound as any)?.__pendingAutoSwapDir;
+        if (pendingDir !== undefined) {
+          const dir = pendingDir === 1 ? 'left' : 'right';
+          s.currentMission = { ...s.currentMission!, swapDirection: dir as any, swapCount: -1 };
+          const autoSel: Record<string, number[]> = {};
+          for (const p of s.players) autoSel[p.id] = [...p.hand];
+          s.swapSelections = autoSel;
+          const sw2 = doDirectionalSwap(s);
+          Object.assign(s, { players: sw2.players, swapSelections: {} });
+          delete (s.piliEarnedThisRound as any).__pendingAutoSwapDir;
+        }
         s.phase = 'play'; s.currentTurnId = getNextPlayerId(s.players, s.dealerId!);
         s.leadPlayerId = s.currentTurnId; s.currentTrick = [];
       }
