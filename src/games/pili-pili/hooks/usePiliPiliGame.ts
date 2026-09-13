@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { PiliPiliState, PiliPiliBroadcast, PiliPiliPlayer } from '../types';
 import { RoomPlayer } from './usePiliPiliRoom';
 import { dealCards, drawMission, getNextPlayerId, resolveTrick, shuffle } from '../gameLogic';
+import { drawSpicyMissions, mergeMissions } from '../missions';
 
 interface UsePiliPiliGameProps {
   playerId: string;
@@ -15,6 +16,7 @@ const emptyState: PiliPiliState = {
   phase: 'create', roomCode: '', players: [], currentMission: null,
   roundNumber: 0, currentTrick: [], trickNumber: 0, totalTricks: 0,
   leadPlayerId: null, currentTurnId: null, usedMissionIds: [], dealerId: null,
+  spicyMode: false, drawnMissions: [],
   swapSelections: {}, swapTrickWinnerId: null, swapTrickTargetId: null,
   swapTrickWinnerCard: null, swapTrickTargetCard: null,
   lastTrickCards: [], lastTrickWinnerId: null,
@@ -104,7 +106,8 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
           return p;
         });
       }
-      s.phase = s.players.some(p => p.pilis >= 7) ? 'game-over' : 'round-result';
+      const piliLimit = s.spicyMode ? 10 : 7;
+      s.phase = s.players.some(p => p.pilis >= piliLimit) ? 'game-over' : 'round-result';
       s.currentTrick = [];
     } else if (s.currentMission?.swapAfterTrick) {
       const wi = s.players.findIndex(p => p.id === wId);
@@ -154,10 +157,20 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
     const s = { ...stRef.current };
 
     if (action === 'start' || action === 'next-round') {
+      if (action === 'start' && payload?.spicyMode !== undefined) s.spicyMode = payload.spicyMode;
       s.roundNumber += 1;
       s.dealerId = s.dealerId ? getNextPlayerId(s.players, s.dealerId) : s.players[0].id;
-      const m = drawMission(s.usedMissionIds);
-      s.currentMission = m; s.usedMissionIds = [...s.usedMissionIds, m.id];
+      let m: any;
+      if (s.spicyMode) {
+        const drawn = drawSpicyMissions();
+        s.drawnMissions = drawn;
+        m = drawn.length === 1 ? drawn[0] : mergeMissions(drawn);
+      } else {
+        m = drawMission(s.usedMissionIds);
+        s.drawnMissions = [m];
+        s.usedMissionIds = [...s.usedMissionIds, m.id];
+      }
+      s.currentMission = m;
       s.players = dealCards(s.players, m.cardsPerPlayer, !!m.jokerInPlay);
       s.totalTricks = m.cardsPerPlayer; s.trickNumber = 0; s.currentTrick = [];
       s.lastTrickCards = []; s.lastTrickWinnerId = null;
@@ -169,11 +182,10 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
       s.blindPlay = false; s.allHandsVisible = false;
       s.previousBetValue = null; s.piliEarnedThisRound = {};
       if (m.drawAfterBet) {
-        const used = s.players.flatMap(p => p.hand);
+        const used = s.players.flatMap((p: any) => p.hand);
         s.extraDeck = shuffle(Array.from({ length: 55 }, (_, i) => i + 1).filter(c => !used.includes(c)));
       } else { s.extraDeck = []; }
       if (m.timedView) { s.timedBetting = true; s.timedBetSeconds = m.timedView; }
-      // Forehead missions: go to forehead-select first
       if (m.foreheadCards && m.foreheadCount) { s.phase = 'forehead-select'; }
       else { s.phase = 'mission'; }
       s.currentTurnId = null;
@@ -318,7 +330,7 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
   const my = state.players.find(p => p.id === playerId);
   return {
     state, myPlayer: my, myHand: my?.hand || [],
-    startGame: useCallback(() => act('start'), [act]),
+    startGame: useCallback((spicy?: boolean) => act('start', { spicyMode: !!spicy }), [act]),
     proceedToBetting: useCallback(() => act('proceed-to-betting'), [act]),
     autoProceedTimed: useCallback(() => act('auto-proceed-timed'), [act]),
     placeBet: useCallback((b: number) => act('bet', { pId: playerId, bet: b }), [act, playerId]),

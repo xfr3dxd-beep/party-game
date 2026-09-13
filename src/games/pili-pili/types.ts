@@ -57,6 +57,9 @@ export interface PiliPiliState {
   currentTurnId: string | null;
   usedMissionIds: number[];
   dealerId: string | null;
+  // Game mode
+  spicyMode: boolean;
+  drawnMissions: Mission[]; // for spicy: the individual missions drawn
   // Swap tracking
   swapSelections: Record<string, number[]>;
   swapTrickWinnerId: string | null;

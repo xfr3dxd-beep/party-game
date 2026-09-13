@@ -54,18 +54,17 @@ export default function PiliPiliPage() {
             <ArrowLeft size={16} /> Torna ai Giochi
           </button>
         )}
-
         {currentPhase === 'create' && (
           <PiliPiliCreate onCreateRoom={handleCreateRoom} onJoinRoom={handleJoinRoom} isConnecting={isConnecting} />
         )}
         {currentPhase === 'lobby' && roomCode && (
-          <PiliPiliLobby roomCode={roomCode} players={players} isHost={isHost} onStartGame={startGame} />
+          <PiliPiliLobby roomCode={roomCode} players={players} isHost={isHost} onStartGame={(spicy) => startGame(spicy)} />
         )}
         {currentPhase === 'forehead-select' && myPlayer && (
           <PiliPiliForeheadSelect state={state} myPlayer={myPlayer} onSelect={foreheadSelect} />
         )}
         {currentPhase === 'mission' && (
-          <PiliPiliMission mission={state.currentMission} isHost={isHost} onProceed={proceedToBetting} onAutoProceedTimed={autoProceedTimed} />
+          <PiliPiliMission mission={state.currentMission} state={state} isHost={isHost} onProceed={proceedToBetting} onAutoProceedTimed={autoProceedTimed} />
         )}
         {currentPhase === 'pili-transfer-select' && myPlayer && (
           <PiliPiliTransferSelect state={state} myPlayer={myPlayer} onSelect={piliTransferSelect} />

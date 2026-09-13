@@ -322,10 +322,72 @@ export const ALL_MISSIONS: Mission[] = [
 export function getRandomMission(usedIds: number[]): Mission {
   const available = ALL_MISSIONS.filter(m => !usedIds.includes(m.id));
   if (available.length === 0) {
-    // All missions used — reset and pick any
     return ALL_MISSIONS[Math.floor(Math.random() * ALL_MISSIONS.length)];
   }
   return available[Math.floor(Math.random() * available.length)];
+}
+
+// Draw 1-3 missions for Spicy Mode (no repeats in same draw)
+export function drawSpicyMissions(): Mission[] {
+  const count = Math.floor(Math.random() * 3) + 1;
+  const shuffled = [...ALL_MISSIONS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+// Merge multiple missions into one combined mission for Spicy Mode
+export function mergeMissions(missions: Mission[]): Mission {
+  if (missions.length === 1) return missions[0];
+  const merged: Mission = {
+    id: -1,
+    name: missions.map(m => m.name).join(' + '),
+    description: missions.map(m => `#${m.id}: ${m.description}`).join('\n'),
+    cardsPerPlayer: Math.max(...missions.map(m => m.cardsPerPlayer)),
+    image: missions[0].image,
+  };
+  // Card Reveal: timers (lowest wins), overridden by openHands
+  const timedMs = missions.filter(m => m.timedView);
+  const hasOpen = missions.some(m => m.openHands);
+  if (timedMs.length > 0 && !hasOpen) {
+    merged.timedView = Math.min(...timedMs.map(m => m.timedView!));
+    merged.blindAfterView = true;
+  }
+  // Pre-betting: forehead
+  const fhMs = missions.filter(m => m.foreheadCards);
+  if (fhMs.length > 0) {
+    merged.foreheadCards = true;
+    merged.foreheadCount = Math.max(...fhMs.map(m => m.foreheadCount || 1));
+  }
+  // Betting: restrictions
+  if (missions.some(m => m.noZeroBet)) merged.noZeroBet = true;
+  if (missions.some(m => m.noOneBet)) merged.noOneBet = true;
+  if (missions.some(m => m.noCopyBet)) merged.noCopyBet = true;
+  // Post-betting: swaps (most cards wins) & transfers
+  const swMs = missions.filter(m => m.swapDirection && m.swapTiming === 'after-bet');
+  if (swMs.length > 0) {
+    const best = swMs.reduce((a, b) => ((b.swapCount === -1 ? 999 : (b.swapCount || 0)) > (a.swapCount === -1 ? 999 : (a.swapCount || 0)) ? b : a));
+    merged.swapDirection = best.swapDirection;
+    merged.swapCount = best.swapCount;
+    merged.swapTiming = 'after-bet';
+  }
+  if (missions.some(m => m.transferPili)) merged.transferPili = true;
+  // Card Actions: draw
+  const drMs = missions.filter(m => m.drawAfterBet);
+  if (drMs.length > 0) merged.drawAfterBet = Math.max(...drMs.map(m => m.drawAfterBet!));
+  // Playing Cards
+  if (missions.some(m => m.invertWinner)) merged.invertWinner = true;
+  if (missions.some(m => m.simultaneousPlay)) merged.simultaneousPlay = true;
+  if (missions.some(m => m.mustPlayHighLow)) merged.mustPlayHighLow = true;
+  if (hasOpen) merged.openHands = true;
+  // Trick-taking: bonuses & penalties
+  if (missions.some(m => m.bonusPrecise)) {
+    merged.bonusPrecise = true;
+    merged.bonusPreciseAmount = missions.find(m => m.bonusPrecise)?.bonusPreciseAmount;
+  }
+  if (missions.some(m => m.penaltyFirstLast)) merged.penaltyFirstLast = true;
+  const rgMs = missions.filter(m => m.penaltyRange);
+  if (rgMs.length > 0) merged.penaltyRange = [Math.min(...rgMs.map(m => m.penaltyRange![0])), Math.max(...rgMs.map(m => m.penaltyRange![1]))];
+  if (missions.some(m => m.swapAfterTrick)) merged.swapAfterTrick = true;
+  return merged;
 }
 
 // Get card image path by value (1-55 = numbered, 56 = jolly)
@@ -335,12 +397,5 @@ export function getCardImage(value: number): string {
   return `/Pili Pili/Carte/carta_${padded}.png`;
 }
 
-// Get Pili token image
-export function getPiliImage(): string {
-  return '/Pili Pili/Carte/Pili.png';
-}
-
-// Get card back (Dorso) image
-export function getCardBack(): string {
-  return '/Pili Pili/Carte/Dorso.jpg';
-}
+export function getPiliImage(): string { return '/Pili Pili/Carte/Pili.png'; }
+export function getCardBack(): string { return '/Pili Pili/Carte/Dorso.jpg'; }

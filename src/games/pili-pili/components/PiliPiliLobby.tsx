@@ -6,11 +6,12 @@ interface PiliPiliLobbyProps {
   roomCode: string;
   players: RoomPlayer[];
   isHost: boolean;
-  onStartGame: () => void;
+  onStartGame: (spicyMode: boolean) => void;
 }
 
 export default function PiliPiliLobby({ roomCode, players, isHost, onStartGame }: PiliPiliLobbyProps) {
   const [showRules, setShowRules] = useState(false);
+  const [spicyMode, setSpicyMode] = useState(false);
   const canStart = players.length >= 2 && players.length <= 8;
 
   return (
@@ -55,13 +56,43 @@ export default function PiliPiliLobby({ roomCode, players, isHost, onStartGame }
 
       {isHost ? (
         <div className="text-center">
+          {/* Mode selector */}
+          <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
+            <button
+              onClick={() => setSpicyMode(false)}
+              style={{
+                padding: '0.8rem 1.5rem', fontSize: '1rem', fontWeight: 700, color: '#fff',
+                background: !spicyMode ? 'linear-gradient(135deg, #ea580c, #dc2626)' : 'rgba(100,100,100,0.3)',
+                border: !spicyMode ? '2px solid #ea580c' : '2px solid rgba(255,255,255,0.1)',
+                borderRadius: '10px', cursor: 'pointer',
+              }}
+            >
+              🎴 Classica
+            </button>
+            <button
+              onClick={() => setSpicyMode(true)}
+              style={{
+                padding: '0.8rem 1.5rem', fontSize: '1rem', fontWeight: 700, color: '#fff',
+                background: spicyMode ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(100,100,100,0.3)',
+                border: spicyMode ? '2px solid #ef4444' : '2px solid rgba(255,255,255,0.1)',
+                borderRadius: '10px', cursor: 'pointer',
+              }}
+            >
+              🌶️ Spicy
+            </button>
+          </div>
+          {spicyMode && (
+            <p style={{ color: '#ef4444', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              🔥 1-3 missioni a caso ogni round! Pili limite: 10
+            </p>
+          )}
           <button
             className="btn btn-primary btn-lg"
-            onClick={onStartGame}
+            onClick={() => onStartGame(spicyMode)}
             disabled={!canStart}
-            style={{ padding: '1rem 3rem', fontSize: '1.2rem', background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)', border: 'none' }}
+            style={{ padding: '1rem 3rem', fontSize: '1.2rem', background: spicyMode ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)', border: 'none' }}
           >
-            Inizia Partita
+            {spicyMode ? '🌶️ Inizia Spicy!' : 'Inizia Partita'}
           </button>
           {!canStart && (
             <p className="text-muted mt-sm">Servono da 2 a 8 giocatori</p>
