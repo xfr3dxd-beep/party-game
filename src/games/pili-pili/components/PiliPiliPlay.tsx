@@ -46,24 +46,31 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
   return (
     <div className="animate-fade-in" style={{
       display: 'flex', flexDirection: 'column', minHeight: '85vh',
-      backgroundImage: 'url("/Pili Pili/Table Game/Table Game.jpg")',
+      backgroundImage: state.spicyMode
+        ? 'url("/Pili Pili/Table Game/Table Game Spicy.png")'
+        : 'url("/Pili Pili/Table Game/Table Game.jpg")',
       backgroundSize: 'cover', backgroundPosition: 'center',
       borderRadius: '16px', overflow: 'hidden', position: 'relative',
       margin: '-1rem', padding: '1rem',
     }}>
 
-      {/* Top-left: mission thumbnail */}
+      {/* Top-left: mission thumbnail(s) */}
       {state.currentMission && (
-        <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10 }}>
-          <img src={state.currentMission.image} alt={state.currentMission.name}
-            onClick={() => setShowMission(true)}
-            style={{
-              width: '80px', height: 'auto', borderRadius: '8px', cursor: 'pointer',
-              border: '2px solid rgba(234,88,12,0.6)', boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
-            }} />
-          <div style={{ fontSize: '0.6rem', color: '#fff', textAlign: 'center', textShadow: '0 1px 3px rgba(0,0,0,0.8)', marginTop: '2px' }}>
-            #{state.currentMission.id}
-          </div>
+        <div onClick={() => setShowMission(true)} style={{
+          position: 'absolute', top: '10px', left: '10px', zIndex: 10, cursor: 'pointer',
+          display: 'flex', gap: '4px',
+        }}>
+          {(state.drawnMissions && state.drawnMissions.length > 1 ? state.drawnMissions : [state.currentMission]).map((m, i) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <img src={m.image} alt={m.name} style={{
+                width: state.drawnMissions?.length > 1 ? '55px' : '80px',
+                height: 'auto', borderRadius: '6px',
+                border: `2px solid rgba(${state.spicyMode ? '239,68,68' : '234,88,12'},0.6)`,
+                boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+              }} />
+              <div style={{ fontSize: '0.5rem', color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>#{m.id}</div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -244,18 +251,45 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          zIndex: 1000, padding: '1rem', cursor: 'pointer',
+          zIndex: 1000, padding: '1rem', cursor: 'pointer', overflowY: 'auto',
         }}>
-          <img src={state.currentMission.image} alt={state.currentMission.name} style={{
-            maxWidth: '90vw', maxHeight: '60vh', borderRadius: '16px',
-            boxShadow: '0 12px 40px rgba(234,88,12,0.5)', border: '2px solid rgba(234,88,12,0.5)', marginBottom: '1rem',
-          }} />
-          <h3 style={{ color: '#fbbf24', fontSize: '1.3rem', marginBottom: '0.5rem' }}>
-            Missione #{state.currentMission.id}: {state.currentMission.name}
-          </h3>
-          <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1rem', textAlign: 'center', maxWidth: '400px', lineHeight: 1.5 }}>
-            {state.currentMission.description}
-          </p>
+          {state.drawnMissions && state.drawnMissions.length > 1 ? (
+            <>
+              <h3 style={{ color: '#ef4444', fontSize: '1.3rem', marginBottom: '1rem' }}>
+                🌶️ {state.drawnMissions.length} Missioni Attive
+              </h3>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1rem' }}>
+                {state.drawnMissions.map((m, i) => (
+                  <div key={i} style={{ textAlign: 'center', maxWidth: '250px' }}>
+                    <img src={m.image} alt={m.name} style={{
+                      maxWidth: '200px', width: '100%', borderRadius: '12px',
+                      boxShadow: '0 8px 24px rgba(239,68,68,0.4)',
+                      border: '2px solid rgba(239,68,68,0.5)', marginBottom: '0.5rem',
+                    }} />
+                    <h4 style={{ color: '#fbbf24', fontSize: '0.95rem', marginBottom: '0.3rem' }}>
+                      #{m.id}: {m.name}
+                    </h4>
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem', lineHeight: 1.4 }}>
+                      {m.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <>
+              <img src={state.currentMission.image} alt={state.currentMission.name} style={{
+                maxWidth: '90vw', maxHeight: '60vh', borderRadius: '16px',
+                boxShadow: '0 12px 40px rgba(234,88,12,0.5)', border: '2px solid rgba(234,88,12,0.5)', marginBottom: '1rem',
+              }} />
+              <h3 style={{ color: '#fbbf24', fontSize: '1.3rem', marginBottom: '0.5rem' }}>
+                Missione #{state.currentMission.id}: {state.currentMission.name}
+              </h3>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '1rem', textAlign: 'center', maxWidth: '400px', lineHeight: 1.5 }}>
+                {state.currentMission.description}
+              </p>
+            </>
+          )}
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '1.5rem' }}>Tocca per chiudere</p>
         </div>
       )}

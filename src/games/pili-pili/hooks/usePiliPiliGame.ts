@@ -192,6 +192,8 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
       sync(s);
 
     } else if (action === 'proceed-to-betting') {
+      // openHands: show all cards from betting phase onwards
+      if (s.currentMission?.openHands) s.allHandsVisible = true;
       // Check if pili transfer mission: need transfer select first
       if (s.currentMission?.transferPili) {
         s.phase = 'pili-transfer-select'; s.piliTransferTargets = {};
