@@ -319,18 +319,38 @@ export const ALL_MISSIONS: Mission[] = [
   },
 ];
 
+// Cryptographically better random number [0, max)
+function secureRandom(max: number): number {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0] % max;
+  }
+  return Math.floor(Math.random() * max);
+}
+
+// Fisher-Yates shuffle (unbiased)
+function fisherYates<T>(array: T[]): T[] {
+  const a = [...array];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = secureRandom(i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export function getRandomMission(usedIds: number[]): Mission {
   const available = ALL_MISSIONS.filter(m => !usedIds.includes(m.id));
   if (available.length === 0) {
-    return ALL_MISSIONS[Math.floor(Math.random() * ALL_MISSIONS.length)];
+    return ALL_MISSIONS[secureRandom(ALL_MISSIONS.length)];
   }
-  return available[Math.floor(Math.random() * available.length)];
+  return available[secureRandom(available.length)];
 }
 
 // Draw 1-3 missions for Spicy Mode (no repeats in same draw)
 export function drawSpicyMissions(): Mission[] {
-  const count = Math.floor(Math.random() * 3) + 1;
-  const shuffled = [...ALL_MISSIONS].sort(() => Math.random() - 0.5);
+  const count = secureRandom(3) + 1; // 1, 2, or 3
+  const shuffled = fisherYates(ALL_MISSIONS);
   return shuffled.slice(0, count);
 }
 
