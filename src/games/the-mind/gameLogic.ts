@@ -87,8 +87,9 @@ export function validatePlay(
   
   if (card.deck === 'white') {
     for (const player of allPlayers) {
-      if (player.id === playerId) continue;
       for (const playerCard of player.hand) {
+        // Skip the card being played itself
+        if (player.id === playerId && playerCard.value === card.value && playerCard.deck === card.deck) continue;
         if (playerCard.deck === 'white' && playerCard.value < card.value) {
           conflictCards.push({ playerId: player.id, card: playerCard });
         }
@@ -96,8 +97,8 @@ export function validatePlay(
     }
   } else {
     for (const player of allPlayers) {
-      if (player.id === playerId) continue;
       for (const playerCard of player.hand) {
+        if (player.id === playerId && playerCard.value === card.value && playerCard.deck === card.deck) continue;
         if (playerCard.deck === 'red' && playerCard.value > card.value) {
           conflictCards.push({ playerId: player.id, card: playerCard });
         }
