@@ -5,11 +5,11 @@ import { getRoleById } from '../roles';
 interface Props {
   state: MascaradeState;
   isHost: boolean;
-  onNewGame: () => void;
+  onRematch: () => void;
   onGoHome: () => void;
 }
 
-export default function MascaradeResult({ state, isHost, onNewGame, onGoHome }: Props) {
+export default function MascaradeResult({ state, isHost, onRematch, onGoHome }: Props) {
   const winner = state.players.find(p => p.id === state.winnerId);
   const sorted = [...state.players].sort((a, b) => b.coins - a.coins);
 
@@ -58,10 +58,10 @@ export default function MascaradeResult({ state, isHost, onNewGame, onGoHome }: 
 
       <div style={{ display: 'flex', gap: '1rem' }}>
         {isHost && (
-          <button onClick={onNewGame} style={{
+          <button onClick={onRematch} style={{
             padding: '0.8rem 1.5rem', fontSize: '1rem', fontWeight: 700, color: '#fff',
             background: '#d4a843', border: 'none', borderRadius: '10px', cursor: 'pointer',
-          }}>🎭 Nuova Partita</button>
+          }}>🔄 Rivincita</button>
         )}
         <button onClick={onGoHome} style={{
           padding: '0.8rem 1.5rem', fontSize: '1rem', fontWeight: 700, color: '#fff',

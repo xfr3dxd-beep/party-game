@@ -24,7 +24,11 @@ export default function MascaradePlay({
   const sorted = [...state.players].sort((a, b) => a.seatIndex - b.seatIndex);
 
   return (
-    <div style={{ minHeight: '85vh', padding: '1rem', position: 'relative' }}>
+    <div style={{
+      minHeight: '100vh', padding: '1rem', position: 'relative',
+      backgroundImage: 'url(/Mascarade/Board%20Game%20Mascarade.png)',
+      backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat',
+    }}>
       {/* Top bar: Round info + roles button */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
         <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>

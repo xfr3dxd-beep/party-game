@@ -393,6 +393,16 @@ export function useMascaradeGame({ playerId, isHost, players, broadcast, onBroad
       const ns = advanceTurn(s);
       sync(ns);
 
+    } else if (action === 'rematch') {
+      // Go back to lobby with same players, host picks A/B again
+      const lobbyPlayers = s.players.map(p => ({
+        ...p, roleId: 0, coins: 6, hasViewedCard: false, hasIntroduced: false,
+      }));
+      sync({
+        ...empty, phase: 'lobby', roomCode: s.roomCode,
+        players: lobbyPlayers,
+      });
+
     } else if (action === 'new-game') {
       sync({ ...empty, phase: 'create' });
     }
@@ -436,6 +446,7 @@ export function useMascaradeGame({ playerId, isHost, players, broadcast, onBroad
     effectMarionettista: useCallback((t1: string, t2: string) => act('effect-marionettista-targets', { target1Id: t1, target2Id: t2, userId: playerId }), [act, playerId]),
     effectPrincipessa: useCallback((targetId: string) => act('effect-principessa-target', { targetId, userId: playerId }), [act, playerId]),
     effectPrincipessaDone: useCallback(() => act('effect-principessa-done'), [act]),
+    rematch: useCallback(() => act('rematch'), [act]),
     newGame: useCallback(() => act('new-game'), [act]),
   };
 }

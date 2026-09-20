@@ -111,7 +111,7 @@ export default function MascaradePage() {
         )}
 
         {currentPhase === 'game-over' && (
-          <MascaradeResult state={state} isHost={isHost} onNewGame={game.newGame} onGoHome={() => { disconnect(); navigate('/'); }} />
+          <MascaradeResult state={state} isHost={isHost} onRematch={game.rematch} onGoHome={() => { disconnect(); navigate('/'); }} />
         )}
 
         {/* Roles reference sheet - always accessible */}
