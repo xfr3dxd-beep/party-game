@@ -128,6 +128,33 @@ export default function Home() {
               <span className="mind-players-badge" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#fb923c', borderColor: 'rgba(249, 115, 22, 0.3)' }}>📱 Multiplayer online</span>
             </div>
           </div>
+
+          {/* Mascarade Card */}
+          <div
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/mascarade')}
+            id="game-card-mascarade"
+            style={{ animationDelay: '0.5s' }}
+          >
+            <span className="game-card-badge badge-live">Giocabile</span>
+            <div className="game-card-icon" style={{ fontSize: '3.5rem' }}>
+              🎭
+            </div>
+            <h2 className="game-card-title">Mascarade</h2>
+            <p className="game-card-desc">
+              Bluff, inganni e identità nascoste! Scambia carte, dichiara ruoli e sfida gli altri per accumulare monete.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="mind-players-badge" style={{ background: 'rgba(212, 168, 67, 0.15)', color: '#d4a843', borderColor: 'rgba(212, 168, 67, 0.3)' }}>👥 6-12 giocatori</span>
+              <span className="mind-players-badge" style={{ background: 'rgba(212, 168, 67, 0.15)', color: '#d4a843', borderColor: 'rgba(212, 168, 67, 0.3)' }}>📱 Multiplayer online</span>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

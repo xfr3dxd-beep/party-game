@@ -8,6 +8,7 @@ import ImpostorePage from './games/impostore/ImpostorePage';
 import SciaradaPage from './games/sciarada/SciaradaPage';
 import TheMindPage from './games/the-mind/TheMindPage';
 import PiliPiliPage from './games/pili-pili/PiliPiliPage';
+import MascaradePage from './games/mascarade/MascaradePage';
 
 export default function App() {
   return (
@@ -52,6 +53,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <PiliPiliPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mascarade"
+            element={
+              <ProtectedRoute>
+                <MascaradePage />
               </ProtectedRoute>
             }
           />
