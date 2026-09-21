@@ -21,7 +21,7 @@ export interface MascaradeLobbyProps {
   roomCode: string;
   players: RoomPlayer[];
   isHost: boolean;
-  onStartGame: (variant: 'A' | 'B') => void;
+  onStartGame: (variant: 'A' | 'B', customRoles?: number[]) => void;
 }
 
 export default function MascaradeLobby({
@@ -30,11 +30,12 @@ export default function MascaradeLobby({
   isHost,
   onStartGame,
 }: MascaradeLobbyProps) {
-  const [variant, setVariant] = useState<'A' | 'B'>('A');
+  const [variant, setVariant] = useState<'A' | 'B' | 'custom' | 'random'>('A');
   const [copied, setCopied] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [showAllRoles, setShowAllRoles] = useState(false);
   const [selectedRole, setSelectedRole] = useState<MascaradeRole | null>(null);
+  const [customSelected, setCustomSelected] = useState<number[]>([]);
 
   // Default preview player count reflects joined players, clamped to 6-12
   const effectiveCount = Math.min(12, Math.max(6, players.length));
@@ -46,6 +47,16 @@ export default function MascaradeLobby({
   }, [players.length]);
 
   const canStart = players.length >= 6 && players.length <= 12;
+  const neededRoles = Math.min(12, Math.max(6, players.length));
+
+  // Toggle a role in custom selection (Contadino can be added twice since ids 7 & 8)
+  const toggleCustomRole = (roleId: number) => {
+    setCustomSelected(prev => {
+      if (prev.includes(roleId)) return prev.filter(r => r !== roleId);
+      if (prev.length >= neededRoles) return prev;
+      return [...prev, roleId];
+    });
+  };
 
   const handleCopyCode = () => {
     if (navigator.clipboard) {
@@ -55,8 +66,28 @@ export default function MascaradeLobby({
     }
   };
 
+  // Fisher-Yates for random mode
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a;
+  };
+
+  const handleStart = () => {
+    if (variant === 'custom') {
+      onStartGame('A', customSelected);
+    } else if (variant === 'random') {
+      // Pick N random from all role IDs (1-17, where 7 and 8 are both Contadino)
+      const allIds = ALL_ROLES.map(r => r.id);
+      const picked = shuffle(allIds).slice(0, neededRoles);
+      onStartGame('A', picked);
+    } else {
+      onStartGame(variant);
+    }
+  };
+
   // Get roles in game for the currently previewed player count and selected variant
-  const currentRoleIds = TABLES[previewCount]?.[variant] || TABLES[6][variant];
+  const currentRoleIds = (variant === 'A' || variant === 'B')
+    ? (TABLES[previewCount]?.[variant] || TABLES[6].A)
+    : (variant === 'custom' ? customSelected : ALL_ROLES.map(r => r.id).slice(0, previewCount));
   const roleCards = currentRoleIds.map((id) => getRoleById(id));
 
   return (
@@ -476,58 +507,17 @@ export default function MascaradeLobby({
                 padding: '0.75rem',
                 borderRadius: '12px',
                 cursor: isHost ? 'pointer' : 'default',
-                background:
-                  variant === 'A'
-                    ? 'rgba(212, 168, 67, 0.18)'
-                    : 'rgba(15, 14, 24, 0.5)',
-                border:
-                  variant === 'A'
-                    ? '2px solid #d4a843'
-                    : '1px solid rgba(255, 255, 255, 0.08)',
-                boxShadow:
-                  variant === 'A' ? '0 0 16px rgba(212, 168, 67, 0.25)' : 'none',
+                background: variant === 'A' ? 'rgba(212, 168, 67, 0.18)' : 'rgba(15, 14, 24, 0.5)',
+                border: variant === 'A' ? '2px solid #d4a843' : '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: variant === 'A' ? '0 0 16px rgba(212, 168, 67, 0.25)' : 'none',
                 transition: 'all 0.2s ease',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.2rem',
-                }}
-              >
-                <span
-                  style={{
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    color: variant === 'A' ? '#f6d37a' : '#ffffff',
-                  }}
-                >
-                  Variante A
-                </span>
-                {variant === 'A' && (
-                  <span
-                    style={{
-                      background: '#d4a843',
-                      color: '#1a1200',
-                      borderRadius: '50%',
-                      width: '16px',
-                      height: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.65rem',
-                      fontWeight: 900,
-                    }}
-                  >
-                    ✓
-                  </span>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: variant === 'A' ? '#f6d37a' : '#ffffff' }}>Variante A</span>
+                {variant === 'A' && <span style={{ background: '#d4a843', color: '#1a1200', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 900 }}>✓</span>}
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.65)' }}>
-                Equilibrata & Dinamica
-              </div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.65)' }}>Equilibrata & Dinamica</div>
             </div>
 
             {/* Variant B */}
@@ -537,60 +527,98 @@ export default function MascaradeLobby({
                 padding: '0.75rem',
                 borderRadius: '12px',
                 cursor: isHost ? 'pointer' : 'default',
-                background:
-                  variant === 'B'
-                    ? 'rgba(212, 168, 67, 0.18)'
-                    : 'rgba(15, 14, 24, 0.5)',
-                border:
-                  variant === 'B'
-                    ? '2px solid #d4a843'
-                    : '1px solid rgba(255, 255, 255, 0.08)',
-                boxShadow:
-                  variant === 'B' ? '0 0 16px rgba(212, 168, 67, 0.25)' : 'none',
+                background: variant === 'B' ? 'rgba(212, 168, 67, 0.18)' : 'rgba(15, 14, 24, 0.5)',
+                border: variant === 'B' ? '2px solid #d4a843' : '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: variant === 'B' ? '0 0 16px rgba(212, 168, 67, 0.25)' : 'none',
                 transition: 'all 0.2s ease',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.2rem',
-                }}
-              >
-                <span
-                  style={{
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    color: variant === 'B' ? '#f6d37a' : '#ffffff',
-                  }}
-                >
-                  Variante B
-                </span>
-                {variant === 'B' && (
-                  <span
-                    style={{
-                      background: '#d4a843',
-                      color: '#1a1200',
-                      borderRadius: '50%',
-                      width: '16px',
-                      height: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.65rem',
-                      fontWeight: 900,
-                    }}
-                  >
-                    ✓
-                  </span>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: variant === 'B' ? '#f6d37a' : '#ffffff' }}>Variante B</span>
+                {variant === 'B' && <span style={{ background: '#d4a843', color: '#1a1200', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 900 }}>✓</span>}
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.65)' }}>
-                Tattica & Intrighi
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.65)' }}>Tattica & Intrighi</div>
+            </div>
+
+            {/* Custom */}
+            <div
+              onClick={() => isHost && setVariant('custom')}
+              style={{
+                padding: '0.75rem',
+                borderRadius: '12px',
+                cursor: isHost ? 'pointer' : 'default',
+                background: variant === 'custom' ? 'rgba(139, 92, 246, 0.18)' : 'rgba(15, 14, 24, 0.5)',
+                border: variant === 'custom' ? '2px solid #a78bfa' : '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: variant === 'custom' ? '0 0 16px rgba(139, 92, 246, 0.25)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: variant === 'custom' ? '#c4b5fd' : '#ffffff' }}>🛠️ Personalizzata</span>
+                {variant === 'custom' && <span style={{ background: '#a78bfa', color: '#1a1200', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 900 }}>✓</span>}
               </div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.65)' }}>Scegli tu i ruoli</div>
+            </div>
+
+            {/* Random */}
+            <div
+              onClick={() => isHost && setVariant('random')}
+              style={{
+                padding: '0.75rem',
+                borderRadius: '12px',
+                cursor: isHost ? 'pointer' : 'default',
+                background: variant === 'random' ? 'rgba(34, 197, 94, 0.18)' : 'rgba(15, 14, 24, 0.5)',
+                border: variant === 'random' ? '2px solid #4ade80' : '1px solid rgba(255, 255, 255, 0.08)',
+                boxShadow: variant === 'random' ? '0 0 16px rgba(34, 197, 94, 0.25)' : 'none',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.2rem' }}>
+                <span style={{ fontWeight: 800, fontSize: '0.95rem', color: variant === 'random' ? '#86efac' : '#ffffff' }}>🎲 Casuale</span>
+                {variant === 'random' && <span style={{ background: '#4ade80', color: '#1a1200', borderRadius: '50%', width: '16px', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: 900 }}>✓</span>}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.65)' }}>Ruoli casuali</div>
             </div>
           </div>
+
+          {/* Custom role picker */}
+          {variant === 'custom' && isHost && (
+            <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(139, 92, 246, 0.08)', borderRadius: '12px', border: '1px solid rgba(139, 92, 246, 0.2)' }}>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#a78bfa', marginBottom: '0.5rem' }}>
+                Scegli {neededRoles} ruoli ({customSelected.length}/{neededRoles}):
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: '0.5rem' }}>
+                {ALL_ROLES.map(role => {
+                  const isSelected = customSelected.includes(role.id);
+                  const isFull = customSelected.length >= neededRoles && !isSelected;
+                  return (
+                    <div key={role.id} onClick={() => !isFull && toggleCustomRole(role.id)}
+                      style={{
+                        textAlign: 'center', padding: '0.4rem', borderRadius: '8px', cursor: isFull ? 'not-allowed' : 'pointer',
+                        background: isSelected ? 'rgba(139, 92, 246, 0.2)' : 'rgba(15, 14, 24, 0.5)',
+                        border: isSelected ? '2px solid #a78bfa' : '1px solid rgba(255, 255, 255, 0.1)',
+                        opacity: isFull ? 0.4 : 1, transition: 'all 0.15s ease',
+                      }}>
+                      <img src={role.image} alt={role.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px', marginBottom: '0.2rem' }}
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/Mascarade/Dorso.png'; }} />
+                      <div style={{ fontSize: '0.6rem', fontWeight: 700, color: isSelected ? '#c4b5fd' : 'rgba(255,255,255,0.7)' }}>{role.name}</div>
+                      {isSelected && <div style={{ fontSize: '0.55rem', color: '#a78bfa' }}>✓</div>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Random mode info */}
+          {variant === 'random' && (
+            <div style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(34, 197, 94, 0.08)', borderRadius: '12px', border: '1px solid rgba(34, 197, 94, 0.2)', textAlign: 'center' }}>
+              <div style={{ fontSize: '0.85rem', color: '#4ade80', marginBottom: '0.3rem' }}>🎲 Modalità Casuale</div>
+              <div style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.6)' }}>
+                {neededRoles} ruoli verranno scelti casualmente tra tutti i 17 disponibili all'inizio della partita.
+              </div>
+            </div>
+          )}
 
           {/* Role Preview Filter / Header */}
           <div
@@ -733,17 +761,17 @@ export default function MascaradeLobby({
       {isHost ? (
         <div style={{ textAlign: 'center', marginTop: '1rem' }}>
           <button
-            onClick={() => onStartGame(variant)}
-            disabled={!canStart}
+            onClick={handleStart}
+            disabled={!canStart || (variant === 'custom' && customSelected.length !== neededRoles)}
             style={{
               padding: '1.1rem 3.5rem',
               fontSize: '1.25rem',
               fontWeight: 800,
               borderRadius: '16px',
               border: 'none',
-              cursor: canStart ? 'pointer' : 'not-allowed',
+              cursor: canStart && !(variant === 'custom' && customSelected.length !== neededRoles) ? 'pointer' : 'not-allowed',
               color: canStart ? '#1a1200' : 'rgba(255, 255, 255, 0.4)',
-              background: canStart
+              background: canStart && !(variant === 'custom' && customSelected.length !== neededRoles)
                 ? 'linear-gradient(135deg, #f5d485 0%, #d4a843 45%, #b8860b 100%)'
                 : 'rgba(60, 50, 40, 0.4)',
               boxShadow: canStart
@@ -754,15 +782,9 @@ export default function MascaradeLobby({
               gap: '0.75rem',
               transition: 'all 0.2s ease',
             }}
-            onMouseDown={(e) => {
-              if (canStart) e.currentTarget.style.transform = 'scale(0.98)';
-            }}
-            onMouseUp={(e) => {
-              if (canStart) e.currentTarget.style.transform = 'scale(1)';
-            }}
           >
             <Play size={22} fill={canStart ? '#1a1200' : 'none'} />
-            <span>Inizia Partita (Variante {variant})</span>
+            <span>Inizia Partita ({variant === 'custom' ? '🛠️ Personalizzata' : variant === 'random' ? '🎲 Casuale' : `Variante ${variant}`})</span>
           </button>
 
           {!canStart && (

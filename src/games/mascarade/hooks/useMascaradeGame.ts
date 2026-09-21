@@ -181,7 +181,21 @@ export function useMascaradeGame({ playerId, isHost, players, broadcast, onBroad
 
     if (action === 'start') {
       const variant = payload?.variant || 'A';
-      const result = dealRoles(players, players.length, variant);
+      const customRoles: number[] | undefined = payload?.customRoles;
+      let result;
+      if (customRoles && customRoles.length > 0) {
+        // Custom or random mode: use provided role IDs directly
+        const shuffled = [...customRoles].sort(() => Math.random() - 0.5);
+        result = {
+          players: players.map((p, i) => ({
+            id: p.id, name: p.name, roleId: shuffled[i],
+            coins: 6, seatIndex: i, hasViewedCard: false, hasIntroduced: false,
+          })),
+          rolesInGame: customRoles,
+        };
+      } else {
+        result = dealRoles(players, players.length, variant);
+      }
       const starter = Math.floor(Math.random() * players.length);
       const ns: MascaradeState = {
         ...empty,
@@ -426,7 +440,7 @@ export function useMascaradeGame({ playerId, isHost, players, broadcast, onBroad
 
   return {
     state, myPlayer: my, activePlayer, isMyTurn, isForcedSwap,
-    startGame: useCallback((variant: 'A' | 'B') => act('start', { variant }), [act]),
+    startGame: useCallback((variant: 'A' | 'B', customRoles?: number[]) => act('start', { variant, customRoles }), [act]),
     viewedCard: useCallback(() => act('viewed-card', { pId: playerId }), [act, playerId]),
     introDone: useCallback(() => act('intro-done', { pId: playerId }), [act, playerId]),
     actionLook: useCallback(() => act('action-look', { pId: playerId }), [act, playerId]),
