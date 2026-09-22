@@ -38,6 +38,8 @@ const INITIAL_STATE: TheMindState = {
   conflict: null,
   shurikenVote: null,
   won: false,
+  lastPlayedCard: null,
+  lastPlayedBy: null,
 };
 
 export function useTheMindGame({
@@ -91,6 +93,8 @@ export function useTheMindGame({
       conflict: null,
       shurikenVote: null,
       won: false,
+      lastPlayedCard: null,
+      lastPlayedBy: null,
     };
 
     syncState(newState);
@@ -138,6 +142,8 @@ export function useTheMindGame({
           redPile: newRedPile,
           conflict,
           won: false,
+          lastPlayedCard: card,
+          lastPlayedBy: cardPlayerId,
         });
       } else {
         // Show conflict, then resume playing the SAME level
@@ -149,6 +155,8 @@ export function useTheMindGame({
           whitePile: newWhitePile,
           redPile: newRedPile,
           conflict,
+          lastPlayedCard: card,
+          lastPlayedBy: cardPlayerId,
         });
       }
     } else {
@@ -180,6 +188,8 @@ export function useTheMindGame({
             lives: newLives,
             stars: newStars,
             won: true,
+            lastPlayedCard: card,
+            lastPlayedBy: cardPlayerId,
           });
         } else {
           syncState({
@@ -191,6 +201,8 @@ export function useTheMindGame({
             lives: newLives,
             stars: newStars,
             conflict: null,
+            lastPlayedCard: card,
+            lastPlayedBy: cardPlayerId,
           });
         }
       } else {
@@ -199,6 +211,8 @@ export function useTheMindGame({
           players: updatedPlayers,
           whitePile: newWhitePile,
           redPile: newRedPile,
+          lastPlayedCard: card,
+          lastPlayedBy: cardPlayerId,
         });
       }
     }

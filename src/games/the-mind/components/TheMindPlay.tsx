@@ -132,7 +132,61 @@ const TheMindPlay: React.FC<TheMindPlayProps> = ({
           </div>
         )}
 
-        {/* Pile area */}
+        {/* Players card count */}
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center',
+          margin: '0.5rem 0', padding: '0.4rem 0.8rem',
+        }}>
+          {state.players.map(p => {
+            const isMe = p.id === playerId;
+            const cardCount = p.hand.length;
+            return (
+              <div key={p.id} style={{
+                display: 'flex', alignItems: 'center', gap: '0.35rem',
+                padding: '0.25rem 0.6rem', borderRadius: '8px',
+                background: isMe ? 'rgba(100,180,255,0.15)' : 'rgba(255,255,255,0.08)',
+                border: isMe ? '1px solid rgba(100,180,255,0.3)' : '1px solid rgba(255,255,255,0.1)',
+              }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: isMe ? '#93c5fd' : 'rgba(255,255,255,0.7)' }}>
+                  {p.name}
+                </span>
+                <span style={{
+                  fontSize: '0.75rem', fontWeight: 900,
+                  color: cardCount === 0 ? '#4ade80' : '#fbbf24',
+                }}>
+                  🃏 {cardCount}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Last played card indicator */}
+        {state.lastPlayedCard && state.lastPlayedBy && (
+          <div style={{
+            textAlign: 'center', margin: '0.3rem 0', padding: '0.3rem 0.8rem',
+            display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem',
+          }}>
+            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>
+              Ultima carta:
+            </span>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: '38px', height: '50px', borderRadius: '6px', fontWeight: 900, fontSize: '1rem',
+              background: state.lastPlayedCard.deck === 'white'
+                ? 'linear-gradient(145deg, hsl(210,80%,55%), hsl(220,85%,35%))'
+                : 'linear-gradient(145deg, hsl(350,80%,55%), hsl(340,85%,30%))',
+              color: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+              border: '1px solid rgba(255,255,255,0.2)',
+            }}>
+              {state.lastPlayedCard.value}
+            </span>
+            <span style={{ fontSize: '0.75rem', color: '#fbbf24', fontWeight: 600 }}>
+              {state.players.find(p => p.id === state.lastPlayedBy)?.name}
+            </span>
+          </div>
+        )}
+
         <div className="mind-pile-area">
           <div className="mind-pile mind-pile-white">
             <span className="mind-pile-label">⬆ ASC</span>

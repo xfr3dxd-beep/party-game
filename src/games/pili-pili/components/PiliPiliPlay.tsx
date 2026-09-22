@@ -74,10 +74,10 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
         </div>
       )}
 
-      {/* Bottom-left: Pili count */}
-      <div style={{ position: 'absolute', bottom: '10px', left: '10px', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+      {/* Middle-left: Pili count */}
+      <div style={{ position: 'absolute', top: '50%', left: '10px', transform: 'translateY(-50%)', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
         <img src={getPiliImage()} alt="Pili" onClick={() => setShowPili(true)} style={{
-          width: '105px', height: 'auto', transform: 'scaleY(1.33)', transformOrigin: 'bottom',
+          width: '105px', height: 'auto', transform: 'scaleY(1.33)', transformOrigin: 'center',
           borderRadius: '6px', border: '2px solid rgba(239,68,68,0.4)',
           boxShadow: '0 4px 12px rgba(0,0,0,0.3)', cursor: 'pointer', opacity: 0.5,
         }} />

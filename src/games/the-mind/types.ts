@@ -59,6 +59,9 @@ export interface TheMindState {
   shurikenVote: ShurikenVote | null;
   // Result
   won: boolean;
+  // Last played card info (for display)
+  lastPlayedCard: TheMindCard | null;
+  lastPlayedBy: string | null;
 }
 
 // ---- Broadcast event types ----

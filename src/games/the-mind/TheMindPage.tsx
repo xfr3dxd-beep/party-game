@@ -250,6 +250,8 @@ export default function TheMindPage() {
             rewardStar={levelConfig?.rewardStar ?? false}
             isHost={isHost}
             onNextLevel={requestNextLevel}
+            lastPlayedCard={state.lastPlayedCard}
+            lastPlayedByName={state.lastPlayedBy ? state.players.find(p => p.id === state.lastPlayedBy)?.name : undefined}
           />
         )}
 
