@@ -155,6 +155,33 @@ export default function Home() {
               <span className="mind-players-badge" style={{ background: 'rgba(212, 168, 67, 0.15)', color: '#d4a843', borderColor: 'rgba(212, 168, 67, 0.3)' }}>📱 Multiplayer online</span>
             </div>
           </div>
+
+          {/* Citadels Card */}
+          <div
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/citadels')}
+            id="game-card-citadels"
+            style={{ animationDelay: '0.6s' }}
+          >
+            <span className="game-card-badge badge-live">Giocabile</span>
+            <div className="game-card-icon" style={{ fontSize: '3.5rem' }}>
+              🏰
+            </div>
+            <h2 className="game-card-title">Citadels</h2>
+            <p className="game-card-desc">
+              Costruisci la tua città, scegli personaggi, usa effetti unici e diventa il più ricco nobile del regno!
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="mind-players-badge" style={{ background: 'rgba(201, 168, 76, 0.15)', color: '#c9a84c', borderColor: 'rgba(201, 168, 76, 0.3)' }}>👥 4-9 giocatori</span>
+              <span className="mind-players-badge" style={{ background: 'rgba(201, 168, 76, 0.15)', color: '#c9a84c', borderColor: 'rgba(201, 168, 76, 0.3)' }}>📱 Multiplayer online</span>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

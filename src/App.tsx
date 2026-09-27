@@ -9,6 +9,7 @@ import SciaradaPage from './games/sciarada/SciaradaPage';
 import TheMindPage from './games/the-mind/TheMindPage';
 import PiliPiliPage from './games/pili-pili/PiliPiliPage';
 import MascaradePage from './games/mascarade/MascaradePage';
+import CitadelsPage from './games/citadels/CitadelsPage';
 
 export default function App() {
   return (
@@ -61,6 +62,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <MascaradePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/citadels"
+            element={
+              <ProtectedRoute>
+                <CitadelsPage />
               </ProtectedRoute>
             }
           />
