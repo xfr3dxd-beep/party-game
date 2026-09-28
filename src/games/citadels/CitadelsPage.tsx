@@ -17,6 +17,9 @@ import { useNavigate } from 'react-router-dom';
 
 export default function CitadelsPage() {
   const navigate = useNavigate();
+  const [localPhase, setLocalPhase] = useState<'create' | 'lobby'>('create');
+  const [isConnecting, setIsConnecting] = useState(false);
+
   const room = useCitadelsRoom();
   const game = useCitadelsGame({
     playerId: room.playerId,
@@ -32,15 +35,23 @@ export default function CitadelsPage() {
   const [showEffect, setShowEffect] = useState(false);
 
   const { state, myPlayer } = game;
-  const currentPhase = state.phase;
+  const currentPhase = state.phase !== 'create' ? state.phase : localPhase;
+
+  const handleCreate = async (name: string) => {
+    setIsConnecting(true); await room.createRoom(name); setIsConnecting(false); setLocalPhase('lobby');
+  };
+  const handleJoin = async (code: string, name: string): Promise<boolean> => {
+    setIsConnecting(true); const ok = await room.joinRoom(code, name); setIsConnecting(false);
+    if (ok) setLocalPhase('lobby'); return ok;
+  };
 
   // Create / Join
-  if (!room.roomCode || currentPhase === 'create') {
+  if (currentPhase === 'create') {
     return (
       <CitadelsCreate
-        onCreateRoom={room.createRoom}
-        onJoinRoom={room.joinRoom}
-        isConnecting={false}
+        onCreateRoom={handleCreate}
+        onJoinRoom={handleJoin}
+        isConnecting={isConnecting}
       />
     );
   }
@@ -49,7 +60,7 @@ export default function CitadelsPage() {
   if (currentPhase === 'lobby') {
     return (
       <CitadelsLobby
-        roomCode={room.roomCode}
+        roomCode={room.roomCode!}
         players={room.players}
         isHost={room.isHost}
         onStartGame={game.startGame}
