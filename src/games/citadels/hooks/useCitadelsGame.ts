@@ -34,12 +34,19 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     broadcast({ type: 'sync', state: s });
   }, [broadcast]);
 
-  // Non-host listens for sync
+  // Use a ref for proc so broadcast handler always calls latest version
+  const procRef = useRef<(action: string, payload: any) => void>(() => {});
+
+  // Listen for broadcast events
   useEffect(() => {
     onBroadcast((event) => {
       if (event.type === 'sync') {
+        // All players receive state sync from host
         stRef.current = event.state;
         setState(event.state);
+      } else if (event.type === 'action') {
+        // Host processes action events from all players
+        procRef.current(event.action, event.payload);
       }
     });
   }, [onBroadcast]);
@@ -945,6 +952,9 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, sync, players]);
 
+  // Keep procRef in sync
+  procRef.current = proc;
+
   // ========== ROUND END ==========
   const resolveRoundEnd = useCallback((s: CitadelsState) => {
     // Check if assassinated rank 4 needs to reveal for crown
@@ -1020,8 +1030,11 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
   const isMyTurn = state.activePlayerId === playerId;
 
   const act = useCallback((action: string, payload: any = {}) => {
-    proc(action, payload);
-  }, [proc]);
+    // Broadcast the action — host will pick it up and process it
+    broadcast({ type: 'action', action, payload });
+    // Host also processes locally (broadcast doesn't echo back to sender)
+    if (isHost) proc(action, payload);
+  }, [broadcast, isHost, proc]);
 
   return {
     state,
