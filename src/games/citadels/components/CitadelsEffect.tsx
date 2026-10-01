@@ -38,6 +38,7 @@ interface CitadelsEffectProps {
   onSpyReveal: (targetId: string, color: string) => void;
   onNavigatorChoose: (choice: 'gold' | 'cards') => void;
   onArtistEmbellish: (districtUids: string[]) => void;
+  onVeggenteTake?: () => void;
   onClose: () => void;
 }
 
@@ -64,6 +65,7 @@ export default function CitadelsEffect({
   onSpyReveal,
   onNavigatorChoose,
   onArtistEmbellish,
+  onVeggenteTake,
   onClose,
 }: CitadelsEffectProps) {
   // Local states for complex interactive effects
@@ -105,7 +107,7 @@ export default function CitadelsEffect({
 
   // Determine which character header image & title to render
   const headerImage = isBlackmailerDecide
-    ? '/Citadels/Personaggi + token/Ricattatore.jpg'
+    ? '/Citadels/Personaggi %2B token/Ricattatore.jpg'
     : character?.image || '/Citadels/Dorso carte personaggio.png';
 
   const headerTitle = isBlackmailerDecide
@@ -1469,6 +1471,38 @@ export default function CitadelsEffect({
                   </div>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* VEGGENTE (Rank 3, ID 9)                                        */}
+          {/* ============================================================== */}
+          {!isBlackmailerDecide && character?.id === 9 && (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.95rem', color: 'rgba(244, 237, 226, 0.85)' }}>
+                La Veggente pesca <strong>1 carta a caso</strong> dalla mano di ciascun giocatore.
+                Poi dovrà restituire <strong>1 carta</strong> ad ognuno di essi, scelta tra tutte le carte in mano.
+              </p>
+              <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: 'rgba(201,168,76,0.7)' }}>
+                Può anche costruire fino a 2 distretti per turno.
+              </p>
+              <button
+                onClick={() => { if (onVeggenteTake) onVeggenteTake(); }}
+                disabled={!onVeggenteTake}
+                style={{
+                  padding: '0.8rem 2rem',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  cursor: onVeggenteTake ? 'pointer' : 'not-allowed',
+                  background: onVeggenteTake ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.1)',
+                  color: onVeggenteTake ? '#fff' : 'rgba(255,255,255,0.3)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  boxShadow: onVeggenteTake ? '0 4px 15px rgba(168, 85, 247, 0.4)' : 'none',
+                }}
+              >
+                🔮 Pesca Carte dagli Altri Giocatori
+              </button>
             </div>
           )}
 

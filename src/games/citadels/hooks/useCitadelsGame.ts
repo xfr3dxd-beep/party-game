@@ -803,8 +803,8 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       });
     }
 
-    // ========== EFFECT: SPY ==========
-    else if (action === 'spy-reveal') {
+    // ========== EFFECT: SPY (step 1: pick target+color, reveal hand) ==========
+    else if (action === 'spy-pick') {
       const { targetPlayerId, color } = payload;
       const spy = s.players.find(pl => pl.id === s.activePlayerId);
       const target = s.players.find(pl => pl.id === targetPlayerId);
@@ -813,17 +813,39 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       const matchingCards = target.hand.filter(c => getDistrictById(c.districtId).color === color);
       const count = matchingCards.length;
 
-      // Spy gets count gold + count cards from deck
+      // Show target's full hand + matching count in effect context
+      sync({
+        ...s,
+        phase: 'effect-active',
+        effectContext: {
+          type: 'spy-reveal',
+          data: {
+            targetPlayerId,
+            color,
+            targetHand: target.hand, // full hand revealed to spy
+            matchCount: count,
+          },
+        },
+      });
+    }
+
+    // ========== EFFECT: SPY (step 2: confirm, collect reward) ==========
+    else if (action === 'spy-confirm') {
+      const spy = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!spy || !s.effectContext || s.effectContext.type !== 'spy-reveal') return;
+
+      const { matchCount } = s.effectContext.data;
+
       let newDeck = s.districtDeck;
       let extraCards: DistrictCard[] = [];
-      if (count > 0) {
-        const { drawn, remaining } = drawCards(newDeck, count);
+      if (matchCount > 0) {
+        const { drawn, remaining } = drawCards(newDeck, matchCount);
         extraCards = drawn;
         newDeck = remaining;
       }
 
       const updatedPlayers = s.players.map(pl =>
-        pl.id === spy.id ? { ...pl, gold: pl.gold + count, hand: [...pl.hand, ...extraCards] } : pl
+        pl.id === spy.id ? { ...pl, gold: pl.gold + matchCount, hand: [...pl.hand, ...extraCards], hasUsedEffect: true } : pl
       );
 
       sync({ ...s, players: updatedPlayers, districtDeck: newDeck, phase: 'turn-action', effectContext: null });
@@ -847,6 +869,77 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         );
         sync({ ...s, players: updatedPlayers, districtDeck: remaining, phase: 'turn-action', effectContext: null });
       }
+    }
+
+    // ========== VEGGENTE (step 1: take 1 random card from each other player) ==========
+    else if (action === 'veggente-take') {
+      const veggente = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!veggente) return;
+
+      const takenFrom: { playerId: string; card: DistrictCard }[] = [];
+      let updatedPlayers = [...s.players];
+
+      for (const pl of updatedPlayers) {
+        if (pl.id === veggente.id || pl.hand.length === 0) continue;
+        // Pick random card from this player's hand
+        const randIdx = Math.floor(Math.random() * pl.hand.length);
+        const card = pl.hand[randIdx];
+        takenFrom.push({ playerId: pl.id, card });
+      }
+
+      // Remove cards from other players, add to veggente
+      const takenCards = takenFrom.map(t => t.card);
+      updatedPlayers = updatedPlayers.map(pl => {
+        if (pl.id === veggente.id) {
+          return { ...pl, hand: [...pl.hand, ...takenCards] };
+        }
+        const taken = takenFrom.find(t => t.playerId === pl.id);
+        if (taken) {
+          return { ...pl, hand: pl.hand.filter(c => c.uid !== taken.card.uid) };
+        }
+        return pl;
+      });
+
+      // Show effect context for step 2
+      sync({
+        ...s,
+        players: updatedPlayers,
+        phase: 'effect-active',
+        effectContext: {
+          type: 'veggente-return',
+          data: {
+            takenFrom: takenFrom.map(t => ({ playerId: t.playerId, playerName: s.players.find(p => p.id === t.playerId)?.name || '' })),
+            totalToReturn: takenFrom.length,
+          },
+        },
+      });
+    }
+
+    // ========== VEGGENTE (step 2: choose cards to return, 1 per player taken from) ==========
+    else if (action === 'veggente-return') {
+      const { assignments } = payload as { assignments: { playerId: string; cardUid: string }[] };
+      const veggente = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!veggente || !s.effectContext || s.effectContext.type !== 'veggente-return') return;
+
+      const { totalToReturn } = s.effectContext.data;
+      if (assignments.length !== totalToReturn) return;
+
+      let updatedPlayers = [...s.players];
+      for (const { playerId, cardUid } of assignments) {
+        const card = updatedPlayers.find(p => p.id === veggente.id)!.hand.find(c => c.uid === cardUid);
+        if (!card) continue;
+        updatedPlayers = updatedPlayers.map(pl => {
+          if (pl.id === veggente.id) return { ...pl, hand: pl.hand.filter(c => c.uid !== cardUid) };
+          if (pl.id === playerId) return { ...pl, hand: [...pl.hand, card] };
+          return pl;
+        });
+      }
+
+      updatedPlayers = updatedPlayers.map(pl =>
+        pl.id === veggente.id ? { ...pl, hasUsedEffect: true } : pl
+      );
+
+      sync({ ...s, players: updatedPlayers, phase: 'turn-action', effectContext: null });
     }
 
     // ========== MUSEO (TUCK CARD) ==========
@@ -1068,10 +1161,14 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       act('diplomat-swap', { myDistrictUid, targetPlayerId, targetDistrictUid }), [act]),
     blackmailerDecide: useCallback((pay: boolean) =>
       act('blackmailer-decide', { pId: playerId, pay }), [act, playerId]),
-    spyReveal: useCallback((targetPlayerId: string, color: string) =>
-      act('spy-reveal', { targetPlayerId, color }), [act]),
+    spyPick: useCallback((targetPlayerId: string, color: string) =>
+      act('spy-pick', { targetPlayerId, color }), [act]),
+    spyConfirm: useCallback(() => act('spy-confirm'), [act]),
     navigatorChoose: useCallback((choice: 'gold' | 'cards') =>
       act('navigator-choose', { choice }), [act]),
+    veggenteTake: useCallback(() => act('veggente-take'), [act]),
+    veggenteReturn: useCallback((assignments: { playerId: string; cardUid: string }[]) =>
+      act('veggente-return', { assignments }), [act]),
     museoTuck: useCallback((cardUid: string) => act('museo-tuck', { cardUid }), [act]),
     useFucina: useCallback(() => act('use-fucina'), [act]),
     useLaboratorio: useCallback((cardUid: string) => act('use-laboratorio', { cardUid }), [act]),
