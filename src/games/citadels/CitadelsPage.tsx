@@ -36,6 +36,11 @@ export default function CitadelsPage() {
   const [showRules, setShowRules] = useState(false);
   const [showEffect, setShowEffect] = useState(false);
   const [showHand, setShowHand] = useState(false);
+  const [infoCard, setInfoCard] = useState<any>(null);
+  const [showCardinal, setShowCardinal] = useState(false);
+  const [cardSelDistrict, setCardSelDistrict] = useState<string | null>(null);
+  const [cardSelTarget, setCardSelTarget] = useState<string | null>(null);
+  const [cardSelCards, setCardSelCards] = useState<string[]>([]);
 
   const { state, myPlayer } = game;
   const currentPhase = state.phase !== 'create' ? state.phase : localPhase;
@@ -98,8 +103,8 @@ export default function CitadelsPage() {
                 const d = getDistrictById(card.districtId);
                 const colorMap: Record<string, string> = { blue: '#3b82f6', green: '#22c55e', yellow: '#eab308', red: '#ef4444', purple: '#a855f7' };
                 return (
-                  <div key={card.uid} style={{
-                    borderRadius: '8px', overflow: 'hidden',
+                  <div key={card.uid} onClick={() => setInfoCard(d)} style={{
+                    borderRadius: '8px', overflow: 'hidden', cursor: 'pointer',
                     border: `2px solid ${colorMap[d.color] || '#555'}`,
                     background: 'rgba(26,21,32,0.95)',
                   }}>
@@ -116,6 +121,38 @@ export default function CitadelsPage() {
               })}
             </div>
           )}
+
+          {/* Player's own city */}
+          <div style={{ marginTop: '1.5rem', borderTop: '1px solid rgba(201,168,76,0.3)', paddingTop: '1rem' }}>
+            <h3 style={{ color: '#c9a84c', margin: '0 0 0.8rem 0' }}>🏰 La Tua Città ({myPlayer.builtDistricts.length} distretti)</h3>
+            {myPlayer.builtDistricts.length === 0 ? (
+              <p style={{ color: 'rgba(255,255,255,0.5)', textAlign: 'center' }}>Nessun distretto costruito</p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.6rem' }}>
+                {myPlayer.builtDistricts.map(bd => {
+                  const d = getDistrictById(bd.districtId);
+                  const colorMap: Record<string, string> = { blue: '#3b82f6', green: '#22c55e', yellow: '#eab308', red: '#ef4444', purple: '#a855f7' };
+                  return (
+                    <div key={bd.uid} onClick={() => setInfoCard(d)} style={{
+                      borderRadius: '8px', overflow: 'hidden', cursor: 'pointer',
+                      border: `2px solid ${colorMap[d.color] || '#555'}`,
+                      background: 'rgba(26,21,32,0.95)',
+                      position: 'relative',
+                    }}>
+                      <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '120px', objectFit: 'cover' }} />
+                      <div style={{ padding: '0.3rem', textAlign: 'center', fontSize: '0.7rem' }}>
+                        <div style={{ fontWeight: 700, color: colorMap[d.color] || '#c9a84c' }}>{d.nameIt}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.6)' }}>🪙 {d.cost}</div>
+                      </div>
+                      {bd.artisanCoins > 0 && (
+                        <div style={{ position: 'absolute', top: '4px', right: '4px', background: '#c9a84c', color: '#1a1200', borderRadius: '50%', width: '18px', height: '18px', fontSize: '0.6rem', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+{bd.artisanCoins}</div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -355,6 +392,21 @@ export default function CitadelsPage() {
             />
           )}
 
+          {/* Cardinal build button — only for Cardinal (ID 15) during turn-action */}
+          {currentPhase === 'turn-action' && myPlayer && game.isMyTurn && myPlayer.characterId === 15 && myPlayer.buildsUsed < myPlayer.maxBuilds && (
+            <div style={{ textAlign: 'center', padding: '0.5rem' }}>
+              <button onClick={() => {
+                setCardSelDistrict(null); setCardSelTarget(null); setCardSelCards([]);
+                setShowCardinal(true);
+              }} style={{
+                padding: '0.6rem 1.5rem', fontSize: '0.95rem', fontWeight: 700,
+                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(59,130,246,0.4)',
+              }}>⛪ Costruisci con Carte (Cardinale)</button>
+            </div>
+          )}
+
           {/* Effect modal */}
           {showEffect && myPlayer && (
             <CitadelsEffect
@@ -397,8 +449,8 @@ export default function CitadelsPage() {
           {/* Veggente return cards modal */}
           {currentPhase === 'effect-active' && state.effectContext?.type === 'veggente-return' && <VeggenteReturnModal />}
 
-          {/* Pick drawn card */}
-          {currentPhase === 'effect-active' && state.effectContext?.type === 'pick-card-from-drawn' && state.drawnCards && myPlayer && (
+          {/* Pick drawn card — only shown to the active player */}
+          {currentPhase === 'effect-active' && state.effectContext?.type === 'pick-card-from-drawn' && state.drawnCards && myPlayer && state.activePlayerId === myPlayer.id && (
             <div style={{
               position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100,
               display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem',
@@ -408,15 +460,23 @@ export default function CitadelsPage() {
                 {state.drawnCards.map(card => {
                   const d = getDistrictById(card.districtId);
                   return (
-                    <div key={card.uid} onClick={() => game.pickDrawnCard(card.uid)} style={{
-                      cursor: 'pointer', borderRadius: '8px', overflow: 'hidden',
-                      border: '2px solid rgba(201,168,76,0.4)', width: '100px',
-                      transition: 'all 0.15s',
+                    <div key={card.uid} style={{
+                      borderRadius: '8px', overflow: 'hidden', position: 'relative',
+                      border: '2px solid rgba(201,168,76,0.4)', width: '110px',
                     }}>
-                      <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '130px', objectFit: 'cover' }} />
-                      <div style={{ padding: '0.3rem', textAlign: 'center', background: 'rgba(26,21,32,0.9)', fontSize: '0.7rem' }}>
-                        <div style={{ fontWeight: 700, color: '#c9a84c' }}>{d.nameIt}</div>
-                        <div style={{ color: 'rgba(255,255,255,0.6)' }}>💰 {d.cost}</div>
+                      <button onClick={(e) => { e.stopPropagation(); setInfoCard(d); }} style={{
+                        position: 'absolute', top: '4px', right: '4px', zIndex: 2,
+                        background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(201,168,76,0.5)',
+                        color: '#c9a84c', borderRadius: '50%', width: '24px', height: '24px',
+                        fontSize: '0.7rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>ℹ️</button>
+                      <div onClick={() => game.pickDrawnCard(card.uid)} style={{ cursor: 'pointer' }}>
+                        <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                        <div style={{ padding: '0.3rem', textAlign: 'center', background: 'rgba(26,21,32,0.9)', fontSize: '0.7rem' }}>
+                          <div style={{ fontWeight: 700, color: '#c9a84c' }}>{d.nameIt}</div>
+                          <div style={{ color: 'rgba(255,255,255,0.6)' }}>🪙 {d.cost}</div>
+                          {d.isUnique && <div style={{ color: 'rgba(168,85,247,0.7)', fontSize: '0.6rem' }}>✨ Unico</div>}
+                        </div>
                       </div>
                     </div>
                   );
@@ -460,6 +520,171 @@ export default function CitadelsPage() {
           onClose={() => setViewCityPlayerId(null)}
         />
       )}
+
+      {/* Info Card Overlay — large view of any district card */}
+      {infoCard && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 300,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+        }} onClick={() => setInfoCard(null)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            maxWidth: '320px', width: '100%', background: 'rgba(26,21,32,0.98)',
+            borderRadius: '16px', overflow: 'hidden',
+            border: '2px solid #c9a84c', boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
+          }}>
+            <img src={infoCard.image} alt={infoCard.nameIt} style={{ width: '100%', height: '380px', objectFit: 'cover' }} />
+            <div style={{ padding: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <h3 style={{ color: '#c9a84c', margin: 0, fontSize: '1.1rem' }}>{infoCard.nameIt}</h3>
+                <span style={{
+                  background: 'rgba(201,168,76,0.2)', color: '#c9a84c', padding: '0.2rem 0.6rem',
+                  borderRadius: '6px', fontWeight: 700, fontSize: '0.9rem',
+                }}>🪙 {infoCard.cost}</span>
+              </div>
+              {(() => {
+                const colorNames: Record<string, string> = { blue: 'Religioso', green: 'Commerciale', yellow: 'Nobiliare', red: 'Militare', purple: 'Unico' };
+                const colorMap: Record<string, string> = { blue: '#3b82f6', green: '#22c55e', yellow: '#eab308', red: '#ef4444', purple: '#a855f7' };
+                return (
+                  <span style={{ fontSize: '0.8rem', color: colorMap[infoCard.color], fontWeight: 600 }}>
+                    {colorNames[infoCard.color] || infoCard.color}
+                  </span>
+                );
+              })()}
+              {infoCard.isUnique && infoCard.effectTextIt && (
+                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.85rem', marginTop: '0.8rem', lineHeight: '1.4' }}>
+                  {infoCard.effectTextIt}
+                </p>
+              )}
+              <button onClick={() => setInfoCard(null)} style={{
+                width: '100%', marginTop: '1rem', padding: '0.6rem',
+                background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                color: '#fff', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem',
+              }}>Chiudi</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cardinal Build Modal */}
+      {showCardinal && myPlayer && myPlayer.characterId === 15 && (() => {
+        const colorMap: Record<string, string> = { blue: '#3b82f6', green: '#22c55e', yellow: '#eab308', red: '#ef4444', purple: '#a855f7' };
+        const districtCard = cardSelDistrict ? myPlayer.hand.find(c => c.uid === cardSelDistrict) : null;
+        const district = districtCard ? getDistrictById(districtCard.districtId) : null;
+        const cost = district?.cost || 0;
+        const target = cardSelTarget ? state.players.find(p => p.id === cardSelTarget) : null;
+        const maxCards = Math.min(cost, target?.gold || 0);
+        const goldFromOwn = cost - cardSelCards.length;
+        const canConfirm = cardSelDistrict && cardSelTarget && cardSelCards.length <= maxCards && goldFromOwn <= myPlayer.gold;
+
+        return (
+          <div style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 200,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem', overflow: 'auto',
+          }}>
+            <div style={{ maxWidth: '600px', width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ color: '#c9a84c', margin: 0 }}>⛪ Costruzione del Cardinale</h3>
+                <button onClick={() => setShowCardinal(false)} style={{
+                  background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                  color: '#fff', borderRadius: '8px', padding: '0.4rem 0.8rem', cursor: 'pointer',
+                }}>✕</button>
+              </div>
+
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginBottom: '0.8rem' }}>
+                1. Scegli il distretto da costruire:
+              </p>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                {myPlayer.hand.map(card => {
+                  const d = getDistrictById(card.districtId);
+                  const isSel = cardSelDistrict === card.uid;
+                  return (
+                    <div key={card.uid} onClick={() => { setCardSelDistrict(card.uid); setCardSelCards([]); }} style={{
+                      width: '75px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                      border: `2px solid ${isSel ? '#c9a84c' : 'rgba(255,255,255,0.1)'}`,
+                      boxShadow: isSel ? '0 0 8px rgba(201,168,76,0.5)' : 'none',
+                    }}>
+                      <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '90px', objectFit: 'cover' }} />
+                      <div style={{ padding: '0.2rem', textAlign: 'center', fontSize: '0.6rem', background: 'rgba(26,21,32,0.9)' }}>
+                        <div style={{ fontWeight: 700, color: colorMap[d.color] || '#c9a84c' }}>{d.nameIt}</div>
+                        <div style={{ color: 'rgba(255,255,255,0.5)' }}>🪙{d.cost}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {cardSelDistrict && (
+                <>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                    2. Scegli il giocatore a cui dare carte (costo: 🪙{cost}):
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                    {state.players.filter(p => p.id !== myPlayer.id && p.gold > 0).map(p => (
+                      <button key={p.id} onClick={() => { setCardSelTarget(p.id); setCardSelCards([]); }} style={{
+                        padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer',
+                        background: cardSelTarget === p.id ? 'rgba(201,168,76,0.3)' : 'rgba(255,255,255,0.05)',
+                        border: `1px solid ${cardSelTarget === p.id ? '#c9a84c' : 'rgba(255,255,255,0.15)'}`,
+                        color: '#e8e0d5', fontSize: '0.85rem',
+                      }}>
+                        {p.name} (🪙{p.gold})
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {cardSelDistrict && cardSelTarget && (
+                <>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+                    3. Scegli carte da dare (max {maxCards}). Ogni carta = 1🪙 dal giocatore. Tu paghi i restanti 🪙{goldFromOwn} dal tuo oro.
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                    {myPlayer.hand.filter(c => c.uid !== cardSelDistrict).map(card => {
+                      const d = getDistrictById(card.districtId);
+                      const isSel = cardSelCards.includes(card.uid);
+                      return (
+                        <div key={card.uid} onClick={() => {
+                          if (isSel) setCardSelCards(cardSelCards.filter(u => u !== card.uid));
+                          else if (cardSelCards.length < maxCards) setCardSelCards([...cardSelCards, card.uid]);
+                        }} style={{
+                          width: '70px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                          border: `2px solid ${isSel ? '#c9a84c' : 'rgba(255,255,255,0.1)'}`,
+                          opacity: isSel ? 1 : 0.7,
+                        }}>
+                          <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '85px', objectFit: 'cover' }} />
+                          <div style={{ padding: '0.15rem', textAlign: 'center', fontSize: '0.55rem', background: 'rgba(26,21,32,0.9)' }}>
+                            <div style={{ fontWeight: 700, color: colorMap[d.color] || '#c9a84c' }}>{d.nameIt}</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '8px', padding: '0.6rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                    <div style={{ color: '#c9a84c' }}>Riepilogo:</div>
+                    <div style={{ color: 'rgba(255,255,255,0.7)' }}>
+                      Costruisci: <strong>{district?.nameIt}</strong> (🪙{cost}) | 
+                      Dai {cardSelCards.length} carte a {target?.name} → ricevi 🪙{cardSelCards.length} | 
+                      Paghi dal tuo oro: 🪙{goldFromOwn}
+                    </div>
+                  </div>
+
+                  <button disabled={!canConfirm} onClick={() => {
+                    game.cardinalBuild(cardSelDistrict!, cardSelTarget!, cardSelCards);
+                    setShowCardinal(false);
+                  }} style={{
+                    width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700,
+                    cursor: canConfirm ? 'pointer' : 'not-allowed',
+                    background: canConfirm ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'rgba(255,255,255,0.1)',
+                    color: canConfirm ? '#fff' : 'rgba(255,255,255,0.3)',
+                    border: 'none', borderRadius: '12px',
+                  }}>⛪ Costruisci con il Cardinale</button>
+                </>
+              )}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -464,6 +464,74 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       });
     }
 
+    // ========== CARDINAL BUILD (pay with cards given to another player) ==========
+    else if (action === 'cardinal-build') {
+      const { cardUid, targetPlayerId, cardUidsToGive } = payload;
+      const p = s.players.find(pl => pl.id === s.activePlayerId);
+      const target = s.players.find(pl => pl.id === targetPlayerId);
+      if (!p || !target || p.characterId !== 15) return;
+
+      const card = p.hand.find(c => c.uid === cardUid);
+      if (!card) return;
+      const district = getDistrictById(card.districtId);
+      const cost = district.cost;
+
+      // Cards to give (each = 1 gold from target)
+      const cardsToGive = cardUidsToGive.length;
+      if (cardsToGive > cost || cardsToGive > target.gold) return;
+
+      const goldFromOwn = cost - cardsToGive;
+      if (p.gold < goldFromOwn) return;
+
+      // Validate all card uids exist in hand (excluding the district being built)
+      const handWithoutBuilt = p.hand.filter(c => c.uid !== cardUid);
+      const givenCards = cardUidsToGive.map((uid: string) => handWithoutBuilt.find(c => c.uid === uid)).filter(Boolean) as DistrictCard[];
+      if (givenCards.length !== cardsToGive) return;
+
+      const newBuilt: BuiltDistrict = {
+        uid: card.uid, districtId: card.districtId, artisanCoins: 0, museumCards: 0,
+      };
+
+      const givenUidSet = new Set(cardUidsToGive as string[]);
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id === p.id) {
+          return {
+            ...pl,
+            gold: pl.gold - goldFromOwn,
+            goldSpentThisTurn: pl.goldSpentThisTurn + cost,
+            hand: pl.hand.filter(c => c.uid !== cardUid && !givenUidSet.has(c.uid)),
+            builtDistricts: [...pl.builtDistricts, newBuilt],
+            buildsUsed: pl.buildsUsed + 1,
+          };
+        }
+        if (pl.id === targetPlayerId) {
+          return {
+            ...pl,
+            gold: pl.gold - cardsToGive,
+            hand: [...pl.hand, ...givenCards],
+          };
+        }
+        return pl;
+      });
+
+      // Check game end
+      const builder = updatedPlayers.find(pl => pl.id === p.id)!;
+      let gameEndTriggered = s.gameEndTriggered;
+      let firstTo7 = s.firstTo7PlayerId;
+      if (!gameEndTriggered && countBuiltDistricts(builder) >= 7) {
+        gameEndTriggered = true;
+        firstTo7 = p.id;
+      }
+
+      sync({
+        ...s,
+        players: updatedPlayers,
+        gameEndTriggered,
+        firstTo7PlayerId: firstTo7,
+        gameEndRound: gameEndTriggered && !s.gameEndTriggered ? s.roundNumber : s.gameEndRound,
+      });
+    }
+
     // ========== END TURN ==========
     else if (action === 'end-turn') {
       const p = s.players.find(pl => pl.id === s.activePlayerId);
@@ -1169,6 +1237,8 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     veggenteTake: useCallback(() => act('veggente-take'), [act]),
     veggenteReturn: useCallback((assignments: { playerId: string; cardUid: string }[]) =>
       act('veggente-return', { assignments }), [act]),
+    cardinalBuild: useCallback((cardUid: string, targetPlayerId: string, cardUidsToGive: string[]) =>
+      act('cardinal-build', { cardUid, targetPlayerId, cardUidsToGive }), [act]),
     museoTuck: useCallback((cardUid: string) => act('museo-tuck', { cardUid }), [act]),
     useFucina: useCallback(() => act('use-fucina'), [act]),
     useLaboratorio: useCallback((cardUid: string) => act('use-laboratorio', { cardUid }), [act]),
