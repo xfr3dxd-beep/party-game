@@ -492,6 +492,8 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         uid: card.uid, districtId: card.districtId, artisanCoins: 0, museumCards: 0,
       };
 
+      const isScuderie = district.id === 525;
+
       const givenUidSet = new Set(cardUidsToGive as string[]);
       const updatedPlayers = s.players.map(pl => {
         if (pl.id === p.id) {
@@ -501,7 +503,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
             goldSpentThisTurn: pl.goldSpentThisTurn + cost,
             hand: pl.hand.filter(c => c.uid !== cardUid && !givenUidSet.has(c.uid)),
             builtDistricts: [...pl.builtDistricts, newBuilt],
-            buildsUsed: pl.buildsUsed + 1,
+            buildsUsed: isScuderie ? pl.buildsUsed : pl.buildsUsed + 1,
             hasUsedEffect: true,
           };
         }

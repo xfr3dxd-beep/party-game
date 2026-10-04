@@ -231,11 +231,17 @@ export default function CitadelsPage() {
             const isMatch = d.color === color;
             return (
               <div key={card.uid} style={{
-                borderRadius: '8px', overflow: 'hidden', width: '90px',
+                borderRadius: '8px', overflow: 'hidden', width: '90px', position: 'relative',
                 border: `2px solid ${isMatch ? colorMap[color] : 'rgba(255,255,255,0.15)'}`,
                 opacity: isMatch ? 1 : 0.5,
                 boxShadow: isMatch ? `0 0 12px ${colorMap[color]}40` : 'none',
               }}>
+                <button onClick={(e) => { e.stopPropagation(); setInfoCard(d); }} style={{
+                  position: 'absolute', top: '3px', right: '3px', zIndex: 2,
+                  background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(201,168,76,0.5)',
+                  color: '#c9a84c', borderRadius: '50%', width: '22px', height: '22px',
+                  fontSize: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>ℹ️</button>
                 <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '110px', objectFit: 'cover' }} />
                 <div style={{ padding: '0.25rem', textAlign: 'center', background: 'rgba(26,21,32,0.9)', fontSize: '0.65rem' }}>
                   <div style={{ fontWeight: 700, color: colorMap[d.color] || '#c9a84c' }}>{d.nameIt}</div>
@@ -303,7 +309,14 @@ export default function CitadelsPage() {
                       border: `2px solid ${isSelected ? '#c9a84c' : 'rgba(255,255,255,0.1)'}`,
                       opacity: isUsed ? 0.3 : 1,
                       boxShadow: isSelected ? '0 0 8px rgba(201,168,76,0.5)' : 'none',
+                      position: 'relative',
                     }}>
+                      <button onClick={(e) => { e.stopPropagation(); setInfoCard(d); }} style={{
+                        position: 'absolute', top: '2px', right: '2px', zIndex: 2,
+                        background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(201,168,76,0.5)',
+                        color: '#c9a84c', borderRadius: '50%', width: '20px', height: '20px',
+                        fontSize: '0.55rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>ℹ️</button>
                       <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '85px', objectFit: 'cover' }} />
                       <div style={{ padding: '0.2rem', textAlign: 'center', background: 'rgba(26,21,32,0.9)', fontSize: '0.6rem' }}>
                         <div style={{ fontWeight: 700, color: colorMap[d.color] || '#c9a84c' }}>{d.nameIt}</div>
@@ -585,10 +598,16 @@ export default function CitadelsPage() {
                   const isSel = cardSelDistrict === card.uid;
                   return (
                     <div key={card.uid} onClick={() => { setCardSelDistrict(card.uid); setCardSelCards([]); }} style={{
-                      width: '75px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                      width: '75px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', position: 'relative',
                       border: `2px solid ${isSel ? '#c9a84c' : 'rgba(255,255,255,0.1)'}`,
                       boxShadow: isSel ? '0 0 8px rgba(201,168,76,0.5)' : 'none',
                     }}>
+                      <button onClick={(e) => { e.stopPropagation(); setInfoCard(d); }} style={{
+                        position: 'absolute', top: '2px', right: '2px', zIndex: 2,
+                        background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(201,168,76,0.5)',
+                        color: '#c9a84c', borderRadius: '50%', width: '20px', height: '20px',
+                        fontSize: '0.55rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>ℹ️</button>
                       <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '90px', objectFit: 'cover' }} />
                       <div style={{ padding: '0.2rem', textAlign: 'center', fontSize: '0.6rem', background: 'rgba(26,21,32,0.9)' }}>
                         <div style={{ fontWeight: 700, color: colorMap[d.color] || '#c9a84c' }}>{d.nameIt}</div>
@@ -633,10 +652,16 @@ export default function CitadelsPage() {
                           if (isSel) setCardSelCards(cardSelCards.filter(u => u !== card.uid));
                           else if (cardSelCards.length < maxCards) setCardSelCards([...cardSelCards, card.uid]);
                         }} style={{
-                          width: '70px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                          width: '70px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer', position: 'relative',
                           border: `2px solid ${isSel ? '#c9a84c' : 'rgba(255,255,255,0.1)'}`,
                           opacity: isSel ? 1 : 0.7,
                         }}>
+                          <button onClick={(e) => { e.stopPropagation(); setInfoCard(d); }} style={{
+                            position: 'absolute', top: '2px', right: '2px', zIndex: 2,
+                            background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(201,168,76,0.5)',
+                            color: '#c9a84c', borderRadius: '50%', width: '20px', height: '20px',
+                            fontSize: '0.55rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>ℹ️</button>
                           <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '85px', objectFit: 'cover' }} />
                           <div style={{ padding: '0.15rem', textAlign: 'center', fontSize: '0.55rem', background: 'rgba(26,21,32,0.9)' }}>
                             <div style={{ fontWeight: 700, color: colorMap[d.color] || '#c9a84c' }}>{d.nameIt}</div>
