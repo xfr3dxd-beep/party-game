@@ -502,6 +502,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
             hand: pl.hand.filter(c => c.uid !== cardUid && !givenUidSet.has(c.uid)),
             builtDistricts: [...pl.builtDistricts, newBuilt],
             buildsUsed: pl.buildsUsed + 1,
+            hasUsedEffect: true,
           };
         }
         if (pl.id === targetPlayerId) {
