@@ -397,11 +397,13 @@ export default function CitadelsPage() {
               onBuildDistrict={game.buildDistrict}
               onEndTurn={game.endTurn}
               onCollectIncome={game.collectIncome}
+              onCollectIncomeChoice={game.collectIncomeChoice}
               onTakeCrown={game.takeCrown}
               onUseEffect={() => setShowEffect(true)}
               onUseFucina={game.useFucina}
               onUseLaboratorio={game.useLaboratorio}
               onMuseoTuck={game.museoTuck}
+              onCovoBuild={game.covoBuild}
             />
           )}
 
@@ -424,6 +426,8 @@ export default function CitadelsPage() {
               onArtistEmbellish={(uids) => { game.artistEmbellish(uids); setShowEffect(false); }}
               onVeggenteTake={() => { game.veggenteTake(); setShowEffect(false); }}
               onCardinalBuild={() => { setShowEffect(false); setCardSelDistrict(null); setCardSelTarget(null); setCardSelCards([]); setShowCardinal(true); }}
+              onMagistrateAssign={(assignments) => { game.magistrateAssign(assignments); setShowEffect(false); }}
+              onSorcererLook={(targetId) => { game.sorcererLook(targetId); setShowEffect(false); }}
               onClose={() => setShowEffect(false)}
             />
           )}
@@ -447,6 +451,58 @@ export default function CitadelsPage() {
 
           {/* Veggente return cards modal */}
           {currentPhase === 'effect-active' && state.effectContext?.type === 'veggente-return' && <VeggenteReturnModal />}
+
+          {/* Sorcerer look modal — shows target's hand, pick card to build */}
+          {currentPhase === 'effect-active' && state.effectContext?.type === 'sorcerer-look' && myPlayer && state.activePlayerId === myPlayer.id && (() => {
+            const { targetPlayerId, targetHand } = state.effectContext.data;
+            const targetName = state.players.find(p => p.id === targetPlayerId)?.name || '?';
+            const colorMap: Record<string, string> = { blue: '#3b82f6', green: '#22c55e', yellow: '#eab308', red: '#ef4444', purple: '#a855f7' };
+            return (
+              <div style={{
+                position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 200,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem', overflow: 'auto',
+              }}>
+                <div style={{ maxWidth: '600px', width: '100%' }}>
+                  <h3 style={{ color: '#a855f7', marginBottom: '0.5rem' }}>🔮 Mano di {targetName}</h3>
+                  <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                    Clicca su un distretto per costruirlo nella tua città (paghi il costo, ignora duplicati, non consuma la costruzione del turno).
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                    {(targetHand as DistrictCard[]).map((card: DistrictCard) => {
+                      const d = getDistrictById(card.districtId);
+                      const canAfford = myPlayer.gold >= d.cost;
+                      return (
+                        <div key={card.uid} style={{
+                          borderRadius: '8px', overflow: 'hidden', width: '90px', position: 'relative',
+                          border: `2px solid ${canAfford ? 'rgba(168,85,247,0.4)' : 'rgba(255,255,255,0.1)'}`,
+                          opacity: canAfford ? 1 : 0.5,
+                        }}>
+                          <button onClick={(e) => { e.stopPropagation(); setInfoCard(d); }} style={{
+                            position: 'absolute', top: '3px', right: '3px', zIndex: 2,
+                            background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(168,85,247,0.5)',
+                            color: '#a855f7', borderRadius: '50%', width: '22px', height: '22px',
+                            fontSize: '0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>ℹ️</button>
+                          <div onClick={() => { if (canAfford) game.sorcererBuild(targetPlayerId, card.uid); }} style={{ cursor: canAfford ? 'pointer' : 'not-allowed' }}>
+                            <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '110px', objectFit: 'cover' }} />
+                            <div style={{ padding: '0.25rem', textAlign: 'center', background: 'rgba(26,21,32,0.9)', fontSize: '0.65rem' }}>
+                              <div style={{ fontWeight: 700, color: colorMap[d.color] || '#c9a84c' }}>{d.nameIt}</div>
+                              <div style={{ color: canAfford ? 'rgba(255,255,255,0.6)' : '#ef4444' }}>🪙 {d.cost} {!canAfford && '(no oro)'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button onClick={() => game.sorcererBuild(targetPlayerId, '')} style={{
+                    width: '100%', padding: '0.7rem', background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)', color: '#e8e0d5',
+                    borderRadius: '10px', cursor: 'pointer', fontSize: '0.9rem',
+                  }}>❌ Non costruire (annulla)</button>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Pick drawn card — only shown to the active player */}
           {currentPhase === 'effect-active' && state.effectContext?.type === 'pick-card-from-drawn' && state.drawnCards && myPlayer && state.activePlayerId === myPlayer.id && (

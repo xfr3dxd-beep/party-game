@@ -40,6 +40,8 @@ interface CitadelsEffectProps {
   onArtistEmbellish: (districtUids: string[]) => void;
   onVeggenteTake?: () => void;
   onCardinalBuild?: () => void;
+  onMagistrateAssign?: (assignments: { playerId: string; token: 'real' | 'fake' }[]) => void;
+  onSorcererLook?: (targetPlayerId: string) => void;
   onClose: () => void;
 }
 
@@ -68,6 +70,8 @@ export default function CitadelsEffect({
   onArtistEmbellish,
   onVeggenteTake,
   onCardinalBuild,
+  onMagistrateAssign,
+  onSorcererLook,
   onClose,
 }: CitadelsEffectProps) {
   // Local states for complex interactive effects
@@ -336,6 +340,101 @@ export default function CitadelsEffect({
                 >
                   🎲 Rischia (Non Pagare)
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* MAGISTRATO (Rank 1, ID 2) — Assign threat tokens                */}
+          {/* ============================================================== */}
+          {!isBlackmailerDecide && character?.id === 2 && (() => {
+            const TOKEN_BACK = '/Citadels/Personaggi %2B token/Token Magistrato Dorso (segnalino minaccia).jpg';
+            const otherPlayers = state.players.filter(p => p.id !== myPlayer.id);
+            const [tokenAssignments, setTokenAssignments] = React.useState<Record<string, 'real' | 'fake' | null>>({});
+            const assigned = Object.entries(tokenAssignments).filter(([_, v]) => v !== null);
+            const realCount = assigned.filter(([_, v]) => v === 'real').length;
+            const fakeCount = assigned.filter(([_, v]) => v === 'fake').length;
+            const canConfirm = realCount === 1 && fakeCount === 2;
+
+            const toggleToken = (playerId: string) => {
+              const current = tokenAssignments[playerId];
+              if (!current) {
+                // Assign real if not yet assigned, else fake
+                if (realCount === 0) setTokenAssignments({ ...tokenAssignments, [playerId]: 'real' });
+                else if (fakeCount < 2) setTokenAssignments({ ...tokenAssignments, [playerId]: 'fake' });
+              } else if (current === 'real') {
+                if (fakeCount < 2) setTokenAssignments({ ...tokenAssignments, [playerId]: 'fake' });
+                else setTokenAssignments({ ...tokenAssignments, [playerId]: null });
+              } else if (current === 'fake') {
+                setTokenAssignments({ ...tokenAssignments, [playerId]: null });
+              }
+            };
+
+            return (
+              <div>
+                <p style={{ margin: '0 0 0.8rem 0', fontSize: '0.9rem', color: 'rgba(244, 237, 226, 0.8)' }}>
+                  Assegna 3 segnalini minaccia: <strong style={{ color: '#ef4444' }}>1 vero</strong> e <strong style={{ color: 'rgba(255,255,255,0.5)' }}>2 falsi</strong>.
+                  Clicca sui giocatori per assegnare.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {otherPlayers.map(p => {
+                    const token = tokenAssignments[p.id];
+                    return (
+                      <button key={p.id} onClick={() => toggleToken(p.id)} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.6rem',
+                        padding: '0.6rem 1rem', borderRadius: '8px', cursor: 'pointer',
+                        background: token === 'real' ? 'rgba(239,68,68,0.2)' : token === 'fake' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${token === 'real' ? '#ef4444' : token === 'fake' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
+                        color: '#e8e0d5', textAlign: 'left',
+                      }}>
+                        <img src={TOKEN_BACK} alt="token" style={{ width: '30px', height: '30px', borderRadius: '4px', objectFit: 'cover' }} />
+                        <span style={{ flex: 1, fontWeight: 600 }}>{p.name}</span>
+                        {token === 'real' && <span style={{ color: '#ef4444', fontWeight: 700 }}>🔴 VERO</span>}
+                        {token === 'fake' && <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>⚪ Falso</span>}
+                        {!token && <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button disabled={!canConfirm} onClick={() => {
+                  if (onMagistrateAssign) {
+                    const arr = Object.entries(tokenAssignments)
+                      .filter(([_, v]) => v !== null)
+                      .map(([playerId, token]) => ({ playerId, token: token as 'real' | 'fake' }));
+                    onMagistrateAssign(arr);
+                  }
+                }} style={{
+                  width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700,
+                  cursor: canConfirm ? 'pointer' : 'not-allowed',
+                  background: canConfirm ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255,255,255,0.1)',
+                  color: canConfirm ? '#fff' : 'rgba(255,255,255,0.3)',
+                  border: 'none', borderRadius: '12px',
+                }}>⚖️ Assegna Segnalini ({assigned.length}/3)</button>
+              </div>
+            );
+          })()}
+
+          {/* ============================================================== */}
+          {/* STREGONE (Rank 3, ID 8) — Look at hand                         */}
+          {/* ============================================================== */}
+          {!isBlackmailerDecide && character?.id === 8 && (
+            <div>
+              <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'rgba(244, 237, 226, 0.8)' }}>
+                Guarda la mano di un giocatore e scegli se costruire uno dei suoi distretti
+                (pagando il costo, ignorando i duplicati, senza usare la tua costruzione del turno).
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                {state.players.filter(p => p.id !== myPlayer.id && p.hand.length > 0).map(p => (
+                  <button key={p.id} onClick={() => { if (onSorcererLook) onSorcererLook(p.id); }} style={{
+                    display: 'flex', alignItems: 'center', gap: '0.6rem',
+                    padding: '0.6rem 1rem', borderRadius: '8px', cursor: 'pointer',
+                    background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)',
+                    color: '#e8e0d5',
+                  }}>
+                    <span style={{ flex: 1, fontWeight: 600, textAlign: 'left' }}>{p.name}</span>
+                    <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem' }}>🃏 {p.hand.length} carte</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}

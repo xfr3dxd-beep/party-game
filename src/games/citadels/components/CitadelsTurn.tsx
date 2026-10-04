@@ -29,11 +29,13 @@ interface CitadelsTurnProps {
   onBuildDistrict: (cardUid: string) => void;
   onEndTurn: () => void;
   onCollectIncome: () => void;
+  onCollectIncomeChoice?: (type: 'gold' | 'cards') => void;
   onTakeCrown: () => void;
   onUseEffect: () => void;
   onUseFucina: () => void;
   onUseLaboratorio: (cardUid: string) => void;
   onMuseoTuck: (cardUid: string) => void;
+  onCovoBuild?: (cardUid: string, cardsToDiscard: string[]) => void;
 }
 
 const DISTRICT_COLORS: Record<string, { label: string; bg: string; text: string; border: string; icon: string }> = {
@@ -54,11 +56,13 @@ export default function CitadelsTurn({
   onBuildDistrict,
   onEndTurn,
   onCollectIncome,
+  onCollectIncomeChoice,
   onTakeCrown,
   onUseEffect,
   onUseFucina,
   onUseLaboratorio,
   onMuseoTuck,
+  onCovoBuild,
 }: CitadelsTurnProps) {
   // Only visible when isMyTurn is true
   if (!isMyTurn) return null;
@@ -66,6 +70,8 @@ export default function CitadelsTurn({
   const [specialMode, setSpecialMode] = useState<'none' | 'laboratorio' | 'museo'>('none');
   const [fucinaUsed, setFucinaUsed] = useState(false);
   const [incomeCollected, setIncomeCollected] = useState(false);
+  const [covoBuildUid, setCovoBuildUid] = useState<string | null>(null);
+  const [covoDiscards, setCovoDiscards] = useState<string[]>([]);
 
   const character = myPlayer.characterId ? getCharacterById(myPlayer.characterId) : null;
 
@@ -337,25 +343,65 @@ export default function CitadelsTurn({
           </button>
         )}
 
-        {/* Character Income Button */}
-        {character?.incomeColor && (
+        {/* Character Income Button — Patrizio (12) gets two buttons: gold or cards */}
+        {character?.incomeColor && character.id === 12 && onCollectIncomeChoice && (
+          <div style={{ display: 'flex', gap: '0.4rem' }}>
+            <button
+              onClick={() => { onCollectIncomeChoice('gold'); setIncomeCollected(true); }}
+              disabled={incomeCollected || incomeAmount === 0}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.35rem',
+                padding: '0.55rem 0.8rem',
+                background: incomeCollected || incomeAmount === 0
+                  ? 'rgba(255, 255, 255, 0.05)'
+                  : 'linear-gradient(135deg, rgba(230, 184, 0, 0.25) 0%, rgba(201, 168, 76, 0.1) 100%)',
+                border: `1px solid ${incomeCollected || incomeAmount === 0 ? 'rgba(255,255,255,0.1)' : '#f39c12'}`,
+                borderRadius: '8px',
+                color: incomeCollected || incomeAmount === 0 ? 'rgba(255,255,255,0.4)' : '#ffd54f',
+                fontWeight: 700, fontSize: '0.8rem',
+                cursor: incomeCollected || incomeAmount === 0 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              <Coins size={14} />
+              Reddito +{incomeAmount}🪙
+              {incomeCollected && ' ✓'}
+            </button>
+            <button
+              onClick={() => { onCollectIncomeChoice('cards'); setIncomeCollected(true); }}
+              disabled={incomeCollected || incomeAmount === 0}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.35rem',
+                padding: '0.55rem 0.8rem',
+                background: incomeCollected || incomeAmount === 0
+                  ? 'rgba(255, 255, 255, 0.05)'
+                  : 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.1) 100%)',
+                border: `1px solid ${incomeCollected || incomeAmount === 0 ? 'rgba(255,255,255,0.1)' : '#3b82f6'}`,
+                borderRadius: '8px',
+                color: incomeCollected || incomeAmount === 0 ? 'rgba(255,255,255,0.4)' : '#93c5fd',
+                fontWeight: 700, fontSize: '0.8rem',
+                cursor: incomeCollected || incomeAmount === 0 ? 'not-allowed' : 'pointer',
+              }}
+            >
+              🃏 Reddito +{incomeAmount}🃏
+              {incomeCollected && ' ✓'}
+            </button>
+          </div>
+        )}
+        {/* Standard income button for non-Patrizio characters */}
+        {character?.incomeColor && character.id !== 12 && (
           <button
             onClick={handleIncome}
             disabled={incomeCollected || incomeAmount === 0}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.45rem',
+              display: 'flex', alignItems: 'center', gap: '0.45rem',
               padding: '0.55rem 0.95rem',
-              background:
-                incomeCollected || incomeAmount === 0
-                  ? 'rgba(255, 255, 255, 0.05)'
-                  : 'linear-gradient(135deg, rgba(230, 184, 0, 0.25) 0%, rgba(201, 168, 76, 0.1) 100%)',
+              background: incomeCollected || incomeAmount === 0
+                ? 'rgba(255, 255, 255, 0.05)'
+                : 'linear-gradient(135deg, rgba(230, 184, 0, 0.25) 0%, rgba(201, 168, 76, 0.1) 100%)',
               border: `1px solid ${incomeCollected || incomeAmount === 0 ? 'rgba(255,255,255,0.1)' : '#f39c12'}`,
               borderRadius: '8px',
               color: incomeCollected || incomeAmount === 0 ? 'rgba(255,255,255,0.4)' : '#ffd54f',
-              fontWeight: 700,
-              fontSize: '0.85rem',
+              fontWeight: 700, fontSize: '0.85rem',
               cursor: incomeCollected || incomeAmount === 0 ? 'not-allowed' : 'pointer',
               transition: 'all 0.15s',
             }}
@@ -1048,7 +1094,13 @@ export default function CitadelsTurn({
                     <div style={{ marginTop: 'auto' }}>
                       {isEligibleToBuild ? (
                         <button
-                          onClick={() => onBuildDistrict(card.uid)}
+                          onClick={() => {
+                            if (district.id === 506 && onCovoBuild) {
+                              setCovoBuildUid(card.uid); setCovoDiscards([]);
+                            } else {
+                              onBuildDistrict(card.uid);
+                            }
+                          }}
                           style={{
                             width: '100%',
                             padding: '0.45rem',
@@ -1103,6 +1155,74 @@ export default function CitadelsTurn({
           </div>
         )}
       </div>
+      {covoBuildUid && onCovoBuild && (() => {
+        const covoCard = myPlayer.hand.find(c => c.uid === covoBuildUid);
+        if (!covoCard) return null;
+        const covoDistrict = getDistrictById(covoCard.districtId);
+        const goldCost = Math.max(0, covoDistrict.cost - covoDiscards.length);
+        const canConfirm = goldCost <= myPlayer.gold;
+        const otherCards = myPlayer.hand.filter(c => c.uid !== covoBuildUid);
+
+        return (
+          <div style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 200,
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+          }}>
+            <div style={{ maxWidth: '500px', width: '100%' }}>
+              <h3 style={{ color: '#a855f7', marginBottom: '0.5rem' }}>🏴‍☠️ Covo dei Ladri</h3>
+              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                Costo: 🪙{covoDistrict.cost}. Puoi scartare carte come pagamento parziale (1 carta = 1🪙).
+                Seleziona le carte da scartare.
+              </p>
+              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                {otherCards.map(card => {
+                  const d = getDistrictById(card.districtId);
+                  const isSel = covoDiscards.includes(card.uid);
+                  const maxDiscards = covoDistrict.cost;
+                  return (
+                    <div key={card.uid} onClick={() => {
+                      if (isSel) setCovoDiscards(covoDiscards.filter(u => u !== card.uid));
+                      else if (covoDiscards.length < maxDiscards) setCovoDiscards([...covoDiscards, card.uid]);
+                    }} style={{
+                      width: '65px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                      border: `2px solid ${isSel ? '#a855f7' : 'rgba(255,255,255,0.1)'}`,
+                      opacity: isSel ? 1 : 0.6,
+                    }}>
+                      <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '80px', objectFit: 'cover' }} />
+                      <div style={{ padding: '0.15rem', textAlign: 'center', fontSize: '0.5rem', background: 'rgba(26,21,32,0.9)' }}>
+                        <div style={{ fontWeight: 700, color: '#c9a84c' }}>{d.nameIt}</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: '8px', padding: '0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                <div style={{ color: '#a855f7' }}>Riepilogo:</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)' }}>
+                  Scarti {covoDiscards.length} carte (= 🪙{covoDiscards.length}) | Paghi dal tuo oro: 🪙{goldCost}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => setCovoBuildUid(null)} style={{
+                  flex: 1, padding: '0.7rem', background: 'rgba(255,255,255,0.1)',
+                  border: '1px solid rgba(255,255,255,0.2)', color: '#e8e0d5',
+                  borderRadius: '10px', cursor: 'pointer',
+                }}>Annulla</button>
+                <button disabled={!canConfirm} onClick={() => {
+                  onCovoBuild(covoBuildUid, covoDiscards);
+                  setCovoBuildUid(null);
+                }} style={{
+                  flex: 2, padding: '0.7rem', fontWeight: 700,
+                  cursor: canConfirm ? 'pointer' : 'not-allowed',
+                  background: canConfirm ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.1)',
+                  color: canConfirm ? '#fff' : 'rgba(255,255,255,0.3)',
+                  border: 'none', borderRadius: '10px',
+                }}>🏴‍☠️ Costruisci (🪙{goldCost})</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

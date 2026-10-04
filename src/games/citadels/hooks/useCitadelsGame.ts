@@ -588,6 +588,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
 
       const char = getCharacterById(p.characterId);
       if (!char.incomeColor) return;
+      if (char.id === 12) return; // Patrizio must use collect-income-choice
 
       let color = char.incomeColor;
       // Scuola di Magia (524) counts as chosen color
@@ -598,7 +599,6 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
 
       // Some chars get gold, some get cards, some choose
       // Abate (14): gold or card per blue
-      // Patrizio (12): gold or card per yellow
       // Others: gold per color
 
       let goldIncome = count;
@@ -609,6 +609,222 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         pl.id === p.id ? { ...pl, gold: pl.gold + goldIncome } : pl
       );
       sync({ ...s, players: updatedPlayers });
+    }
+
+    else if (action === 'collect-income-choice') {
+      const { type } = payload as { type: 'gold' | 'cards' };
+      const p = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!p || p.characterId !== 12) return;
+
+      const char = getCharacterById(p.characterId);
+      if (!char.incomeColor) return;
+
+      const count = countDistrictsByColor(p, char.incomeColor);
+      if (count === 0) return;
+
+      if (type === 'gold') {
+        const updatedPlayers = s.players.map(pl =>
+          pl.id === p.id ? { ...pl, gold: pl.gold + count } : pl
+        );
+        sync({ ...s, players: updatedPlayers });
+      } else if (type === 'cards') {
+        const { drawn, remaining } = drawCards(s.districtDeck, count);
+        const updatedPlayers = s.players.map(pl =>
+          pl.id === p.id ? { ...pl, hand: [...pl.hand, ...drawn] } : pl
+        );
+        sync({ ...s, players: updatedPlayers, districtDeck: remaining });
+      }
+    }
+
+    // ========== MAGISTRATO ASSIGN ==========
+    else if (action === 'magistrate-assign') {
+      const { assignments } = payload as { assignments: { playerId: string; token: 'real' | 'fake' }[] };
+      const mag = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!mag || mag.characterId !== 2) return;
+      if (assignments.length !== 3) return;
+      
+      const realCount = assignments.filter(a => a.token === 'real').length;
+      const fakeCount = assignments.filter(a => a.token === 'fake').length;
+      if (realCount !== 1 || fakeCount !== 2) return;
+      
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id === mag.id) return { ...pl, hasUsedEffect: true };
+        const assignment = assignments.find(a => a.playerId === pl.id);
+        if (assignment) return { ...pl, magistrateToken: assignment.token };
+        return pl;
+      });
+      sync({ ...s, players: updatedPlayers });
+    }
+
+    // ========== STREGONE LOOK ==========
+    else if (action === 'sorcerer-look') {
+      const { targetPlayerId } = payload;
+      const sorcerer = s.players.find(pl => pl.id === s.activePlayerId);
+      const target = s.players.find(pl => pl.id === targetPlayerId);
+      if (!sorcerer || !target || sorcerer.characterId !== 8) return;
+      
+      sync({
+        ...s,
+        phase: 'effect-active',
+        effectContext: { type: 'sorcerer-look', data: { targetPlayerId, targetHand: target.hand } },
+      });
+    }
+
+    // ========== STREGONE BUILD ==========
+    else if (action === 'sorcerer-build') {
+      const { targetPlayerId, cardUid } = payload;
+      const sorcerer = s.players.find(pl => pl.id === s.activePlayerId);
+      const target = s.players.find(pl => pl.id === targetPlayerId);
+      if (!sorcerer || !target || sorcerer.characterId !== 8) return;
+      
+      if (!cardUid) {
+        // Cancel
+        const updatedPlayers = s.players.map(pl => pl.id === sorcerer.id ? { ...pl, hasUsedEffect: true } : pl);
+        sync({ ...s, players: updatedPlayers, phase: 'turn-action', effectContext: null });
+        return;
+      }
+      
+      const card = target.hand.find(c => c.uid === cardUid);
+      if (!card) return;
+      
+      const district = getDistrictById(card.districtId);
+      if (sorcerer.gold < district.cost) return; 
+
+      const newBuilt: BuiltDistrict = {
+        uid: card.uid, districtId: card.districtId, artisanCoins: 0, museumCards: 0,
+      };
+
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id === sorcerer.id) {
+          return {
+            ...pl,
+            gold: pl.gold - district.cost,
+            builtDistricts: [...pl.builtDistricts, newBuilt],
+            hasUsedEffect: true,
+          };
+        }
+        if (pl.id === target.id) {
+          return {
+            ...pl,
+            hand: pl.hand.filter(c => c.uid !== cardUid),
+          };
+        }
+        return pl;
+      });
+
+      // Check game end trigger
+      const builder = updatedPlayers.find(pl => pl.id === sorcerer.id)!;
+      let gameEndTriggered = s.gameEndTriggered;
+      let firstTo7 = s.firstTo7PlayerId;
+      if (!gameEndTriggered && countBuiltDistricts(builder) >= 7) {
+        gameEndTriggered = true;
+        firstTo7 = sorcerer.id;
+      }
+
+      sync({ 
+        ...s, 
+        players: updatedPlayers, 
+        phase: 'turn-action', 
+        effectContext: null,
+        gameEndTriggered,
+        firstTo7PlayerId: firstTo7,
+        gameEndRound: gameEndTriggered && !s.gameEndTriggered ? s.roundNumber : s.gameEndRound,
+      });
+    }
+
+    // ========== COVO BUILD ==========
+    else if (action === 'covo-build') {
+      const { cardUid, cardsToDiscard } = payload as { cardUid: string, cardsToDiscard: string[] };
+      const p = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!p) return;
+      
+      const card = p.hand.find(c => c.uid === cardUid);
+      if (!card || card.districtId !== 506) return;
+      
+      const district = getDistrictById(card.districtId);
+      const cost = district.cost;
+      
+      const check = canBuild(p, card, s);
+      if (!check.ok) return;
+
+      const isScuderie = district.id === 525;
+      if (!isScuderie && p.buildsUsed >= p.maxBuilds) return;
+
+      const discount = cardsToDiscard.length;
+      let newCost = Math.max(0, cost - discount);
+      
+      const handWithoutCovo = p.hand.filter(c => c.uid !== cardUid);
+      const discarded = cardsToDiscard.map(uid => handWithoutCovo.find(c => c.uid === uid)).filter(Boolean) as DistrictCard[];
+      if (discarded.length !== discount) return;
+      
+      let newTaxPool = [...s.taxPool];
+      const hasTassatore = s.characterPool.includes(27);
+      let taxAmount = 0;
+      if (hasTassatore && !isScuderie) {
+        const tassatorePlayer = s.players.find(pl => pl.characterId === 27);
+        if (tassatorePlayer && tassatorePlayer.id !== p.id) {
+          if (p.gold >= newCost + 1) {
+            newTaxPool.push({ playerId: p.id, amount: 1 });
+            taxAmount = 1;
+          }
+        }
+      }
+      
+      const totalCost = newCost + taxAmount;
+      if (p.gold < totalCost) return;
+      
+      const newBuilt: BuiltDistrict = {
+        uid: card.uid, districtId: card.districtId, artisanCoins: 0, museumCards: 0,
+      };
+      
+      let newDeck = returnToBottom(s.districtDeck, discarded);
+      
+      let extraDraw: DistrictCard[] = [];
+      if (p.characterId === 12) {
+        const { drawn, remaining } = drawCards(newDeck, 1);
+        extraDraw = drawn;
+        newDeck = remaining;
+      }
+      
+      const discardedUidSet = new Set(cardsToDiscard);
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id === p.id) {
+          return {
+            ...pl,
+            gold: pl.gold - totalCost,
+            goldSpentThisTurn: pl.goldSpentThisTurn + newCost,
+            hand: pl.hand.filter(c => c.uid !== cardUid && !discardedUidSet.has(c.uid)),
+            builtDistricts: [...pl.builtDistricts, newBuilt],
+            buildsUsed: isScuderie ? pl.buildsUsed : pl.buildsUsed + 1,
+          };
+        }
+        return pl;
+      });
+      
+      let finalPlayers = updatedPlayers;
+      if (extraDraw.length > 0) {
+        finalPlayers = finalPlayers.map(pl =>
+          pl.id === p.id ? { ...pl, hand: [...pl.hand, ...extraDraw] } : pl
+        );
+      }
+      
+      const builder = finalPlayers.find(pl => pl.id === p.id)!;
+      let gameEndTriggered = s.gameEndTriggered;
+      let firstTo7 = s.firstTo7PlayerId;
+      if (!gameEndTriggered && countBuiltDistricts(builder) >= 7) {
+        gameEndTriggered = true;
+        firstTo7 = p.id;
+      }
+      
+      sync({
+        ...s,
+        players: finalPlayers,
+        districtDeck: newDeck,
+        taxPool: newTaxPool,
+        gameEndTriggered,
+        firstTo7PlayerId: firstTo7,
+        gameEndRound: gameEndTriggered && !s.gameEndTriggered ? s.roundNumber : s.gameEndRound,
+      });
     }
 
     // ========== EFFECT: ASSASSIN ==========
@@ -1216,6 +1432,11 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     buildDistrict: useCallback((cardUid: string) => act('build-district', { cardUid }), [act]),
     endTurn: useCallback(() => act('end-turn'), [act]),
     collectIncome: useCallback(() => act('collect-income'), [act]),
+    collectIncomeChoice: useCallback((type: 'gold' | 'cards') => act('collect-income-choice', { type }), [act]),
+    magistrateAssign: useCallback((assignments: { playerId: string; token: 'real' | 'fake' }[]) => act('magistrate-assign', { assignments }), [act]),
+    sorcererLook: useCallback((targetPlayerId: string) => act('sorcerer-look', { targetPlayerId }), [act]),
+    sorcererBuild: useCallback((targetPlayerId: string, cardUid: string | null) => act('sorcerer-build', { targetPlayerId, cardUid }), [act]),
+    covoBuild: useCallback((cardUid: string, cardsToDiscard: string[]) => act('covo-build', { cardUid, cardsToDiscard }), [act]),
     takeCrown: useCallback(() => act('take-crown'), [act]),
     // Effects
     assassinTarget: useCallback((rank: number) => act('assassin-target', { targetRank: rank }), [act]),
