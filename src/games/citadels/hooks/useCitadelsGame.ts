@@ -836,8 +836,8 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     // ========== EFFECT: THIEF ==========
     else if (action === 'thief-target') {
       const { targetRank } = payload;
-      // Can't target rank 1 or assassinated rank
-      if (targetRank === 1 || targetRank === s.assassinatedRank) return;
+      // Can't target rank 1 (assassin)
+      if (targetRank === 1) return;
       sync({ ...s, robbedRank: targetRank, phase: 'turn-action' });
     }
 

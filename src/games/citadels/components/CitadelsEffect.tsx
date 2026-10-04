@@ -544,24 +544,8 @@ export default function CitadelsEffect({
           {!isBlackmailerDecide && character?.id === 4 && (
             <div>
               <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'rgba(244, 237, 226, 0.8)' }}>
-                Nomina un personaggio di rango 3-9 da derubare (non puoi derubare il rango 1 o il personaggio assassinato). Quando verrà chiamato, ruberai tutto il suo oro:
+                Nomina un personaggio di rango 3-9 da derubare (non puoi derubare il rango 1). Se scegli un personaggio assassinato, non otterrai nulla:
               </p>
-
-              {state.assassinatedRank && (
-                <div
-                  style={{
-                    padding: '0.5rem 0.8rem',
-                    marginBottom: '1rem',
-                    borderRadius: '8px',
-                    background: 'rgba(192, 57, 43, 0.2)',
-                    border: '1px solid #c0392b',
-                    fontSize: '0.8rem',
-                    color: '#ff7675',
-                  }}
-                >
-                  ⚠️ Rango {state.assassinatedRank} è stato assassinato e non può essere derubato.
-                </div>
-              )}
 
               <div
                 style={{
@@ -572,7 +556,7 @@ export default function CitadelsEffect({
               >
                 {state.characterPool
                   .map((cId: number) => getCharacterById(cId))
-                  .filter((c: CitadelsCharacter) => c.rank >= 3 && c.rank !== state.assassinatedRank)
+                  .filter((c: CitadelsCharacter) => c.rank >= 3)
                   .sort((a: CitadelsCharacter, b: CitadelsCharacter) => a.rank - b.rank)
                   .map((targetChar: CitadelsCharacter) => (
                     <div
