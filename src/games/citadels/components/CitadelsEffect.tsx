@@ -39,6 +39,7 @@ interface CitadelsEffectProps {
   onNavigatorChoose: (choice: 'gold' | 'cards') => void;
   onArtistEmbellish: (districtUids: string[]) => void;
   onVeggenteTake?: () => void;
+  onCardinalBuild?: () => void;
   onClose: () => void;
 }
 
@@ -66,6 +67,7 @@ export default function CitadelsEffect({
   onNavigatorChoose,
   onArtistEmbellish,
   onVeggenteTake,
+  onCardinalBuild,
   onClose,
 }: CitadelsEffectProps) {
   // Local states for complex interactive effects
@@ -1471,6 +1473,38 @@ export default function CitadelsEffect({
                   </div>
                 </button>
               </div>
+            </div>
+          )}
+
+          {/* ============================================================== */}
+          {/* CARDINALE (Rank 5, ID 15)                                      */}
+          {/* ============================================================== */}
+          {!isBlackmailerDecide && character?.id === 15 && (
+            <div style={{ textAlign: 'center' }}>
+              <p style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', color: 'rgba(244, 237, 226, 0.85)' }}>
+                Il Cardinale può costruire un distretto pagando parte del costo con <strong>carte</strong> date
+                a un altro giocatore, il quale è obbligato a scambiare <strong>1 oro per carta ricevuta</strong>.
+              </p>
+              <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: 'rgba(201,168,76,0.7)' }}>
+                Non puoi dare più carte del costo del distretto, né più del numero di ori del giocatore scelto.
+              </p>
+              <button
+                onClick={() => { if (onCardinalBuild) onCardinalBuild(); }}
+                disabled={!onCardinalBuild}
+                style={{
+                  padding: '0.8rem 2rem',
+                  fontSize: '1rem',
+                  fontWeight: 700,
+                  cursor: onCardinalBuild ? 'pointer' : 'not-allowed',
+                  background: onCardinalBuild ? 'linear-gradient(135deg, #3b82f6, #1d4ed8)' : 'rgba(255,255,255,0.1)',
+                  color: onCardinalBuild ? '#fff' : 'rgba(255,255,255,0.3)',
+                  border: 'none',
+                  borderRadius: '12px',
+                  boxShadow: onCardinalBuild ? '0 4px 15px rgba(59, 130, 246, 0.4)' : 'none',
+                }}
+              >
+                ⛪ Costruisci con Carte (Cardinale)
+              </button>
             </div>
           )}
 

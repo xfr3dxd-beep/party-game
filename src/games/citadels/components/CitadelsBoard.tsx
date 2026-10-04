@@ -336,6 +336,39 @@ export default function CitadelsBoard({
           })}
         </div>
 
+        {/* Face-Up Discarded Characters (cannot be selected this round) */}
+        {state.draftState && state.draftState.faceUpIds.length > 0 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap',
+            justifyContent: 'center', marginBottom: '1rem',
+            padding: '0.6rem 1rem',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.2)',
+            borderRadius: '10px',
+          }}>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(239,68,68,0.8)', fontWeight: 600 }}>
+              Scartati (scoperti):
+            </span>
+            {state.draftState.faceUpIds.map(charId => {
+              const ch = getCharacterById(charId);
+              return (
+                <div key={charId} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.3rem',
+                  background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
+                  borderRadius: '6px', padding: '0.2rem 0.5rem',
+                }}>
+                  <img src={ch.image} alt={ch.nameIt} style={{
+                    width: '28px', height: '28px', borderRadius: '4px', objectFit: 'cover',
+                  }} />
+                  <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.7)' }}>
+                    {ch.nameIt} ({ch.rank})
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
         {/* Center Area: Current Character Being Called */}
         <div style={{
           background: 'linear-gradient(180deg, rgba(34, 26, 43, 0.95) 0%, rgba(20, 15, 26, 0.98) 100%)',

@@ -392,21 +392,6 @@ export default function CitadelsPage() {
             />
           )}
 
-          {/* Cardinal build button — only for Cardinal (ID 15) during turn-action */}
-          {currentPhase === 'turn-action' && myPlayer && game.isMyTurn && myPlayer.characterId === 15 && myPlayer.buildsUsed < myPlayer.maxBuilds && (
-            <div style={{ textAlign: 'center', padding: '0.5rem' }}>
-              <button onClick={() => {
-                setCardSelDistrict(null); setCardSelTarget(null); setCardSelCards([]);
-                setShowCardinal(true);
-              }} style={{
-                padding: '0.6rem 1.5rem', fontSize: '0.95rem', fontWeight: 700,
-                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-                color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(59,130,246,0.4)',
-              }}>⛪ Costruisci con Carte (Cardinale)</button>
-            </div>
-          )}
-
           {/* Effect modal */}
           {showEffect && myPlayer && (
             <CitadelsEffect
@@ -425,6 +410,7 @@ export default function CitadelsPage() {
               onNavigatorChoose={(c) => { game.navigatorChoose(c); setShowEffect(false); }}
               onArtistEmbellish={(uids) => { game.artistEmbellish(uids); setShowEffect(false); }}
               onVeggenteTake={() => { game.veggenteTake(); setShowEffect(false); }}
+              onCardinalBuild={() => { setShowEffect(false); setCardSelDistrict(null); setCardSelTarget(null); setCardSelCards([]); setShowCardinal(true); }}
               onClose={() => setShowEffect(false)}
             />
           )}
