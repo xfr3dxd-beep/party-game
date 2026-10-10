@@ -36,6 +36,7 @@ interface CitadelsTurnProps {
   onUseLaboratorio: (cardUid: string) => void;
   onMuseoTuck: (cardUid: string) => void;
   onCovoBuild?: (cardUid: string, cardsToDiscard: string[]) => void;
+  onNavigatorChoose?: (choice: 'gold' | 'cards') => void;
 }
 
 const DISTRICT_COLORS: Record<string, { label: string; bg: string; text: string; border: string; icon: string }> = {
@@ -63,6 +64,7 @@ export default function CitadelsTurn({
   onUseLaboratorio,
   onMuseoTuck,
   onCovoBuild,
+  onNavigatorChoose,
 }: CitadelsTurnProps) {
   // Only visible when isMyTurn is true
   if (!isMyTurn) return null;
@@ -344,7 +346,7 @@ export default function CitadelsTurn({
         )}
 
         {/* Character Income Button — Patrizio (12) gets two buttons: gold or cards */}
-        {character?.incomeColor && character.id === 12 && onCollectIncomeChoice && (
+        {character?.incomeColor && (character.id === 12 || character.id === 14) && onCollectIncomeChoice && (
           <div style={{ display: 'flex', gap: '0.4rem' }}>
             <button
               onClick={() => { onCollectIncomeChoice('gold'); setIncomeCollected(true); }}
@@ -388,7 +390,7 @@ export default function CitadelsTurn({
           </div>
         )}
         {/* Standard income button for non-Patrizio characters */}
-        {character?.incomeColor && character.id !== 12 && (
+        {character?.incomeColor && character.id !== 12 && character.id !== 14 && (
           <button
             onClick={handleIncome}
             disabled={incomeCollected || incomeAmount === 0}
@@ -412,8 +414,8 @@ export default function CitadelsTurn({
           </button>
         )}
 
-        {/* Crown button for rank 4 */}
-        {character?.rank === 4 && !myPlayer.hasCrown && (
+        {/* Crown button for rank 4 — NOT for Imperatore (ID 11), who passes crown via Effect */}
+        {character?.rank === 4 && character.id !== 11 && !myPlayer.hasCrown && (
           <button
             onClick={onTakeCrown}
             style={{
@@ -819,6 +821,54 @@ export default function CitadelsTurn({
                   : `Ne peschi ${cardDrawCount} e ne scegli 1 da tenere`}
               </div>
             </button>
+
+            {/* Navigator Effect — 4 gold or 4 cards, no building */}
+            {character?.id === 21 && onNavigatorChoose && (
+              <>
+                <button
+                  onClick={() => onNavigatorChoose('gold')}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    padding: '1.25rem 1rem',
+                    background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.3) 0%, rgba(161, 98, 7, 0.2) 100%)',
+                    border: '2px solid #eab308',
+                    borderRadius: '12px', cursor: 'pointer', color: '#fde047',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)', transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+                >
+                  <div style={{ fontSize: '2.4rem', marginBottom: '0.4rem' }}>⚓</div>
+                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', marginBottom: '0.25rem' }}>
+                    ⚓ Effetto: +4 Oro
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(253, 224, 71, 0.8)' }}>
+                    ⚠️ Non potrai costruire questo turno
+                  </div>
+                </button>
+                <button
+                  onClick={() => onNavigatorChoose('cards')}
+                  style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                    padding: '1.25rem 1rem',
+                    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(29, 78, 216, 0.2) 100%)',
+                    border: '2px solid #3b82f6',
+                    borderRadius: '12px', cursor: 'pointer', color: '#93c5fd',
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)', transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
+                >
+                  <div style={{ fontSize: '2.4rem', marginBottom: '0.4rem' }}>⚓</div>
+                  <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff', marginBottom: '0.25rem' }}>
+                    ⚓ Effetto: +4 Carte
+                  </div>
+                  <div style={{ fontSize: '0.7rem', color: 'rgba(147, 197, 253, 0.8)' }}>
+                    ⚠️ Non potrai costruire questo turno
+                  </div>
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -362,9 +362,10 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
 
       // Check if Scuderie (525) — doesn't count toward build limit
       const isScuderie = district.id === 525;
+      const isGreenMerchant = district.color === 'green' && p.characterId === 16;
 
       // Check build limit
-      if (!isScuderie && p.buildsUsed >= p.maxBuilds) return;
+      if (!isScuderie && !isGreenMerchant && p.buildsUsed >= p.maxBuilds) return;
 
       // Tassatore tax: if Tassatore (27) is in the game, add 1 to tax pool
       let newTaxPool = [...s.taxPool];
@@ -417,7 +418,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
             goldSpentThisTurn: pl.goldSpentThisTurn + cost,
             hand: pl.hand.filter(c => c.uid !== cardUid),
             builtDistricts: magistrateSteal ? pl.builtDistricts : [...pl.builtDistricts, newBuilt],
-            buildsUsed: isScuderie ? pl.buildsUsed : pl.buildsUsed + 1,
+            buildsUsed: (isScuderie || isGreenMerchant) ? pl.buildsUsed : pl.buildsUsed + 1,
             magistrateToken: null,
           };
         }
@@ -610,7 +611,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
 
       const char = getCharacterById(p.characterId);
       if (!char.incomeColor) return;
-      if (char.id === 12) return; // Patrizio must use collect-income-choice
+      if (char.id === 12 || char.id === 14) return; // Patrizio/Abate must use collect-income-choice
 
       let color = char.incomeColor;
       // Scuola di Magia (524) counts as chosen color
@@ -636,7 +637,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     else if (action === 'collect-income-choice') {
       const { type } = payload as { type: 'gold' | 'cards' };
       const p = s.players.find(pl => pl.id === s.activePlayerId);
-      if (!p || p.characterId !== 12) return;
+      if (!p || (p.characterId !== 12 && p.characterId !== 14)) return;
 
       const char = getCharacterById(p.characterId);
       if (!char.incomeColor) return;
@@ -656,6 +657,33 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         );
         sync({ ...s, players: updatedPlayers, districtDeck: remaining });
       }
+    }
+
+    // ========== ABATE TAX ==========
+    else if (action === 'abate-tax') {
+      const abate = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!abate || abate.characterId !== 14) return;
+
+      // Find the player with the most gold (excluding the Abate player)
+      let maxGold = -1;
+      let richestPlayer: CitadelsPlayer | null = null;
+      for (const pl of s.players) {
+        if (pl.id === abate.id) continue;
+        if (pl.gold > maxGold) {
+          maxGold = pl.gold;
+          richestPlayer = pl;
+        }
+      }
+
+      if (!richestPlayer || richestPlayer.gold === 0) return;
+
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id === richestPlayer!.id) return { ...pl, gold: pl.gold - 1 };
+        if (pl.id === abate.id) return { ...pl, gold: pl.gold + 1, hasUsedEffect: true };
+        return pl;
+      });
+
+      sync({ ...s, players: updatedPlayers });
     }
 
     // ========== MAGISTRATO ASSIGN ==========
@@ -925,23 +953,45 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         ...pl, hasCrown: pl.id === targetPlayerId,
       }));
 
+      let paymentTaken = false;
+
       // Target pays emperor 1 gold or 1 card
-      if (paymentType === 'gold' && target.gold > 0) {
+      if (paymentType === 'gold' && target.gold >= 1) {
         updatedPlayers = updatedPlayers.map(pl => {
           if (pl.id === target.id) return { ...pl, gold: pl.gold - 1 };
-          if (pl.id === emperor.id) return { ...pl, gold: pl.gold + 1 };
+          if (pl.id === emperor.id) return { ...pl, gold: pl.gold + 1, hasUsedEffect: true };
           return pl;
         });
-      } else if (paymentType === 'card' && target.hand.length > 0) {
+        paymentTaken = true;
+      } else if (paymentType === 'card' && target.hand.length >= 1) {
         const cardToGive = target.hand[0]; // first card
         updatedPlayers = updatedPlayers.map(pl => {
           if (pl.id === target.id) return { ...pl, hand: pl.hand.slice(1) };
-          if (pl.id === emperor.id) return { ...pl, hand: [...pl.hand, cardToGive] };
+          if (pl.id === emperor.id) return { ...pl, hand: [...pl.hand, cardToGive], hasUsedEffect: true };
           return pl;
         });
+        paymentTaken = true;
+      } else {
+        // Still set hasUsedEffect
+        updatedPlayers = updatedPlayers.map(pl => pl.id === emperor.id ? { ...pl, hasUsedEffect: true } : pl);
       }
 
-      sync({ ...s, players: updatedPlayers, crownHolderId: targetPlayerId, phase: 'turn-action', effectContext: null });
+      sync({ 
+        ...s, 
+        players: updatedPlayers, 
+        crownHolderId: targetPlayerId, 
+        phase: 'turn-action', 
+        effectContext: null,
+        notification: {
+          type: 'emperor-crown',
+          data: {
+            emperorName: emperor.name,
+            targetName: target.name,
+            paymentType,
+            paymentTaken
+          }
+        }
+      });
     }
 
     // ========== EFFECT: WARLORD (DESTROY DISTRICT) ==========
@@ -1177,13 +1227,13 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
 
       if (choice === 'gold') {
         const updatedPlayers = s.players.map(pl =>
-          pl.id === nav.id ? { ...pl, gold: pl.gold + 4, maxBuilds: 0 } : pl // can't build
+          pl.id === nav.id ? { ...pl, gold: pl.gold + 4, maxBuilds: 0, hasGathered: true } : pl // can't build
         );
         sync({ ...s, players: updatedPlayers, phase: 'turn-action', effectContext: null });
       } else {
         const { drawn, remaining } = drawCards(s.districtDeck, 4);
         const updatedPlayers = s.players.map(pl =>
-          pl.id === nav.id ? { ...pl, hand: [...pl.hand, ...drawn], maxBuilds: 0 } : pl
+          pl.id === nav.id ? { ...pl, hand: [...pl.hand, ...drawn], maxBuilds: 0, hasGathered: true } : pl
         );
         sync({ ...s, players: updatedPlayers, districtDeck: remaining, phase: 'turn-action', effectContext: null });
       }
@@ -1493,6 +1543,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     veggenteTake: useCallback(() => act('veggente-take'), [act]),
     veggenteReturn: useCallback((assignments: { playerId: string; cardUid: string }[]) =>
       act('veggente-return', { assignments }), [act]),
+    abateTax: useCallback(() => act('abate-tax'), [act]),
     cardinalBuild: useCallback((cardUid: string, targetPlayerId: string, cardUidsToGive: string[]) =>
       act('cardinal-build', { cardUid, targetPlayerId, cardUidsToGive }), [act]),
     museoTuck: useCallback((cardUid: string) => act('museo-tuck', { cardUid }), [act]),

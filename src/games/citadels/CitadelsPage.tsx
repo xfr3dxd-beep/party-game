@@ -404,6 +404,7 @@ export default function CitadelsPage() {
               onUseLaboratorio={game.useLaboratorio}
               onMuseoTuck={game.museoTuck}
               onCovoBuild={game.covoBuild}
+              onNavigatorChoose={game.navigatorChoose}
             />
           )}
 
@@ -428,6 +429,7 @@ export default function CitadelsPage() {
               onCardinalBuild={() => { setShowEffect(false); setCardSelDistrict(null); setCardSelTarget(null); setCardSelCards([]); setShowCardinal(true); }}
               onMagistrateAssign={(assignments) => { game.magistrateAssign(assignments); setShowEffect(false); }}
               onSorcererLook={(targetId) => { game.sorcererLook(targetId); setShowEffect(false); }}
+              onAbateTax={() => { game.abateTax(); setShowEffect(false); }}
               onClose={() => setShowEffect(false)}
             />
           )}
@@ -678,6 +680,36 @@ export default function CitadelsPage() {
                     {districtName} (🪙{districtCost})
                   </p>
                   <p>dalla mano di <strong>{targetName}</strong>!</p>
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+                  Tocca per chiudere
+                </p>
+              </div>
+            );
+          })()}
+
+          {state.notification.type === 'emperor-crown' && (() => {
+            const { emperorName, targetName, paymentType, paymentTaken } = state.notification!.data;
+            return (
+              <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>👑</div>
+                <h2 style={{ color: '#eab308', fontSize: '1.6rem', marginBottom: '0.8rem' }}>
+                  Imperatore — Passaggio di Corona
+                </h2>
+                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6 }}>
+                  <p><strong style={{ color: '#eab308' }}>{emperorName}</strong> ha passato la corona a</p>
+                  <p style={{ color: '#fde047', fontSize: '1.3rem', fontWeight: 700, margin: '0.5rem 0' }}>
+                    👑 {targetName}
+                  </p>
+                  {paymentTaken ? (
+                    <p style={{ color: 'rgba(255,255,255,0.6)' }}>
+                      In cambio ha ricevuto {paymentType === 'gold' ? '1🪙 oro' : '1🃏 carta'} da {targetName}
+                    </p>
+                  ) : (
+                    <p style={{ color: 'rgba(255,255,255,0.4)' }}>
+                      {targetName} non aveva risorse da cedere
+                    </p>
+                  )}
                 </div>
                 <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
                   Tocca per chiudere

@@ -42,6 +42,7 @@ interface CitadelsEffectProps {
   onCardinalBuild?: () => void;
   onMagistrateAssign?: (assignments: { playerId: string; token: 'real' | 'fake' }[]) => void;
   onSorcererLook?: (targetPlayerId: string) => void;
+  onAbateTax?: () => void;
   onClose: () => void;
 }
 
@@ -72,6 +73,7 @@ export default function CitadelsEffect({
   onCardinalBuild,
   onMagistrateAssign,
   onSorcererLook,
+  onAbateTax,
   onClose,
 }: CitadelsEffectProps) {
   // Local states for complex interactive effects
@@ -1558,6 +1560,39 @@ export default function CitadelsEffect({
               </div>
             </div>
           )}
+
+          {/* ============================================================== */}
+          {/* ABATE (Rank 5, ID 14) — Tax richest player                      */}
+          {/* ============================================================== */}
+          {!isBlackmailerDecide && character?.id === 14 && (() => {
+            const otherPlayers = state.players.filter(p => p.id !== myPlayer.id && p.gold > 0);
+            const maxGold = otherPlayers.length > 0 ? Math.max(...otherPlayers.map(p => p.gold)) : 0;
+            const richest = otherPlayers.find(p => p.gold === maxGold);
+            return (
+              <div>
+                <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'rgba(244, 237, 226, 0.8)' }}>
+                  Il giocatore con più oro al tavolo deve dare <strong style={{ color: '#c9a84c' }}>1🪙</strong> all'Abate.
+                </p>
+                {richest ? (
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
+                      Giocatore più ricco: <strong style={{ color: '#ffd54f' }}>{richest.name}</strong> (🪙{richest.gold})
+                    </div>
+                    <button onClick={() => { if (onAbateTax) onAbateTax(); }} style={{
+                      width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700,
+                      cursor: 'pointer',
+                      background: 'linear-gradient(135deg, #c9a84c, #8c681e)',
+                      color: '#1a1520', border: 'none', borderRadius: '12px',
+                    }}>⛪ Riscuoti Tributo (1🪙 da {richest.name})</button>
+                  </div>
+                ) : (
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                    Nessun giocatore ha oro da dare.
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ============================================================== */}
           {/* CARDINALE (Rank 5, ID 15)                                      */}
