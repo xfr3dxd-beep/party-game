@@ -148,8 +148,18 @@ export interface CitadelsState {
   gameEndTriggered: boolean;
   gameEndRound: number;
 
+  // Global notification (shown to all players)
+  notification: GameNotification | null;
+
   // Scores (filled at game-over)
   scores: Record<string, { total: number; breakdown: ScoreBreakdown }> | null;
+}
+
+// ---- Notification ----
+
+export interface GameNotification {
+  type: 'magistrate-token' | 'sorcerer-steal';
+  data: any;
 }
 
 // ---- Scoring ----

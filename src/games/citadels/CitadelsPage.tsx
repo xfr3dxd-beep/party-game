@@ -620,6 +620,74 @@ export default function CitadelsPage() {
         </div>
       )}
 
+      {/* Global Notification Overlay (Magistrate token / Sorcerer steal) */}
+      {state.notification && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 300,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '1.5rem',
+        }} onClick={() => game.dismissNotification()}>
+          {state.notification.type === 'magistrate-token' && (() => {
+            const { isReal, builderName, magistrateName, districtName, districtCost } = state.notification!.data;
+            const tokenImage = isReal
+              ? '/Citadels/Personaggi %2B token/Token Magistrato Vero(segnalino minaccia).jpg'
+              : '/Citadels/Personaggi %2B token/Token Magistrato Fake (segnalino minaccia).jpg';
+            return (
+              <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+                <img src={tokenImage} alt={isReal ? 'Token Vero' : 'Token Falso'} style={{
+                  width: '200px', height: '200px', objectFit: 'contain', marginBottom: '1.5rem',
+                  borderRadius: '16px', border: `3px solid ${isReal ? '#ef4444' : 'rgba(255,255,255,0.3)'}`,
+                  boxShadow: isReal ? '0 0 40px rgba(239,68,68,0.5)' : '0 0 20px rgba(255,255,255,0.1)',
+                }} />
+                <h2 style={{
+                  color: isReal ? '#ef4444' : 'rgba(255,255,255,0.6)',
+                  fontSize: '1.8rem', marginBottom: '0.8rem',
+                }}>
+                  {isReal ? '⚖️ Segnalino VERO!' : '⚪ Segnalino Falso'}
+                </h2>
+                {isReal ? (
+                  <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6 }}>
+                    <p><strong style={{ color: '#ef4444' }}>{magistrateName}</strong> ruba il distretto <strong style={{ color: '#c9a84c' }}>{districtName}</strong> da <strong>{builderName}</strong>!</p>
+                    <p style={{ color: 'rgba(255,255,255,0.6)', marginTop: '0.5rem' }}>
+                      {builderName} viene rimborsato 🪙{districtCost}
+                    </p>
+                  </div>
+                ) : (
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '1rem' }}>
+                    <strong>{builderName}</strong> ha rivelato un segnalino falso. La costruzione prosegue normalmente.
+                  </p>
+                )}
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+                  Tocca per chiudere
+                </p>
+              </div>
+            );
+          })()}
+
+          {state.notification.type === 'sorcerer-steal' && (() => {
+            const { sorcererName, targetName, districtName, districtCost } = state.notification!.data;
+            return (
+              <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+                <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🔮</div>
+                <h2 style={{ color: '#a855f7', fontSize: '1.6rem', marginBottom: '0.8rem' }}>
+                  Stregone — Furto di Distretto
+                </h2>
+                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6 }}>
+                  <p><strong style={{ color: '#a855f7' }}>{sorcererName}</strong> ha rubato e costruito</p>
+                  <p style={{ color: '#c9a84c', fontSize: '1.2rem', fontWeight: 700, margin: '0.5rem 0' }}>
+                    {districtName} (🪙{districtCost})
+                  </p>
+                  <p>dalla mano di <strong>{targetName}</strong>!</p>
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+                  Tocca per chiudere
+                </p>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
       {/* Cardinal Build Modal */}
       {showCardinal && myPlayer && myPlayer.characterId === 15 && (() => {
         const colorMap: Record<string, string> = { blue: '#3b82f6', green: '#22c55e', yellow: '#eab308', red: '#ef4444', purple: '#a855f7' };

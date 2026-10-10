@@ -453,6 +453,22 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         firstTo7 = p.id;
       }
 
+      // Build notification for magistrate token reveal
+      let notification = null;
+      if (p.magistrateToken) {
+        const magistrateName = s.players.find(pl => pl.characterId === 2)?.name || 'Magistrato';
+        notification = {
+          type: 'magistrate-token' as const,
+          data: {
+            isReal: p.magistrateToken === 'real',
+            builderName: p.name,
+            magistrateName,
+            districtName: district.nameIt,
+            districtCost: cost,
+          },
+        };
+      }
+
       sync({
         ...s,
         players: finalPlayers,
@@ -461,6 +477,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         gameEndTriggered,
         firstTo7PlayerId: firstTo7,
         gameEndRound: gameEndTriggered && !s.gameEndTriggered ? s.roundNumber : s.gameEndRound,
+        notification,
       });
     }
 
@@ -533,6 +550,11 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         firstTo7PlayerId: firstTo7,
         gameEndRound: gameEndTriggered && !s.gameEndTriggered ? s.roundNumber : s.gameEndRound,
       });
+    }
+
+    // ========== DISMISS NOTIFICATION ==========
+    else if (action === 'dismiss-notification') {
+      sync({ ...s, notification: null });
     }
 
     // ========== END TURN ==========
@@ -729,6 +751,15 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         gameEndTriggered,
         firstTo7PlayerId: firstTo7,
         gameEndRound: gameEndTriggered && !s.gameEndTriggered ? s.roundNumber : s.gameEndRound,
+        notification: {
+          type: 'sorcerer-steal',
+          data: {
+            sorcererName: sorcerer.name,
+            targetName: target.name,
+            districtName: district.nameIt,
+            districtCost: district.cost,
+          },
+        },
       });
     }
 
@@ -1437,6 +1468,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     sorcererLook: useCallback((targetPlayerId: string) => act('sorcerer-look', { targetPlayerId }), [act]),
     sorcererBuild: useCallback((targetPlayerId: string, cardUid: string | null) => act('sorcerer-build', { targetPlayerId, cardUid }), [act]),
     covoBuild: useCallback((cardUid: string, cardsToDiscard: string[]) => act('covo-build', { cardUid, cardsToDiscard }), [act]),
+    dismissNotification: useCallback(() => act('dismiss-notification'), [act]),
     takeCrown: useCallback(() => act('take-crown'), [act]),
     // Effects
     assassinTarget: useCallback((rank: number) => act('assassin-target', { targetRank: rank }), [act]),

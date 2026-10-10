@@ -363,6 +363,7 @@ export function createInitialState(): CitadelsState {
     firstTo7PlayerId: null,
     gameEndTriggered: false,
     gameEndRound: 0,
+    notification: null,
     scores: null,
   };
 }
