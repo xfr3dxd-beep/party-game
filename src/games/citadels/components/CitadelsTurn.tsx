@@ -1148,7 +1148,8 @@ export default function CitadelsTurn({
                       {isEligibleToBuild ? (
                         <button
                           onClick={() => {
-                            if (district.id === 506 && onCovoBuild) {
+                            const hasCovo = myPlayer.builtDistricts.some(bd => bd.districtId === 506);
+                            if (hasCovo && onCovoBuild && myPlayer.hand.length > 1) {
                               setCovoBuildUid(card.uid); setCovoDiscards([]);
                             } else {
                               onBuildDistrict(card.uid);
@@ -1214,6 +1215,7 @@ export default function CitadelsTurn({
         const covoDistrict = getDistrictById(covoCard.districtId);
         const goldCost = Math.max(0, covoDistrict.cost - covoDiscards.length);
         const canConfirm = goldCost <= myPlayer.gold;
+        const canBuildNormally = covoDistrict.cost <= myPlayer.gold;
         const otherCards = myPlayer.hand.filter(c => c.uid !== covoBuildUid);
 
         return (
@@ -1222,55 +1224,76 @@ export default function CitadelsTurn({
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem',
           }}>
             <div style={{ maxWidth: '500px', width: '100%' }}>
-              <h3 style={{ color: '#a855f7', marginBottom: '0.5rem' }}>🏴‍☠️ Covo dei Ladri</h3>
+              <h3 style={{ color: '#a855f7', marginBottom: '0.3rem' }}>🏴‍☠️ Effetto Covo dei Ladri</h3>
+              <h4 style={{ color: '#c9a84c', margin: '0 0 0.5rem 0', fontSize: '1rem' }}>
+                Costruzione: {covoDistrict.nameIt} (🪙{covoDistrict.cost})
+              </h4>
               <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                Costo: 🪙{covoDistrict.cost}. Puoi scartare carte come pagamento parziale (1 carta = 1🪙).
-                Seleziona le carte da scartare.
+                Grazie al Covo dei Ladri, puoi scartare carte come pagamento parziale (1 carta = 1🪙).
+                Seleziona le carte da usare come pagamento, oppure costruisci normalmente.
               </p>
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
-                {otherCards.map(card => {
-                  const d = getDistrictById(card.districtId);
-                  const isSel = covoDiscards.includes(card.uid);
-                  const maxDiscards = covoDistrict.cost;
-                  return (
-                    <div key={card.uid} onClick={() => {
-                      if (isSel) setCovoDiscards(covoDiscards.filter(u => u !== card.uid));
-                      else if (covoDiscards.length < maxDiscards) setCovoDiscards([...covoDiscards, card.uid]);
-                    }} style={{
-                      width: '65px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
-                      border: `2px solid ${isSel ? '#a855f7' : 'rgba(255,255,255,0.1)'}`,
-                      opacity: isSel ? 1 : 0.6,
-                    }}>
-                      <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '80px', objectFit: 'cover' }} />
-                      <div style={{ padding: '0.15rem', textAlign: 'center', fontSize: '0.5rem', background: 'rgba(26,21,32,0.9)' }}>
-                        <div style={{ fontWeight: 700, color: '#c9a84c' }}>{d.nameIt}</div>
+              {otherCards.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                  {otherCards.map(card => {
+                    const d = getDistrictById(card.districtId);
+                    const isSel = covoDiscards.includes(card.uid);
+                    const maxDiscards = covoDistrict.cost;
+                    return (
+                      <div key={card.uid} onClick={() => {
+                        if (isSel) setCovoDiscards(covoDiscards.filter(u => u !== card.uid));
+                        else if (covoDiscards.length < maxDiscards) setCovoDiscards([...covoDiscards, card.uid]);
+                      }} style={{
+                        width: '65px', borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                        border: `2px solid ${isSel ? '#a855f7' : 'rgba(255,255,255,0.1)'}`,
+                        opacity: isSel ? 1 : 0.6,
+                      }}>
+                        <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '80px', objectFit: 'cover' }} />
+                        <div style={{ padding: '0.15rem', textAlign: 'center', fontSize: '0.5rem', background: 'rgba(26,21,32,0.9)' }}>
+                          <div style={{ fontWeight: 700, color: '#c9a84c' }}>{d.nameIt}</div>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: '8px', padding: '0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
-                <div style={{ color: '#a855f7' }}>Riepilogo:</div>
-                <div style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  Scarti {covoDiscards.length} carte (= 🪙{covoDiscards.length}) | Paghi dal tuo oro: 🪙{goldCost}
+                    );
+                  })}
                 </div>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => setCovoBuildUid(null)} style={{
-                  flex: 1, padding: '0.7rem', background: 'rgba(255,255,255,0.1)',
-                  border: '1px solid rgba(255,255,255,0.2)', color: '#e8e0d5',
-                  borderRadius: '10px', cursor: 'pointer',
-                }}>Annulla</button>
-                <button disabled={!canConfirm} onClick={() => {
-                  onCovoBuild(covoBuildUid, covoDiscards);
-                  setCovoBuildUid(null);
-                }} style={{
-                  flex: 2, padding: '0.7rem', fontWeight: 700,
-                  cursor: canConfirm ? 'pointer' : 'not-allowed',
-                  background: canConfirm ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.1)',
-                  color: canConfirm ? '#fff' : 'rgba(255,255,255,0.3)',
-                  border: 'none', borderRadius: '10px',
-                }}>🏴‍☠️ Costruisci (🪙{goldCost})</button>
+              )}
+              {covoDiscards.length > 0 && (
+                <div style={{ background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.3)', borderRadius: '8px', padding: '0.5rem', marginBottom: '1rem', fontSize: '0.85rem' }}>
+                  <div style={{ color: '#a855f7' }}>Riepilogo:</div>
+                  <div style={{ color: 'rgba(255,255,255,0.7)' }}>
+                    Scarti {covoDiscards.length} carte (= 🪙{covoDiscards.length}) | Paghi dal tuo oro: 🪙{goldCost}
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'column' }}>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => setCovoBuildUid(null)} style={{
+                    flex: 1, padding: '0.7rem', background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)', color: '#e8e0d5',
+                    borderRadius: '10px', cursor: 'pointer',
+                  }}>Annulla</button>
+                  <button disabled={!canBuildNormally} onClick={() => {
+                    onBuildDistrict(covoBuildUid);
+                    setCovoBuildUid(null);
+                  }} style={{
+                    flex: 1, padding: '0.7rem', fontWeight: 700,
+                    cursor: canBuildNormally ? 'pointer' : 'not-allowed',
+                    background: canBuildNormally ? 'linear-gradient(135deg, #c9a84c, #8c681e)' : 'rgba(255,255,255,0.1)',
+                    color: canBuildNormally ? '#1a1520' : 'rgba(255,255,255,0.3)',
+                    border: 'none', borderRadius: '10px',
+                  }}>🪙 Solo Oro (🪙{covoDistrict.cost})</button>
+                </div>
+                {covoDiscards.length > 0 && (
+                  <button disabled={!canConfirm} onClick={() => {
+                    onCovoBuild(covoBuildUid, covoDiscards);
+                    setCovoBuildUid(null);
+                  }} style={{
+                    width: '100%', padding: '0.7rem', fontWeight: 700,
+                    cursor: canConfirm ? 'pointer' : 'not-allowed',
+                    background: canConfirm ? 'linear-gradient(135deg, #a855f7, #7c3aed)' : 'rgba(255,255,255,0.1)',
+                    color: canConfirm ? '#fff' : 'rgba(255,255,255,0.3)',
+                    border: 'none', borderRadius: '10px',
+                  }}>🏴‍☠️ Costruisci con Carte (🪙{goldCost} + 🃏{covoDiscards.length})</button>
+                )}
               </div>
             </div>
           </div>

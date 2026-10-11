@@ -809,7 +809,8 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       if (!p) return;
       
       const card = p.hand.find(c => c.uid === cardUid);
-      if (!card || card.districtId !== 506) return;
+      if (!card) return;
+      if (!p.builtDistricts.some(bd => bd.districtId === 506)) return; // Must have Covo built
       
       const district = getDistrictById(card.districtId);
       const cost = district.cost;
@@ -818,7 +819,8 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       if (!check.ok) return;
 
       const isScuderie = district.id === 525;
-      if (!isScuderie && p.buildsUsed >= p.maxBuilds) return;
+      const isGreenMerchant = district.color === 'green' && p.characterId === 16;
+      if (!isScuderie && !isGreenMerchant && p.buildsUsed >= p.maxBuilds) return;
 
       const discount = cardsToDiscard.length;
       let newCost = Math.max(0, cost - discount);
@@ -865,7 +867,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
             goldSpentThisTurn: pl.goldSpentThisTurn + newCost,
             hand: pl.hand.filter(c => c.uid !== cardUid && !discardedUidSet.has(c.uid)),
             builtDistricts: [...pl.builtDistricts, newBuilt],
-            buildsUsed: isScuderie ? pl.buildsUsed : pl.buildsUsed + 1,
+            buildsUsed: (isScuderie || isGreenMerchant) ? pl.buildsUsed : pl.buildsUsed + 1,
           };
         }
         return pl;
