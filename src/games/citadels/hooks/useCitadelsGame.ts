@@ -362,7 +362,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
 
       // Check if Scuderie (525) — doesn't count toward build limit
       const isScuderie = district.id === 525;
-      const isGreenMerchant = district.color === 'green' && p.characterId === 16;
+      const isGreenMerchant = district.color === 'green' && (p.characterId === 16 || p.characterId === 18);
 
       // Check build limit
       if (!isScuderie && !isGreenMerchant && p.buildsUsed >= p.maxBuilds) return;
@@ -819,7 +819,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       if (!check.ok) return;
 
       const isScuderie = district.id === 525;
-      const isGreenMerchant = district.color === 'green' && p.characterId === 16;
+      const isGreenMerchant = district.color === 'green' && (p.characterId === 16 || p.characterId === 18);
       if (!isScuderie && !isGreenMerchant && p.buildsUsed >= p.maxBuilds) return;
 
       const discount = cardsToDiscard.length;
