@@ -661,21 +661,12 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
 
     // ========== ABATE TAX ==========
     else if (action === 'abate-tax') {
+      const { targetPlayerId } = payload;
       const abate = s.players.find(pl => pl.id === s.activePlayerId);
       if (!abate || abate.characterId !== 14) return;
 
-      // Find the player with the most gold (excluding the Abate player)
-      let maxGold = -1;
-      let richestPlayer: CitadelsPlayer | null = null;
-      for (const pl of s.players) {
-        if (pl.id === abate.id) continue;
-        if (pl.gold > maxGold) {
-          maxGold = pl.gold;
-          richestPlayer = pl;
-        }
-      }
-
-      if (!richestPlayer || richestPlayer.gold === 0) return;
+      const richestPlayer = s.players.find(pl => pl.id === targetPlayerId);
+      if (!richestPlayer || richestPlayer.gold === 0 || richestPlayer.id === abate.id) return;
 
       const updatedPlayers = s.players.map(pl => {
         if (pl.id === richestPlayer!.id) return { ...pl, gold: pl.gold - 1 };
@@ -1586,7 +1577,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     veggenteTake: useCallback(() => act('veggente-take'), [act]),
     veggenteReturn: useCallback((assignments: { playerId: string; cardUid: string }[]) =>
       act('veggente-return', { assignments }), [act]),
-    abateTax: useCallback(() => act('abate-tax'), [act]),
+    abateTax: useCallback((targetPlayerId: string) => act('abate-tax', { targetPlayerId }), [act]),
     cardinalBuild: useCallback((cardUid: string, targetPlayerId: string, cardUidsToGive: string[]) =>
       act('cardinal-build', { cardUid, targetPlayerId, cardUidsToGive }), [act]),
     museoTuck: useCallback((cardUid: string) => act('museo-tuck', { cardUid }), [act]),

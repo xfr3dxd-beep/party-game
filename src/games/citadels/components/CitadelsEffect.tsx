@@ -42,7 +42,7 @@ interface CitadelsEffectProps {
   onCardinalBuild?: () => void;
   onMagistrateAssign?: (assignments: { playerId: string; token: 'real' | 'fake' }[]) => void;
   onSorcererLook?: (targetPlayerId: string) => void;
-  onAbateTax?: () => void;
+  onAbateTax?: (targetPlayerId: string) => void;
   onBlackmailerAssign?: (assignments: { playerId: string; token: 'real' | 'fake' }[]) => void;
   onClose: () => void;
 }
@@ -1572,89 +1572,28 @@ export default function CitadelsEffect({
           )}
 
           {/* ============================================================== */}
-          {/* 10. NAVIGATORE (Rank 7, ID 21)                                 */}
-          {/* ============================================================== */}
-          {!isBlackmailerDecide && character?.id === 21 && (
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.95rem', color: 'rgba(244, 237, 226, 0.85)' }}>
-                Il Navigatore raccoglie un ingente carico dalla sua spedizione. Scegli se ottenere <strong>4 Oro</strong> o <strong>4 Carte</strong>.
-                <br />
-                <span style={{ color: '#e74c3c', fontSize: '0.85rem' }}>
-                  Nota: Se utilizzi questa abilità, NON potrai costruire alcun quartiere in questo turno!
-                </span>
-              </p>
-
-              <div style={{ display: 'flex', gap: '1.25rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => onNavigatorChoose('gold')}
-                  style={{
-                    padding: '1.5rem 2rem',
-                    background: 'linear-gradient(135deg, rgba(230, 184, 0, 0.3) 0%, rgba(184, 134, 11, 0.15) 100%)',
-                    border: '2px solid #e6b800',
-                    borderRadius: '14px',
-                    cursor: 'pointer',
-                    color: '#ffd54f',
-                    minWidth: '220px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-3px)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-                >
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🪙</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff' }}>4 Oro</div>
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginTop: '4px' }}>
-                    Aggiungi 4 monete al tuo tesoro
-                  </div>
-                </button>
-
-                <button
-                  onClick={() => onNavigatorChoose('cards')}
-                  style={{
-                    padding: '1.5rem 2rem',
-                    background: 'linear-gradient(135deg, rgba(142, 68, 173, 0.3) 0%, rgba(75, 30, 100, 0.15) 100%)',
-                    border: '2px solid #8e44ad',
-                    borderRadius: '14px',
-                    cursor: 'pointer',
-                    color: '#d29bfe',
-                    minWidth: '220px',
-                    transition: 'all 0.15s ease',
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-3px)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-                >
-                  <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>🃏</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff' }}>4 Carte</div>
-                  <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginTop: '4px' }}>
-                    Pesca 4 carte distretto dal mazzo
-                  </div>
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================== */}
           {/* ABATE (Rank 5, ID 14) — Tax richest player                      */}
           {/* ============================================================== */}
           {!isBlackmailerDecide && character?.id === 14 && (() => {
             const otherPlayers = state.players.filter(p => p.id !== myPlayer.id && p.gold > 0);
             const maxGold = otherPlayers.length > 0 ? Math.max(...otherPlayers.map(p => p.gold)) : 0;
-            const richest = otherPlayers.find(p => p.gold === maxGold);
+            const richestPlayers = otherPlayers.filter(p => p.gold === maxGold);
             return (
               <div>
                 <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'rgba(244, 237, 226, 0.8)' }}>
                   Il giocatore con più oro al tavolo deve dare <strong style={{ color: '#c9a84c' }}>1🪙</strong> all'Abate.
+                  {richestPlayers.length > 1 && ' Ci sono più giocatori a pari merito — scegli da chi riscuotere:'}
                 </p>
-                {richest ? (
-                  <div style={{ marginBottom: '0.5rem' }}>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.8rem', marginBottom: '0.5rem' }}>
-                      Giocatore più ricco: <strong style={{ color: '#ffd54f' }}>{richest.name}</strong> (🪙{richest.gold})
-                    </div>
-                    <button onClick={() => { if (onAbateTax) onAbateTax(); }} style={{
-                      width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700,
-                      cursor: 'pointer',
-                      background: 'linear-gradient(135deg, #c9a84c, #8c681e)',
-                      color: '#1a1520', border: 'none', borderRadius: '12px',
-                    }}>⛪ Riscuoti Tributo (1🪙 da {richest.name})</button>
+                {richestPlayers.length > 0 ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    {richestPlayers.map(p => (
+                      <button key={p.id} onClick={() => { if (onAbateTax) onAbateTax(p.id); }} style={{
+                        width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700,
+                        cursor: 'pointer',
+                        background: 'linear-gradient(135deg, #c9a84c, #8c681e)',
+                        color: '#1a1520', border: 'none', borderRadius: '12px',
+                      }}>⛪ Riscuoti da {p.name} (🪙{p.gold})</button>
+                    ))}
                   </div>
                 ) : (
                   <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>

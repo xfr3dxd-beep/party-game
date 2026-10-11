@@ -896,7 +896,9 @@ export default function CitadelsTurn({
               {!myPlayer.hasGathered
                 ? 'Raccogli prima le risorse per poter costruire quartieri in questo turno.'
                 : myPlayer.buildsUsed >= myPlayer.maxBuilds
-                ? 'Hai utilizzato tutte le costruzioni disponibili per questo turno.'
+                ? (character?.id === 16
+                  ? 'Puoi ancora costruire distretti verdi senza limiti!'
+                  : 'Hai utilizzato tutte le costruzioni disponibili per questo turno.')
                 : 'Clicca su un quartiere per edificarlo nella tua città:'}
             </p>
           </div>
@@ -1034,7 +1036,8 @@ export default function CitadelsTurn({
 
               // Normal building mode
               const isScuderie = district.id === 525;
-              const hasRemainingBuilds = myPlayer.buildsUsed < myPlayer.maxBuilds || isScuderie;
+              const isGreenMerchant = district.color === 'green' && character?.id === 16;
+              const hasRemainingBuilds = myPlayer.buildsUsed < myPlayer.maxBuilds || isScuderie || isGreenMerchant;
               const isEligibleToBuild = myPlayer.hasGathered && hasRemainingBuilds && buildCheck.ok;
 
               return (

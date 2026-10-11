@@ -41,6 +41,7 @@ export default function CitadelsPage() {
   const [cardSelDistrict, setCardSelDistrict] = useState<string | null>(null);
   const [cardSelTarget, setCardSelTarget] = useState<string | null>(null);
   const [cardSelCards, setCardSelCards] = useState<string[]>([]);
+  const [dismissedNotif, setDismissedNotif] = useState<string | null>(null);
 
   const { state, myPlayer } = game;
   const currentPhase = state.phase !== 'create' ? state.phase : localPhase;
@@ -429,7 +430,7 @@ export default function CitadelsPage() {
               onCardinalBuild={() => { setShowEffect(false); setCardSelDistrict(null); setCardSelTarget(null); setCardSelCards([]); setShowCardinal(true); }}
               onMagistrateAssign={(assignments) => { game.magistrateAssign(assignments); setShowEffect(false); }}
               onSorcererLook={(targetId) => { game.sorcererLook(targetId); setShowEffect(false); }}
-              onAbateTax={() => { game.abateTax(); setShowEffect(false); }}
+              onAbateTax={(targetId) => { game.abateTax(targetId); setShowEffect(false); }}
               onBlackmailerAssign={(assignments) => { game.blackmailerAssign(assignments); setShowEffect(false); }}
               onClose={() => setShowEffect(false)}
             />
@@ -623,13 +624,16 @@ export default function CitadelsPage() {
         </div>
       )}
 
-      {/* Global Notification Overlay (Magistrate token / Sorcerer steal) */}
-      {state.notification && (
+      {/* Global Notification Overlay (per-player dismissal) */}
+      {state.notification && (() => {
+        const notifKey = JSON.stringify(state.notification);
+        if (dismissedNotif === notifKey) return null;
+        return (
         <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 300,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           padding: '1.5rem',
-        }} onClick={() => game.dismissNotification()}>
+        }} onClick={() => setDismissedNotif(notifKey)}>
           {state.notification.type === 'magistrate-token' && (() => {
             const { isReal, builderName, magistrateName, districtName, districtCost } = state.notification!.data;
             const tokenImage = isReal
@@ -758,7 +762,8 @@ export default function CitadelsPage() {
             );
           })()}
         </div>
-      )}
+        );
+      })()}
 
       {/* Cardinal Build Modal */}
       {showCardinal && myPlayer && myPlayer.characterId === 15 && (() => {
