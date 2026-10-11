@@ -353,6 +353,8 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       const p = s.players.find(pl => pl.id === s.activePlayerId);
       if (!p) return;
       if (s.effectContext?.type === 'bewitched-gather') return;
+      // Strega (ID 3) cannot build if she used her effect this turn
+      if (p.characterId === 3 && p.hasUsedEffect) return;
 
       const card = p.hand.find(c => c.uid === cardUid);
       if (!card) return;

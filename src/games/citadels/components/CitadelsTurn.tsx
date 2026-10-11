@@ -910,8 +910,8 @@ export default function CitadelsTurn({
         );
       })()}
 
-      {/* Phase 2: Hand & Building — hidden when bewitched */}
-      {!isBewitched && (
+      {/* Phase 2: Hand & Building — hidden when bewitched or Strega used effect */}
+      {!isBewitched && !(character?.id === 3 && myPlayer.hasUsedEffect) && (
       <div>
         <div
           style={{
