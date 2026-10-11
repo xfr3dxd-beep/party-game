@@ -706,6 +706,26 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       sync({ ...s, players: updatedPlayers });
     }
 
+    // ========== BLACKMAILER ASSIGN ==========
+    else if (action === 'blackmailer-assign') {
+      const { assignments } = payload as { assignments: { playerId: string; token: 'real' | 'fake' }[] };
+      const blackmailer = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!blackmailer || blackmailer.characterId !== 5) return;
+      if (assignments.length !== 2) return;
+
+      const realCount = assignments.filter(a => a.token === 'real').length;
+      const fakeCount = assignments.filter(a => a.token === 'fake').length;
+      if (realCount !== 1 || fakeCount !== 1) return;
+
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id === blackmailer.id) return { ...pl, hasUsedEffect: true };
+        const assignment = assignments.find(a => a.playerId === pl.id);
+        if (assignment) return { ...pl, blackmailerToken: assignment.token };
+        return pl;
+      });
+      sync({ ...s, players: updatedPlayers });
+    }
+
     // ========== STREGONE LOOK ==========
     else if (action === 'sorcerer-look') {
       const { targetPlayerId } = payload;
@@ -1118,10 +1138,20 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       const player = s.players.find(pl => pl.id === pId);
       if (!player) return;
 
+      const isReal = player.blackmailerToken === 'real';
+      const paid = Boolean(pay);
+      const halfGold = Math.floor(player.gold / 2);
+      const goldLost = paid ? halfGold : (isReal ? player.gold : 0);
+
+      const blackmailerPlayer = s.players.find(pl => {
+        const ch = pl.characterId ? getCharacterById(pl.characterId) : null;
+        return ch && ch.rank === 2 && (ch.id === 5);
+      });
+      const blackmailerName = blackmailerPlayer?.name || 'Ricattatore';
+
       let updatedPlayers = [...s.players];
 
       if (pay) {
-        const halfGold = Math.floor(player.gold / 2);
         updatedPlayers = updatedPlayers.map(pl =>
           pl.id === pId ? { ...pl, gold: pl.gold - halfGold, blackmailerPaid: true, blackmailerToken: null } : pl
         );
@@ -1162,12 +1192,24 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         p.id === pId ? { ...p, hasGathered: false, buildsUsed: 0, maxBuilds, hasUsedEffect: false, goldSpentThisTurn: 0 } : p
       );
 
+      const notification = {
+        type: 'blackmailer-token' as const,
+        data: {
+          isReal,
+          playerName: player.name,
+          paid,
+          goldLost,
+          blackmailerName,
+        },
+      };
+
       sync({
         ...s,
         players: resetPlayers,
         activePlayerId: pId,
         phase: 'turn-action',
         effectContext: null,
+        notification,
       });
     }
 
@@ -1515,6 +1557,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     collectIncome: useCallback(() => act('collect-income'), [act]),
     collectIncomeChoice: useCallback((type: 'gold' | 'cards') => act('collect-income-choice', { type }), [act]),
     magistrateAssign: useCallback((assignments: { playerId: string; token: 'real' | 'fake' }[]) => act('magistrate-assign', { assignments }), [act]),
+    blackmailerAssign: useCallback((assignments: { playerId: string; token: 'real' | 'fake' }[]) => act('blackmailer-assign', { assignments }), [act]),
     sorcererLook: useCallback((targetPlayerId: string) => act('sorcerer-look', { targetPlayerId }), [act]),
     sorcererBuild: useCallback((targetPlayerId: string, cardUid: string | null) => act('sorcerer-build', { targetPlayerId, cardUid }), [act]),
     covoBuild: useCallback((cardUid: string, cardsToDiscard: string[]) => act('covo-build', { cardUid, cardsToDiscard }), [act]),

@@ -158,7 +158,7 @@ export interface CitadelsState {
 // ---- Notification ----
 
 export interface GameNotification {
-  type: 'magistrate-token' | 'sorcerer-steal' | 'emperor-crown';
+  type: 'magistrate-token' | 'sorcerer-steal' | 'emperor-crown' | 'blackmailer-token';
   data: any;
 }
 

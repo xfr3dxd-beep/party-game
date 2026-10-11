@@ -43,6 +43,7 @@ interface CitadelsEffectProps {
   onMagistrateAssign?: (assignments: { playerId: string; token: 'real' | 'fake' }[]) => void;
   onSorcererLook?: (targetPlayerId: string) => void;
   onAbateTax?: () => void;
+  onBlackmailerAssign?: (assignments: { playerId: string; token: 'real' | 'fake' }[]) => void;
   onClose: () => void;
 }
 
@@ -74,6 +75,7 @@ export default function CitadelsEffect({
   onMagistrateAssign,
   onSorcererLook,
   onAbateTax,
+  onBlackmailerAssign,
   onClose,
 }: CitadelsEffectProps) {
   // Local states for complex interactive effects
@@ -539,6 +541,75 @@ export default function CitadelsEffect({
               </div>
             </div>
           )}
+
+          {/* ============================================================== */}
+          {/* RICATTATORE (Rank 2, ID 5) — Assign threat tokens               */}
+          {/* ============================================================== */}
+          {!isBlackmailerDecide && character?.id === 5 && (() => {
+            const TOKEN_BACK = '/Citadels/Personaggi %2B token/Token Ricattatore Dorso.jpg';
+            const otherPlayers = state.players.filter(p => p.id !== myPlayer.id);
+            const [tokenAssignments, setTokenAssignments] = React.useState<Record<string, 'real' | 'fake' | null>>({});
+            const assigned = Object.entries(tokenAssignments).filter(([_, v]) => v !== null);
+            const realCount = assigned.filter(([_, v]) => v === 'real').length;
+            const fakeCount = assigned.filter(([_, v]) => v === 'fake').length;
+            const canConfirm = realCount === 1 && fakeCount === 1;
+
+            const toggleToken = (playerId: string) => {
+              const current = tokenAssignments[playerId];
+              if (!current) {
+                if (realCount === 0) setTokenAssignments({ ...tokenAssignments, [playerId]: 'real' });
+                else if (fakeCount === 0) setTokenAssignments({ ...tokenAssignments, [playerId]: 'fake' });
+              } else if (current === 'real') {
+                if (fakeCount === 0) setTokenAssignments({ ...tokenAssignments, [playerId]: 'fake' });
+                else setTokenAssignments({ ...tokenAssignments, [playerId]: null });
+              } else if (current === 'fake') {
+                setTokenAssignments({ ...tokenAssignments, [playerId]: null });
+              }
+            };
+
+            return (
+              <div>
+                <p style={{ margin: '0 0 0.8rem 0', fontSize: '0.9rem', color: 'rgba(244, 237, 226, 0.8)' }}>
+                  Assegna 2 segnalini minaccia: <strong style={{ color: '#ef4444' }}>1 vero</strong> e <strong style={{ color: 'rgba(255,255,255,0.5)' }}>1 falso</strong>.
+                  Quando il loro personaggio viene chiamato, dovranno decidere se pagare.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {otherPlayers.map(p => {
+                    const token = tokenAssignments[p.id];
+                    return (
+                      <button key={p.id} onClick={() => toggleToken(p.id)} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.6rem',
+                        padding: '0.6rem 1rem', borderRadius: '8px', cursor: 'pointer',
+                        background: token === 'real' ? 'rgba(239,68,68,0.2)' : token === 'fake' ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
+                        border: `1px solid ${token === 'real' ? '#ef4444' : token === 'fake' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.1)'}`,
+                        color: '#e8e0d5', textAlign: 'left',
+                      }}>
+                        <img src={TOKEN_BACK} alt="token" style={{ width: '30px', height: '30px', borderRadius: '4px', objectFit: 'cover' }} />
+                        <span style={{ flex: 1, fontWeight: 600 }}>{p.name}</span>
+                        {token === 'real' && <span style={{ color: '#ef4444', fontWeight: 700 }}>🔴 VERO</span>}
+                        {token === 'fake' && <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>⚪ Falso</span>}
+                        {!token && <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                <button disabled={!canConfirm} onClick={() => {
+                  if (onBlackmailerAssign) {
+                    const arr = Object.entries(tokenAssignments)
+                      .filter(([_, v]) => v !== null)
+                      .map(([playerId, token]) => ({ playerId, token: token as 'real' | 'fake' }));
+                    onBlackmailerAssign(arr);
+                  }
+                }} style={{
+                  width: '100%', padding: '0.8rem', fontSize: '1rem', fontWeight: 700,
+                  cursor: canConfirm ? 'pointer' : 'not-allowed',
+                  background: canConfirm ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255,255,255,0.1)',
+                  color: canConfirm ? '#fff' : 'rgba(255,255,255,0.3)',
+                  border: 'none', borderRadius: '12px',
+                }}>💀 Assegna Segnalini ({assigned.length}/2)</button>
+              </div>
+            );
+          })()}
 
           {/* ============================================================== */}
           {/* 3. LADRO (Rank 2, ID 4)                                        */}

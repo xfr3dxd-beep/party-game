@@ -430,6 +430,7 @@ export default function CitadelsPage() {
               onMagistrateAssign={(assignments) => { game.magistrateAssign(assignments); setShowEffect(false); }}
               onSorcererLook={(targetId) => { game.sorcererLook(targetId); setShowEffect(false); }}
               onAbateTax={() => { game.abateTax(); setShowEffect(false); }}
+              onBlackmailerAssign={(assignments) => { game.blackmailerAssign(assignments); setShowEffect(false); }}
               onClose={() => setShowEffect(false)}
             />
           )}
@@ -709,6 +710,45 @@ export default function CitadelsPage() {
                     <p style={{ color: 'rgba(255,255,255,0.4)' }}>
                       {targetName} non aveva risorse da cedere
                     </p>
+                  )}
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
+                  Tocca per chiudere
+                </p>
+              </div>
+            );
+          })()}
+
+          {state.notification.type === 'blackmailer-token' && (() => {
+            const { isReal, playerName, paid, goldLost, blackmailerName } = state.notification!.data;
+            const tokenImage = isReal
+              ? '/Citadels/Personaggi %2B token/Token Ricattatore Vero.jpg'
+              : '/Citadels/Personaggi %2B token/Token Ricattatore Fake.jpg';
+            return (
+              <div style={{ textAlign: 'center', maxWidth: '400px' }}>
+                <img src={tokenImage} alt={isReal ? 'Token Vero' : 'Token Falso'} style={{
+                  width: '180px', height: '180px', objectFit: 'contain', marginBottom: '1.2rem',
+                  borderRadius: '16px', border: `3px solid ${isReal ? '#ef4444' : 'rgba(255,255,255,0.3)'}`,
+                  boxShadow: isReal ? '0 0 40px rgba(239,68,68,0.5)' : '0 0 20px rgba(255,255,255,0.1)',
+                }} />
+                <h2 style={{
+                  color: isReal ? '#ef4444' : 'rgba(255,255,255,0.6)',
+                  fontSize: '1.6rem', marginBottom: '0.8rem',
+                }}>
+                  {isReal ? '💀 Segnalino VERO!' : '⚪ Segnalino Falso'}
+                </h2>
+                <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '1rem', lineHeight: 1.6 }}>
+                  {paid && isReal && (
+                    <p><strong>{playerName}</strong> ha pagato metà del suo oro alla banca (🪙{goldLost}). Il segnalino era vero, ma ha evitato il ricatto!</p>
+                  )}
+                  {paid && !isReal && (
+                    <p><strong>{playerName}</strong> ha pagato metà del suo oro alla banca (🪙{goldLost})... ma il segnalino era falso!</p>
+                  )}
+                  {!paid && isReal && (
+                    <p><strong>{playerName}</strong> ha rifiutato di pagare. Il segnalino era <strong style={{ color: '#ef4444' }}>VERO</strong>! Tutto il suo oro (🪙{goldLost}) va a <strong style={{ color: '#ef4444' }}>{blackmailerName}</strong>!</p>
+                  )}
+                  {!paid && !isReal && (
+                    <p><strong>{playerName}</strong> ha rifiutato di pagare. Il segnalino era falso — nessuna conseguenza!</p>
                   )}
                 </div>
                 <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', marginTop: '1.5rem' }}>
