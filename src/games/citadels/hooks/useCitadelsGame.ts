@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   CitadelsState, CitadelsPlayer, CitadelsBroadcast, DistrictCard,
   DraftState, EffectContext, TaxEntry, BuiltDistrict, ScoreBreakdown,
+  WitchData,
 } from '../types';
 import { getCharacterById, ALL_CHARACTERS } from '../characters';
 import { getDistrictById, buildDeck, randomViola, PRESETS, ALL_VIOLA } from '../districts';
@@ -134,6 +135,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
           assassinatedRank: null,
           robbedRank: null,
           bewitchedRank: null,
+          witchData: null,
           taxPool: [],
           effectContext: null,
           drawnCards: null,
@@ -230,7 +232,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         };
         // Reset turn state for this player
         const resetPlayers = ns.players.map(p =>
-          p.id === player.id ? { ...p, hasGathered: false, buildsUsed: 0, maxBuilds: 1, hasUsedEffect: false, goldSpentThisTurn: 0 } : p
+          p.id === player.id ? { ...p, isBewitched: true, hasGathered: false, buildsUsed: 0, maxBuilds: 1, hasUsedEffect: false, goldSpentThisTurn: 0 } : p
         );
         sync({ ...ns, players: resetPlayers });
         return;
@@ -330,12 +332,13 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         newDeck = remaining;
       }
 
+      const wasBewitched = s.effectContext?.type === 'bewitched-gather' || (s.bewitchedRank === s.currentRank && !s.witchData);
       const ns = {
         ...s,
         districtDeck: newDeck,
         drawnCards: null,
         phase: 'turn-action' as const,
-        effectContext: null,
+        effectContext: wasBewitched ? { type: 'bewitched-gather', data: { targetId: p.id } } : null,
         players: s.players.map(pl => pl.id === p.id
           ? { ...pl, hand: [...pl.hand, kept, ...extraCards], hasGathered: true }
           : pl
@@ -349,6 +352,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       const { cardUid } = payload;
       const p = s.players.find(pl => pl.id === s.activePlayerId);
       if (!p) return;
+      if (s.effectContext?.type === 'bewitched-gather') return;
 
       const card = p.hand.find(c => c.uid === cardUid);
       if (!card) return;
@@ -563,6 +567,58 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       const p = s.players.find(pl => pl.id === s.activePlayerId);
       if (!p) return;
 
+      // Check if this is a bewitched player ending their restricted turn
+      if (s.effectContext?.type === 'bewitched-gather' || (s.bewitchedRank === s.currentRank && !s.witchData)) {
+        const targetPlayer = p;
+        const witchPlayer = s.players.find(pl => pl.characterId === 3);
+
+        if (witchPlayer) {
+          const witchData: WitchData = {
+            witchPlayerId: witchPlayer.id,
+            targetPlayerId: targetPlayer.id,
+            witchOriginalHand: [...witchPlayer.hand],
+            witchOriginalCharacterId: witchPlayer.characterId!,
+            witchOriginalGold: witchPlayer.gold,
+          };
+
+          // Determine maxBuilds for the target character
+          const targetChar = getCharacterById(targetPlayer.characterId!);
+          let maxBuilds = 1;
+          if (targetChar.id === 19) maxBuilds = 3;
+          if (targetChar.id === 9 || targetChar.id === 20) maxBuilds = 2;
+
+          const updatedPlayers = s.players.map(pl => {
+            if (pl.id === witchPlayer.id) {
+              return {
+                ...pl,
+                hand: [...targetPlayer.hand],
+                gold: targetPlayer.gold,
+                characterId: targetPlayer.characterId,
+                hasGathered: true,  // Skip gathering, go straight to build/effects
+                buildsUsed: 0,
+                maxBuilds,
+                hasUsedEffect: false,
+                goldSpentThisTurn: 0,
+              };
+            }
+            if (pl.id === targetPlayer.id) {
+              return { ...pl, hand: [], gold: 0, isBewitched: false };
+            }
+            return pl;
+          });
+
+          sync({
+            ...s,
+            players: updatedPlayers,
+            activePlayerId: witchPlayer.id,
+            phase: 'turn-action',
+            effectContext: null,
+            witchData,
+          });
+          return;
+        }
+      }
+
       let updatedPlayers = [...s.players];
 
       // Alchimista (17): refund gold spent on building
@@ -570,6 +626,34 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         updatedPlayers = updatedPlayers.map(pl =>
           pl.id === p.id ? { ...pl, gold: pl.gold + pl.goldSpentThisTurn } : pl
         );
+      }
+
+      // Check if this is the Witch ending their bonus turn
+      let nextWitchData = s.witchData;
+      if (s.witchData && s.activePlayerId === s.witchData.witchPlayerId) {
+        const wd = s.witchData;
+        const witchCurrent = updatedPlayers.find(pl => pl.id === wd.witchPlayerId)!;
+        updatedPlayers = updatedPlayers.map(pl => {
+          if (pl.id === wd.witchPlayerId) {
+            return {
+              ...pl,
+              hand: wd.witchOriginalHand,
+              characterId: wd.witchOriginalCharacterId,
+              gold: wd.witchOriginalGold,
+            };
+          }
+          if (pl.id === wd.targetPlayerId) {
+            // Return remaining hand and gold from the witch
+            return {
+              ...pl,
+              hand: [...witchCurrent.hand],
+              gold: witchCurrent.gold,
+              isBewitched: false,
+            };
+          }
+          return pl;
+        });
+        nextWitchData = null;
       }
 
       // Ospizio (517): if 0 gold at end of turn, gain 1
@@ -598,6 +682,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         activePlayerId: null,
         phase: 'turn-call',
         effectContext: null,
+        witchData: nextWitchData,
       });
 
       // Auto-call next rank
@@ -903,6 +988,22 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     else if (action === 'assassin-target') {
       const { targetRank } = payload;
       sync({ ...s, assassinatedRank: targetRank, phase: 'turn-action' });
+    }
+
+    // ========== EFFECT: WITCH (BEWITCH TARGET) ==========
+    else if (action === 'witch-bewitch') {
+      const { targetRank } = payload;
+      const witch = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!witch || witch.characterId !== 3) return;
+      if (witch.buildsUsed > 0) return; // Must not have built anything
+
+      sync({
+        ...s,
+        bewitchedRank: targetRank,
+        players: s.players.map(pl =>
+          pl.id === witch.id ? { ...pl, hasUsedEffect: true } : pl
+        ),
+      });
     }
 
     // ========== EFFECT: THIEF ==========
@@ -1513,6 +1614,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
       assassinatedRank: null,
       robbedRank: null,
       bewitchedRank: null,
+      witchData: null,
       taxPool: [],
       activePlayerId: null,
       effectContext: null,
@@ -1558,6 +1660,7 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     takeCrown: useCallback(() => act('take-crown'), [act]),
     // Effects
     assassinTarget: useCallback((rank: number) => act('assassin-target', { targetRank: rank }), [act]),
+    witchBewitch: useCallback((targetRank: number) => act('witch-bewitch', { targetRank }), [act]),
     thiefTarget: useCallback((rank: number) => act('thief-target', { targetRank: rank }), [act]),
     wizardSwap: useCallback((targetPlayerId: string) => act('wizard-swap', { targetPlayerId }), [act]),
     wizardDiscard: useCallback((cardUids: string[]) => act('wizard-discard', { cardUids }), [act]),

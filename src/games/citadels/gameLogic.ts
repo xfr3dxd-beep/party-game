@@ -357,6 +357,7 @@ export function createInitialState(): CitadelsState {
     assassinatedRank: null,
     robbedRank: null,
     bewitchedRank: null,
+    witchData: null,
     taxPool: [],
     effectContext: null,
     drawnCards: null,

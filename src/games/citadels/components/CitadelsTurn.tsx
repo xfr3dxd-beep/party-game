@@ -76,6 +76,8 @@ export default function CitadelsTurn({
   const [covoDiscards, setCovoDiscards] = useState<string[]>([]);
 
   const character = myPlayer.characterId ? getCharacterById(myPlayer.characterId) : null;
+  const isBewitched = state.effectContext?.type === 'bewitched-gather';
+  const isWitchBonusTurn = !!state.witchData && state.witchData.witchPlayerId === myPlayer.id;
 
   // District specials owned
   const hasFucina = hasBuiltDistrict(myPlayer, 508);
@@ -319,7 +321,7 @@ export default function CitadelsTurn({
         }}
       >
         {/* Character Effect Button */}
-        {!myPlayer.hasUsedEffect && (
+        {!isBewitched && !myPlayer.hasUsedEffect && (
           <button
             onClick={onUseEffect}
             style={{
@@ -346,7 +348,7 @@ export default function CitadelsTurn({
         )}
 
         {/* Character Income Button — Patrizio (12) gets two buttons: gold or cards */}
-        {character?.incomeColor && (character.id === 12 || character.id === 14) && onCollectIncomeChoice && (
+        {!isBewitched && character?.incomeColor && (character.id === 12 || character.id === 14) && onCollectIncomeChoice && (
           <div style={{ display: 'flex', gap: '0.4rem' }}>
             <button
               onClick={() => { onCollectIncomeChoice('gold'); setIncomeCollected(true); }}
@@ -390,7 +392,7 @@ export default function CitadelsTurn({
           </div>
         )}
         {/* Standard income button for non-Patrizio characters */}
-        {character?.incomeColor && character.id !== 12 && character.id !== 14 && (
+        {!isBewitched && character?.incomeColor && character.id !== 12 && character.id !== 14 && (
           <button
             onClick={handleIncome}
             disabled={incomeCollected || incomeAmount === 0}
@@ -415,7 +417,7 @@ export default function CitadelsTurn({
         )}
 
         {/* Crown button for rank 4 — NOT for Imperatore (ID 11), who passes crown via Effect */}
-        {character?.rank === 4 && character.id !== 11 && !myPlayer.hasCrown && (
+        {!isBewitched && character?.rank === 4 && character.id !== 11 && !myPlayer.hasCrown && (
           <button
             onClick={onTakeCrown}
             style={{
@@ -873,7 +875,43 @@ export default function CitadelsTurn({
         </div>
       )}
 
-      {/* Phase 2: Hand & Building */}
+      {/* Bewitched player banner */}
+      {isBewitched && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(168,85,247,0.05))',
+          border: '1px solid rgba(168,85,247,0.4)', borderRadius: '12px',
+          padding: '1rem', marginBottom: '0.8rem', textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>🧙‍♀️</div>
+          <div style={{ color: '#a855f7', fontWeight: 700, fontSize: '1rem' }}>Sei Stregato!</div>
+          <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
+            Puoi solo raccogliere le risorse base, poi il tuo turno finisce. La Strega prenderà il controllo del tuo personaggio!
+          </div>
+        </div>
+      )}
+
+      {/* Witch bonus turn banner */}
+      {isWitchBonusTurn && state.witchData && (() => {
+        const targetPlayer = state.players.find(p => p.id === state.witchData!.targetPlayerId);
+        const borrowedChar = character ? character.nameIt : '?';
+        return (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(88,28,135,0.15))',
+            border: '1px solid rgba(168,85,247,0.5)', borderRadius: '12px',
+            padding: '1rem', marginBottom: '0.8rem', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '1.5rem', marginBottom: '0.3rem' }}>🧙‍♀️✨</div>
+            <div style={{ color: '#a855f7', fontWeight: 700, fontSize: '1rem' }}>Turno Bonus della Strega!</div>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.8rem' }}>
+              Stai controllando <strong style={{ color: '#c9a84c' }}>{borrowedChar}</strong> di <strong>{targetPlayer?.name}</strong>.
+              Usi la sua mano e il suo oro, ma costruisci nella tua città!
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Phase 2: Hand & Building — hidden when bewitched */}
+      {!isBewitched && (
       <div>
         <div
           style={{
@@ -1209,6 +1247,7 @@ export default function CitadelsTurn({
           </div>
         )}
       </div>
+      )}
       {covoBuildUid && onCovoBuild && (() => {
         const covoCard = myPlayer.hand.find(c => c.uid === covoBuildUid);
         if (!covoCard) return null;

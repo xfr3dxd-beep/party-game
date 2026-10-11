@@ -432,6 +432,7 @@ export default function CitadelsPage() {
               onSorcererLook={(targetId) => { game.sorcererLook(targetId); setShowEffect(false); }}
               onAbateTax={(targetId) => { game.abateTax(targetId); setShowEffect(false); }}
               onBlackmailerAssign={(assignments) => { game.blackmailerAssign(assignments); setShowEffect(false); }}
+              onWitchBewitch={(rank) => { game.witchBewitch(rank); setShowEffect(false); }}
               onClose={() => setShowEffect(false)}
             />
           )}

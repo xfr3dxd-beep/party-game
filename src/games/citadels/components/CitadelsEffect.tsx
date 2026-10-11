@@ -44,6 +44,7 @@ interface CitadelsEffectProps {
   onSorcererLook?: (targetPlayerId: string) => void;
   onAbateTax?: (targetPlayerId: string) => void;
   onBlackmailerAssign?: (assignments: { playerId: string; token: 'real' | 'fake' }[]) => void;
+  onWitchBewitch?: (targetRank: number) => void;
   onClose: () => void;
 }
 
@@ -76,6 +77,7 @@ export default function CitadelsEffect({
   onSorcererLook,
   onAbateTax,
   onBlackmailerAssign,
+  onWitchBewitch,
   onClose,
 }: CitadelsEffectProps) {
   // Local states for complex interactive effects
@@ -442,6 +444,42 @@ export default function CitadelsEffect({
               </div>
             </div>
           )}
+
+          {/* ============================================================== */}
+          {/* STREGA (Rank 1, ID 3) — Bewitch a character                    */}
+          {/* ============================================================== */}
+          {!isBlackmailerDecide && character?.id === 3 && (() => {
+            const ranks = state.characterPool
+              .map(id => getCharacterById(id))
+              .filter(c => c.rank >= 2 && c.rank <= 9)
+              .sort((a, b) => a.rank - b.rank);
+            const canUse = myPlayer.buildsUsed === 0;
+            return (
+              <div>
+                <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'rgba(244, 237, 226, 0.8)' }}>
+                  {canUse
+                    ? 'Nomina un personaggio in gioco. Quando verrà chiamato, potrà solo raccogliere risorse e il suo turno finirà. Tu prenderai il controllo del suo personaggio, mano e oro!'
+                    : '⚠️ Non puoi usare l\'effetto: hai già costruito questo turno.'}
+                </p>
+                {canUse && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                    {ranks.map(c => (
+                      <button key={c.id} onClick={() => { if (onWitchBewitch) { onWitchBewitch(c.rank); } }} style={{
+                        display: 'flex', alignItems: 'center', gap: '0.6rem',
+                        padding: '0.5rem 0.8rem', borderRadius: '8px', cursor: 'pointer',
+                        background: 'rgba(168,85,247,0.1)',
+                        border: '1px solid rgba(168,85,247,0.3)', color: '#e8e0d5', textAlign: 'left',
+                      }}>
+                        <img src={c.image} alt={c.nameIt} style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />
+                        <span style={{ fontWeight: 700, color: '#a855f7' }}>Rango {c.rank}</span>
+                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>— {c.nameIt}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* ============================================================== */}
           {/* 2. ASSASSINO (Rank 1, ID 1)                                    */}

@@ -107,6 +107,16 @@ export interface TaxEntry {
   amount: number;
 }
 
+// ---- Strega (Witch) ----
+
+export interface WitchData {
+  witchPlayerId: string;
+  targetPlayerId: string;
+  witchOriginalHand: DistrictCard[];
+  witchOriginalCharacterId: number;
+  witchOriginalGold: number;
+}
+
 // ---- Game State ----
 
 export interface CitadelsState {
@@ -137,6 +147,7 @@ export interface CitadelsState {
   assassinatedRank: number | null;
   robbedRank: number | null;
   bewitchedRank: number | null;
+  witchData: WitchData | null;
   taxPool: TaxEntry[];       // Tassatore pool
   effectContext: EffectContext | null;
 
