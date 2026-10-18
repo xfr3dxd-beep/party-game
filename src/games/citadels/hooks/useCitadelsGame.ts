@@ -149,23 +149,47 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
         const newPlayers = assignCharacters(s.players, newDraft);
         // Set up turn calling
         const callOrder = getCallOrder(s.characterPool, newPlayers);
-        const ns: CitadelsState = {
-          ...s,
-          draftState: newDraft,
-          players: newPlayers,
-          phase: 'turn-call',
-          currentRank: 0,
-          calledRanks: [],
-          assassinatedRank: null,
-          robbedRank: null,
-          bewitchedRank: null,
-          witchData: null,
-          taxPool: [],
-          effectContext: null,
-          drawnCards: null,
-          roundStartCrownHolderId: s.crownHolderId,
-        };
-        sync(ns);
+
+        // Teatro (527): if any player has it built, they can swap characters after draft
+        const teatroPlayer = newPlayers.find(pl => hasBuiltDistrict(pl, 527));
+        if (teatroPlayer) {
+          const ns: CitadelsState = {
+            ...s,
+            draftState: newDraft,
+            players: newPlayers,
+            phase: 'effect-active',
+            currentRank: 0,
+            calledRanks: [],
+            assassinatedRank: null,
+            robbedRank: null,
+            bewitchedRank: null,
+            witchData: null,
+            taxPool: [],
+            effectContext: { type: 'teatro-swap', data: { teatroPlayerId: teatroPlayer.id } },
+            drawnCards: null,
+            activePlayerId: teatroPlayer.id,
+            roundStartCrownHolderId: s.crownHolderId,
+          };
+          sync(ns);
+        } else {
+          const ns: CitadelsState = {
+            ...s,
+            draftState: newDraft,
+            players: newPlayers,
+            phase: 'turn-call',
+            currentRank: 0,
+            calledRanks: [],
+            assassinatedRank: null,
+            robbedRank: null,
+            bewitchedRank: null,
+            witchData: null,
+            taxPool: [],
+            effectContext: null,
+            drawnCards: null,
+            roundStartCrownHolderId: s.crownHolderId,
+          };
+          sync(ns);
+        }
       } else {
         sync({ ...s, draftState: newDraft });
       }
@@ -778,8 +802,6 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
       if (char.id === 12 || char.id === 14) return; // Patrizio/Abate must use collect-income-choice
 
       let color = char.incomeColor;
-      // Scuola di Magia (524) counts as chosen color
-      // For simplicity, handled via separate action 'set-magic-school-color'
 
       const count = countDistrictsByColor(p, color);
       if (count === 0) return;
@@ -1789,6 +1811,47 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
       });
     }
 
+    // ========== TEATRO (BLIND SWAP CHARACTER AFTER DRAFT) ==========
+    else if (action === 'teatro-swap') {
+      const { targetPlayerId } = payload;
+      if (s.effectContext?.type !== 'teatro-swap') return;
+      const teatroId = s.effectContext.data.teatroPlayerId;
+      const teatro = s.players.find(pl => pl.id === teatroId);
+      const target = s.players.find(pl => pl.id === targetPlayerId);
+      if (!teatro || !target || teatro.id === target.id) return;
+
+      // Blind swap of characterIds
+      const teatroCharId = teatro.characterId;
+      const targetCharId = target.characterId;
+
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id === teatro.id) return { ...pl, characterId: targetCharId };
+        if (pl.id === target.id) return { ...pl, characterId: teatroCharId };
+        return pl;
+      });
+
+      // Proceed to turn-call
+      sync({
+        ...s,
+        players: updatedPlayers,
+        effectContext: null,
+        phase: 'turn-call',
+        activePlayerId: null,
+      });
+      setTimeout(() => proc('call-next-rank', {}), 500);
+    }
+
+    else if (action === 'teatro-skip') {
+      if (s.effectContext?.type !== 'teatro-swap') return;
+      sync({
+        ...s,
+        effectContext: null,
+        phase: 'turn-call',
+        activePlayerId: null,
+      });
+      setTimeout(() => proc('call-next-rank', {}), 500);
+    }
+
     // ========== ARTISTA (EMBELLISH) ==========
     else if (action === 'artist-embellish') {
       const { districtUids } = payload as { districtUids: string[] }; // max 2
@@ -1985,6 +2048,8 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
     useArmeria: useCallback((targetPlayerId: string, targetDistrictUid: string) => act('use-armeria', { targetPlayerId, targetDistrictUid }), [act]),
     useImpalcatura: useCallback((cardUid: string) => act('use-impalcatura', { cardUid }), [act]),
     necropoliBuild: useCallback((cardUid: string, destroyDistrictUid: string) => act('necropoli-build', { cardUid, destroyDistrictUid }), [act]),
+    teatroSwap: useCallback((targetPlayerId: string) => act('teatro-swap', { targetPlayerId }), [act]),
+    teatroSkip: useCallback(() => act('teatro-skip', {}), [act]),
     artistEmbellish: useCallback((districtUids: string[]) =>
       act('artist-embellish', { districtUids }), [act]),
     rematch: useCallback(() => act('rematch'), [act]),

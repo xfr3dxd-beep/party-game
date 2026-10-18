@@ -551,6 +551,68 @@ export default function CitadelsPage() {
         </>
       )}
 
+          {/* Teatro (527) — swap character modal */}
+          {currentPhase === 'effect-active' && state.effectContext?.type === 'teatro-swap' && myPlayer && state.activePlayerId === myPlayer.id && (
+            <div style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 100,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+            }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #1a1520, #2d1f3d)',
+                borderRadius: '16px', border: '2px solid #8e44ad', padding: '1.5rem',
+                width: '100%', maxWidth: '500px', color: '#f4ede2',
+              }}>
+                <h3 style={{ margin: '0 0 0.5rem 0', color: '#d29bfe', fontSize: '1.1rem' }}>
+                  🎭 Teatro — Scambia Personaggio
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem' }}>
+                  Puoi scambiare alla cieca il tuo personaggio con quello di un altro giocatore. Non saprai quale personaggio riceverai!
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                  {state.players.filter(pl => pl.id !== myPlayer.id).map(pl => {
+                    const charInfo = pl.characterId ? getCharacterById(pl.characterId) : null;
+                    return (
+                      <button
+                        key={pl.id}
+                        onClick={() => game.teatroSwap(pl.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '0.75rem',
+                          padding: '0.6rem 1rem',
+                          background: 'rgba(142, 68, 173, 0.15)',
+                          border: '1px solid rgba(142, 68, 173, 0.5)',
+                          borderRadius: '10px', cursor: 'pointer', color: '#f4ede2',
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(142, 68, 173, 0.35)'; e.currentTarget.style.borderColor = '#d29bfe'; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(142, 68, 173, 0.15)'; e.currentTarget.style.borderColor = 'rgba(142, 68, 173, 0.5)'; }}
+                      >
+                        {charInfo && <img src={charInfo.image} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} />}
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{pl.name}</div>
+                          <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>
+                            Personaggio sconosciuto
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button
+                  onClick={() => game.teatroSkip()}
+                  style={{
+                    width: '100%', padding: '0.65rem',
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    borderRadius: '10px', color: 'rgba(255,255,255,0.7)',
+                    fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer',
+                  }}
+                >
+                  ⏭️ Salta — Non scambiare
+                </button>
+              </div>
+            </div>
+          )}
+
       {/* Game Over */}
       {currentPhase === 'game-over' && (
         <>

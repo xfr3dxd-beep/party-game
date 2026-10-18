@@ -176,10 +176,15 @@ export function findPlayerByCharacter(players: CitadelsPlayer[], charId: number)
 
 /** Count districts of a color in player's city */
 export function countDistrictsByColor(player: CitadelsPlayer, color: string): number {
-  return player.builtDistricts.filter(bd => {
+  let count = player.builtDistricts.filter(bd => {
     const d = getDistrictById(bd.districtId);
     return d.color === color;
   }).length;
+  // Scuola di Magia (524): counts as any one color of your choice for income
+  if (hasBuiltDistrict(player, 524) && ['blue', 'green', 'yellow', 'red'].includes(color)) {
+    count += 1;
+  }
+  return count;
 }
 
 /** Check if player has a built district by id */
