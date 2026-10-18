@@ -15,16 +15,18 @@ import {
   shuffle, drawCards, returnToBottom, canBuild,
 } from '../gameLogic';
 import { RoomPlayer } from './useCitadelsRoom';
+import { debouncedSaveState } from '../../../lib/roomPersistence';
 
 interface UseCitadelsGameProps {
   playerId: string;
   isHost: boolean;
+  roomCode: string | null;
   players: RoomPlayer[];
   broadcast: (event: CitadelsBroadcast) => void;
   onBroadcast: (callback: (event: CitadelsBroadcast) => void) => void;
 }
 
-export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadcast }: UseCitadelsGameProps) {
+export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast }: UseCitadelsGameProps) {
   const [state, setState] = useState<CitadelsState>(createInitialState());
   const stRef = useRef(state);
   stRef.current = state;
@@ -33,7 +35,23 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
     stRef.current = s;
     setState(s);
     broadcast({ type: 'sync', state: s });
-  }, [broadcast]);
+    // Persist to DB for rejoin support
+    if (roomCode && s.phase !== 'create') debouncedSaveState(roomCode, s);
+  }, [broadcast, roomCode]);
+
+  // Load saved state from DB when host rejoins
+  useEffect(() => {
+    if (!isHost || !roomCode || stRef.current.phase !== 'create') return;
+    (async () => {
+      const { loadRoom } = await import('../../../lib/roomPersistence');
+      const room = await loadRoom(roomCode);
+      if (room?.state && room.phase === 'playing') {
+        stRef.current = room.state;
+        setState(room.state);
+        broadcast({ type: 'sync', state: room.state });
+      }
+    })();
+  }, [isHost, roomCode, broadcast]);
 
   // Use a ref for proc so broadcast handler always calls latest version
   const procRef = useRef<(action: string, payload: any) => void>(() => {});
@@ -45,12 +63,17 @@ export function useCitadelsGame({ playerId, isHost, players, broadcast, onBroadc
         // All players receive state sync from host
         stRef.current = event.state;
         setState(event.state);
+      } else if (event.type === 'request-sync') {
+        // Rejoining player requests current state — host re-sends
+        if (isHost && stRef.current.phase !== 'create') {
+          broadcast({ type: 'sync', state: stRef.current });
+        }
       } else if (event.type === 'action') {
         // Host processes action events from all players
         procRef.current(event.action, event.payload);
       }
     });
-  }, [onBroadcast]);
+  }, [onBroadcast, isHost, broadcast]);
 
   // ---- ACTION PROCESSOR ----
   const proc: (action: string, payload: any) => void = useCallback((action: string, payload: any): void => {

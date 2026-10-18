@@ -91,8 +91,7 @@ export interface PiliPiliState {
   piliEarnedThisRound: Record<string, number>;
 }
 
-export interface PiliPiliBroadcast {
-  type: 'sync' | 'action';
-  action?: string;
-  payload?: any;
-}
+export type PiliPiliBroadcast =
+  | { type: 'sync'; payload: PiliPiliState }
+  | { type: 'action'; action?: string; payload?: any }
+  | { type: 'request-sync' };

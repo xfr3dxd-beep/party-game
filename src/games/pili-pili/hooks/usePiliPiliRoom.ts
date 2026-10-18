@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { PiliPiliBroadcast } from '../types';
+import { storeSession, recoverSession, createRoomRecord, updateRoomPlayers, loadRoom, updateRoomHost } from '../../../lib/roomPersistence';
 
 export interface RoomPlayer {
   id: string;
@@ -10,7 +11,7 @@ export interface RoomPlayer {
 
 export function usePiliPiliRoom() {
   const [roomCode, setRoomCode] = useState<string | null>(null);
-  const [playerId] = useState(() => crypto.randomUUID());
+  const [playerId, setPlayerId] = useState<string>(() => crypto.randomUUID());
   const [playerName, setPlayerName] = useState<string>('');
   const [players, setPlayers] = useState<RoomPlayer[]>([]);
   const [isHost, setIsHost] = useState<boolean>(false);
@@ -42,11 +43,12 @@ export function usePiliPiliRoom() {
   }, [disconnect]);
 
   const setupChannel = async (code: string, name: string, host: boolean): Promise<boolean> => {
+    const activePlayerId = recoverSession(code)?.playerId || playerId;
     const channelName = `pili-pili-${code}`;
     const channel = supabase.channel(channelName, {
       config: {
         presence: {
-          key: playerId,
+          key: activePlayerId,
         },
       },
     });
@@ -73,6 +75,7 @@ export function usePiliPiliRoom() {
           
           // Sort players so host is first, or by name, etc.
           setPlayers(currentPlayers);
+          if (host) updateRoomPlayers(code, currentPlayers);
         })
         .on('broadcast', { event: 'game' }, (payload) => {
           if (broadcastCallbackRef.current) {
@@ -82,7 +85,7 @@ export function usePiliPiliRoom() {
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
             await channel.track({
-              id: playerId,
+              id: activePlayerId,
               name,
               isHost: host,
             });
@@ -107,6 +110,7 @@ export function usePiliPiliRoom() {
                   resolve(false);
                 } else {
                   resolve(true);
+                  channel.send({ type: 'broadcast', event: 'game', payload: { type: 'request-sync' } });
                 }
               }, 1000);
             } else {
@@ -123,11 +127,54 @@ export function usePiliPiliRoom() {
   const createRoom = useCallback(async (name: string): Promise<void> => {
     const code = Array.from({ length: 4 }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
     await setupChannel(code, name, true);
-  }, [playerId, setupChannel]);
+    await createRoomRecord(code, 'pili-pili', playerId, [{ id: playerId, name, isHost: true }]);
+    storeSession(code, playerId, name, 'pili-pili');
+  }, [playerId]);
 
   const joinRoom = useCallback(async (code: string, name: string): Promise<boolean> => {
-    return await setupChannel(code.toUpperCase(), name, false);
-  }, [playerId, setupChannel]);
+    const upperCode = code.toUpperCase();
+    
+    // Check for existing session (rejoin)
+    const stored = recoverSession(upperCode);
+    if (stored) {
+      setPlayerId(stored.playerId);
+    }
+    
+    // Check if room exists in DB with saved state (rejoin scenario)
+    const room = await loadRoom(upperCode);
+    if (room && room.phase === 'playing' && room.state) {
+      // This is a rejoin — check if the player was in this game
+      const pid = stored?.playerId || playerId;
+      const wasInGame = room.players.some((p: any) => p.name === name || p.id === pid);
+      if (!wasInGame) return false; // Can't join a game in progress as a new player
+      
+      // Use the stored player ID if found, otherwise use current
+      const rejoiningId = stored?.playerId || pid;
+      if (stored) setPlayerId(rejoiningId);
+      
+      // Check if host is online
+      const result = await setupChannel(upperCode, name, false);
+      if (result) {
+        storeSession(upperCode, rejoiningId, name, 'pili-pili');
+        return true;
+      }
+      
+      // Host is offline — this player becomes the new host
+      await updateRoomHost(upperCode, rejoiningId);
+      const hostResult = await setupChannel(upperCode, name, true);
+      if (hostResult) {
+        storeSession(upperCode, rejoiningId, name, 'pili-pili');
+      }
+      return hostResult;
+    }
+    
+    // Normal join (lobby phase)
+    const result = await setupChannel(upperCode, name, false);
+    if (result) {
+      storeSession(upperCode, playerId, name, 'pili-pili');
+    }
+    return result;
+  }, [playerId]);
 
   const broadcast = useCallback((event: PiliPiliBroadcast) => {
     if (channelRef.current && isConnected) {

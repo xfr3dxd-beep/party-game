@@ -13,10 +13,12 @@ import {
   executeShurikenClassic, executeShurikenExtreme,
   removeCardFromHand,
 } from '../gameLogic';
+import { debouncedSaveState } from '../../../lib/roomPersistence';
 
 interface UseTheMindGameProps {
   playerId: string;
   isHost: boolean;
+  roomCode: string | null;
   players: { id: string; name: string; isHost: boolean }[];
   broadcast: (event: TheMindBroadcast) => void;
   onBroadcast: (callback: (event: TheMindBroadcast) => void) => void;
@@ -45,6 +47,7 @@ const INITIAL_STATE: TheMindState = {
 export function useTheMindGame({
   playerId,
   isHost,
+  roomCode,
   players,
   broadcast,
   onBroadcast,
@@ -57,7 +60,22 @@ export function useTheMindGame({
   const syncState = useCallback((newState: TheMindState) => {
     setState(newState);
     broadcast({ type: 'sync', state: newState });
-  }, [broadcast]);
+    if (roomCode && newState.phase !== 'create') debouncedSaveState(roomCode, newState);
+  }, [broadcast, roomCode]);
+
+  // Load saved state from DB when host rejoins
+  useEffect(() => {
+    if (!isHost || !roomCode || stateRef.current.phase !== 'create') return;
+    (async () => {
+      const { loadRoom } = await import('../../../lib/roomPersistence');
+      const room = await loadRoom(roomCode);
+      if (room?.state && room.phase === 'playing') {
+        stateRef.current = room.state;
+        setState(room.state);
+        broadcast({ type: 'sync', state: room.state });
+      }
+    })();
+  }, [isHost, roomCode, broadcast]);
 
   // ---- HOST: Start the game ----
   const startGame = useCallback((mode: TheMindMode, roomCode: string) => {
@@ -444,6 +462,12 @@ export function useTheMindGame({
           case 'next-level':
             nextLevel();
             break;
+          case 'request-sync':
+            // Rejoining player requests current state
+            if (stateRef.current.phase !== 'create') {
+              broadcast({ type: 'sync', state: stateRef.current });
+            }
+            break;
         }
       } else {
         // Non-host receives state sync
@@ -452,7 +476,7 @@ export function useTheMindGame({
         }
       }
     });
-  }, [isHost, handlePlay, proposeShuriken, handleShurikenVote, handleShurikenChoice, nextLevel, onBroadcast]);
+  }, [isHost, handlePlay, proposeShuriken, handleShurikenVote, handleShurikenChoice, nextLevel, onBroadcast, broadcast]);
 
   // ---- Player actions (sends broadcast, doesn't modify state directly) ----
   const playCard = useCallback((card: TheMindCard) => {

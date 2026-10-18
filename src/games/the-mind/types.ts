@@ -117,7 +117,8 @@ export type TheMindBroadcast =
   | ShurikenChooseEvent
   | ConflictEvent
   | StartGameEvent
-  | NextLevelEvent;
+  | NextLevelEvent
+  | { type: 'request-sync' };
 
 // ---- Level config ----
 

@@ -77,8 +77,7 @@ export interface MascaradeState {
   winnerId: string | null;
 }
 
-export interface MascaradeBroadcast {
-  type: string;
-  action?: string;
-  payload?: any;
-}
+export type MascaradeBroadcast =
+  | { type: 'sync'; payload: MascaradeState }
+  | { type: 'action'; action?: string; payload?: any }
+  | { type: 'request-sync' };

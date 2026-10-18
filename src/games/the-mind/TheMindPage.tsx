@@ -47,6 +47,7 @@ export default function TheMindPage() {
   } = useTheMindGame({
     playerId,
     isHost,
+    roomCode,
     players,
     broadcast,
     onBroadcast,

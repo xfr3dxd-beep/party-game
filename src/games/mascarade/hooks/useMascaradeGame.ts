@@ -3,10 +3,12 @@ import { MascaradeState, MascaradeBroadcast, MascaradePlayer, MascaradePhase } f
 import { RoomPlayer } from './useMascaradeRoom';
 import { dealRoles, nextSeat, giveFromBank, payToPot, checkWin, getRichest, resolveMendicante, swapCards, swapSeats, swapCoins, getLeftNeighbor, getRightNeighbor } from '../gameLogic';
 import { getRoleById } from '../roles';
+import { debouncedSaveState } from '../../../lib/roomPersistence';
 
 interface Props {
   playerId: string;
   isHost: boolean;
+  roomCode: string | null;
   players: RoomPlayer[];
   broadcast: (e: MascaradeBroadcast) => void;
   onBroadcast: (cb: (e: MascaradeBroadcast) => void) => void;
@@ -21,7 +23,7 @@ const empty: MascaradeState = {
   introIndex: 0, winnerId: null,
 };
 
-export function useMascaradeGame({ playerId, isHost, players, broadcast, onBroadcast }: Props) {
+export function useMascaradeGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast }: Props) {
   const [state, setState] = useState<MascaradeState>(empty);
   const stRef = useRef(state);
   const bcRef = useRef(broadcast);
@@ -30,7 +32,22 @@ export function useMascaradeGame({ playerId, isHost, players, broadcast, onBroad
   const sync = useCallback((s: MascaradeState) => {
     stRef.current = s; setState(s);
     bcRef.current({ type: 'sync', payload: s });
-  }, []);
+    if (roomCode && s.phase !== 'create') debouncedSaveState(roomCode, s);
+  }, [roomCode]);
+
+  // Load saved state from DB when host rejoins
+  useEffect(() => {
+    if (!isHost || !roomCode || stRef.current.phase !== 'create') return;
+    (async () => {
+      const { loadRoom } = await import('../../../lib/roomPersistence');
+      const room = await loadRoom(roomCode);
+      if (room?.state && room.phase === 'playing') {
+        stRef.current = room.state;
+        setState(room.state);
+        bcRef.current({ type: 'sync', payload: room.state });
+      }
+    })();
+  }, [isHost, roomCode]);
 
   // Helper: advance turn, check win
   const advanceTurn = (s: MascaradeState): MascaradeState => {
@@ -423,9 +440,16 @@ export function useMascaradeGame({ playerId, isHost, players, broadcast, onBroad
   }, [isHost, players, sync]);
 
   useEffect(() => {
-    onBroadcast((ev) => {
-      if (!isHost && ev.type === 'sync') { setState(ev.payload); stRef.current = ev.payload; }
-      else if (isHost && ev.type === 'action') proc(ev.action!, ev.payload);
+    onBroadcast((event) => {
+      if (!isHost && event.type === 'sync') {
+        setState(event.payload); stRef.current = event.payload;
+      } else if (event.type === 'request-sync') {
+        if (isHost && stRef.current.phase !== 'create') {
+          bcRef.current({ type: 'sync', payload: stRef.current });
+        }
+      } else if (isHost && event.type === 'action') {
+        proc(event.action!, event.payload);
+      }
     });
   }, [onBroadcast, isHost, proc]);
 

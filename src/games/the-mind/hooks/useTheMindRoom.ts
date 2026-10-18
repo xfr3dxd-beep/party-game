@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { TheMindBroadcast } from '../types';
+import { storeSession, recoverSession, createRoomRecord, updateRoomPlayers, loadRoom, updateRoomHost } from '../../../lib/roomPersistence';
 
 export interface RoomPlayer {
   id: string;
@@ -10,7 +11,7 @@ export interface RoomPlayer {
 
 export function useTheMindRoom() {
   const [roomCode, setRoomCode] = useState<string | null>(null);
-  const [playerId] = useState(() => crypto.randomUUID());
+  const [playerId, setPlayerId] = useState<string>(() => crypto.randomUUID());
   const [playerName, setPlayerName] = useState<string>('');
   const [players, setPlayers] = useState<RoomPlayer[]>([]);
   const [isHost, setIsHost] = useState<boolean>(false);
@@ -42,11 +43,12 @@ export function useTheMindRoom() {
   }, [disconnect]);
 
   const setupChannel = async (code: string, name: string, host: boolean): Promise<boolean> => {
+    const activePlayerId = recoverSession(code)?.playerId || playerId;
     const channelName = `the-mind-${code}`;
     const channel = supabase.channel(channelName, {
       config: {
         presence: {
-          key: playerId,
+          key: activePlayerId,
         },
       },
     });
@@ -71,8 +73,8 @@ export function useTheMindRoom() {
             });
           });
           
-          // Sort players so host is first, or by name, etc.
           setPlayers(currentPlayers);
+          if (host) updateRoomPlayers(code, currentPlayers);
         })
         .on('broadcast', { event: 'game' }, (payload) => {
           if (broadcastCallbackRef.current) {
@@ -82,7 +84,7 @@ export function useTheMindRoom() {
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
             await channel.track({
-              id: playerId,
+              id: activePlayerId,
               name,
               isHost: host,
             });
@@ -93,7 +95,6 @@ export function useTheMindRoom() {
             setIsHost(host);
             
             if (!host) {
-              // Wait briefly for presence to sync and verify if host exists
               setTimeout(() => {
                 const currentState = channel.presenceState();
                 let foundHost = false;
@@ -110,6 +111,7 @@ export function useTheMindRoom() {
                   resolve(false);
                 } else {
                   resolve(true);
+                  channel.send({ type: 'broadcast', event: 'game', payload: { type: 'request-sync' } });
                 }
               }, 1000);
             } else {
@@ -128,10 +130,50 @@ export function useTheMindRoom() {
   const createRoom = useCallback(async (name: string): Promise<void> => {
     const code = Array.from({ length: 4 }, () => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
     await setupChannel(code, name, true);
+    await createRoomRecord(code, 'the-mind', playerId, [{ id: playerId, name, isHost: true }]);
+    storeSession(code, playerId, name, 'the-mind');
   }, [playerId]);
 
   const joinRoom = useCallback(async (code: string, name: string): Promise<boolean> => {
-    return await setupChannel(code.toUpperCase(), name, false);
+    const upperCode = code.toUpperCase();
+    
+    // Check for existing session (rejoin)
+    const stored = recoverSession(upperCode);
+    if (stored) {
+      setPlayerId(stored.playerId);
+    }
+    
+    // Check if room exists in DB with saved state (rejoin scenario)
+    const room = await loadRoom(upperCode);
+    if (room && room.phase === 'playing' && room.state) {
+      const pid = stored?.playerId || playerId;
+      const wasInGame = room.players.some((p: any) => p.name === name || p.id === pid);
+      if (!wasInGame) return false;
+      
+      const rejoiningId = stored?.playerId || pid;
+      if (stored) setPlayerId(rejoiningId);
+      
+      const result = await setupChannel(upperCode, name, false);
+      if (result) {
+        storeSession(upperCode, rejoiningId, name, 'the-mind');
+        return true;
+      }
+      
+      // Host is offline — this player becomes the new host
+      await updateRoomHost(upperCode, rejoiningId);
+      const hostResult = await setupChannel(upperCode, name, true);
+      if (hostResult) {
+        storeSession(upperCode, rejoiningId, name, 'the-mind');
+      }
+      return hostResult;
+    }
+    
+    // Normal join (lobby phase)
+    const result = await setupChannel(upperCode, name, false);
+    if (result) {
+      storeSession(upperCode, playerId, name, 'the-mind');
+    }
+    return result;
   }, [playerId]);
 
   const broadcast = useCallback((event: TheMindBroadcast) => {

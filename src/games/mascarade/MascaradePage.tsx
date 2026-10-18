@@ -27,7 +27,7 @@ export default function MascaradePage() {
     createRoom, joinRoom, broadcast, onBroadcast, disconnect,
   } = useMascaradeRoom();
 
-  const game = useMascaradeGame({ playerId, isHost, players, broadcast, onBroadcast });
+  const game = useMascaradeGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast });
   const { state, myPlayer, activePlayer, isMyTurn, isForcedSwap } = game;
 
   const currentPhase = state.phase !== 'create' ? state.phase : localPhase;

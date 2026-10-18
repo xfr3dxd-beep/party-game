@@ -34,7 +34,7 @@ export default function PiliPiliPage() {
     swapSelect, swapTrickTarget, swapTrickCard,
     nextRound, newGame,
     foreheadSelect, piliTransferSelect,
-  } = usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadcast });
+  } = usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast });
 
   const currentPhase = state.phase !== 'create' ? state.phase : localPhase;
 

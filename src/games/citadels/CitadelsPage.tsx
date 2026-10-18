@@ -26,6 +26,7 @@ export default function CitadelsPage() {
   const game = useCitadelsGame({
     playerId: room.playerId,
     isHost: room.isHost,
+    roomCode: room.roomCode,
     players: room.players,
     broadcast: room.broadcast,
     onBroadcast: room.onBroadcast,

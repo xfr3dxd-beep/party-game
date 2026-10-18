@@ -186,4 +186,5 @@ export interface ScoreBreakdown {
 
 export type CitadelsBroadcast =
   | { type: 'sync'; state: CitadelsState }
-  | { type: 'action'; action: string; payload: any };
+  | { type: 'action'; action: string; payload: any }
+  | { type: 'request-sync' };

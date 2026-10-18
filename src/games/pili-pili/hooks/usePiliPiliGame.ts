@@ -3,10 +3,12 @@ import { PiliPiliState, PiliPiliBroadcast, PiliPiliPlayer } from '../types';
 import { RoomPlayer } from './usePiliPiliRoom';
 import { dealCards, drawMission, getNextPlayerId, resolveTrick, shuffle } from '../gameLogic';
 import { drawSpicyMissions, mergeMissions } from '../missions';
+import { debouncedSaveState } from '../../../lib/roomPersistence';
 
 interface UsePiliPiliGameProps {
   playerId: string;
   isHost: boolean;
+  roomCode: string | null;
   players: RoomPlayer[];
   broadcast: (event: PiliPiliBroadcast) => void;
   onBroadcast: (cb: (event: PiliPiliBroadcast) => void) => void;
@@ -27,7 +29,7 @@ const emptyState: PiliPiliState = {
   previousBetValue: null, piliEarnedThisRound: {},
 };
 
-export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadcast }: UsePiliPiliGameProps) {
+export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast }: UsePiliPiliGameProps) {
   const [state, setState] = useState<PiliPiliState>(emptyState);
   const stRef = useRef(state);
   stRef.current = state;
@@ -37,7 +39,22 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
   const sync = useCallback((s: PiliPiliState) => {
     setState(s); stRef.current = s;
     if (isHost) bcRef.current({ type: 'sync', payload: s });
-  }, [isHost]);
+    if (roomCode && s.phase !== 'create') debouncedSaveState(roomCode, s);
+  }, [isHost, roomCode]);
+
+  // Load saved state from DB when host rejoins
+  useEffect(() => {
+    if (!isHost || !roomCode || stRef.current.phase !== 'create') return;
+    (async () => {
+      const { loadRoom } = await import('../../../lib/roomPersistence');
+      const room = await loadRoom(roomCode);
+      if (room?.state && room.phase === 'playing') {
+        stRef.current = room.state;
+        setState(room.state);
+        if (isHost) bcRef.current({ type: 'sync', payload: room.state });
+      }
+    })();
+  }, [isHost, roomCode]);
 
   useEffect(() => {
     if (isHost && stRef.current.phase === 'create' && players.length > 0) {
@@ -352,9 +369,16 @@ export function usePiliPiliGame({ playerId, isHost, players, broadcast, onBroadc
   }, [isHost, sync]);
 
   useEffect(() => {
-    onBroadcast((ev) => {
-      if (!isHost && ev.type === 'sync') { setState(ev.payload); stRef.current = ev.payload; }
-      else if (isHost && ev.type === 'action') proc(ev.action!, ev.payload);
+    onBroadcast((event) => {
+      if (!isHost && event.type === 'sync') {
+        setState(event.payload); stRef.current = event.payload;
+      } else if (event.type === 'request-sync') {
+        if (isHost && stRef.current.phase !== 'create') {
+          bcRef.current({ type: 'sync', payload: stRef.current });
+        }
+      } else if (isHost && event.type === 'action') {
+        proc(event.action!, event.payload);
+      }
     });
   }, [onBroadcast, isHost, proc]);
 
