@@ -1575,6 +1575,99 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
       sync({ ...s, players: updatedPlayers, districtDeck: newDeck });
     }
 
+    // ========== NECROPOLI (BUILD BY DESTROYING A DISTRICT) ==========
+    else if (action === 'necropoli-build') {
+      const { cardUid, destroyDistrictUid } = payload;
+      const p = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!p) return;
+      if (s.effectContext?.type === 'bewitched-gather') return;
+      if (p.characterId === 3 && p.hasUsedEffect) return;
+
+      const card = p.hand.find(c => c.uid === cardUid);
+      if (!card) return;
+      if (card.districtId !== 516) return; // Must be Necropoli
+
+      // Find the district to destroy in own city
+      const destroyBd = p.builtDistricts.find(bd => bd.uid === destroyDistrictUid);
+      if (!destroyBd) return;
+
+      // Build limit check
+      const isScuderie = false; // Necropoli is not Scuderie
+      const isGreenMerchant = false; // Necropoli is purple
+      if (!isScuderie && !isGreenMerchant && p.buildsUsed >= p.maxBuilds) return;
+
+      const newBuilt: BuiltDistrict = {
+        uid: card.uid, districtId: card.districtId, artisanCoins: 0, museumCards: 0,
+      };
+
+      // Destroyed district goes to bottom of deck
+      const destroyedCard: DistrictCard = { uid: destroyBd.uid, districtId: destroyBd.districtId };
+      let newDeck = returnToBottom(s.districtDeck, [destroyedCard]);
+
+      // Patrizio (12): draw a card when building
+      let extraDraw: DistrictCard[] = [];
+      if (p.characterId === 12) {
+        const { drawn, remaining } = drawCards(newDeck, 1);
+        extraDraw = drawn;
+        newDeck = remaining;
+      }
+
+      // Magistrato token check
+      let magistrateSteal = false;
+      if (p.magistrateToken === 'real') {
+        magistrateSteal = true;
+      }
+
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id === p.id) {
+          const newBuiltDistricts = pl.builtDistricts.filter(bd => bd.uid !== destroyDistrictUid);
+          return {
+            ...pl,
+            hand: [...pl.hand.filter(c => c.uid !== cardUid), ...extraDraw],
+            builtDistricts: magistrateSteal ? newBuiltDistricts : [...newBuiltDistricts, newBuilt],
+            buildsUsed: pl.buildsUsed + 1,
+            magistrateToken: null,
+          };
+        }
+        // If magistrate steals, give district to magistrate
+        if (magistrateSteal && pl.characterId && getCharacterById(pl.characterId).rank === 1 && pl.characterId === 2) {
+          return { ...pl, builtDistricts: [...pl.builtDistricts, newBuilt] };
+        }
+        return pl;
+      });
+
+      // Tassatore does NOT apply here — no gold was spent
+
+      // Check game end trigger
+      const builder = updatedPlayers.find(pl => pl.id === p.id)!;
+      let gameEndTriggered = s.gameEndTriggered;
+      let firstTo7 = s.firstTo7PlayerId;
+      if (!gameEndTriggered && countBuiltDistricts(builder) >= 7) {
+        gameEndTriggered = true;
+        firstTo7 = p.id;
+      }
+
+      // Magistrate notification
+      let notification = null;
+      if (p.magistrateToken) {
+        const magistrateName = s.players.find(pl => pl.characterId === 2)?.name || 'Magistrato';
+        notification = {
+          type: 'magistrate-token' as const,
+          data: { isReal: p.magistrateToken === 'real', playerName: p.name, districtName: getDistrictById(516).nameIt, magistrateName },
+        };
+      }
+
+      sync({
+        ...s,
+        players: updatedPlayers,
+        districtDeck: newDeck,
+        gameEndTriggered,
+        firstTo7PlayerId: firstTo7,
+        gameEndRound: gameEndTriggered && !s.gameEndTriggered ? s.roundNumber : s.gameEndRound,
+        ...(notification ? { notification } : {}),
+      });
+    }
+
     // ========== ARMERIA (DESTROY SELF TO DESTROY ANOTHER DISTRICT) ==========
     else if (action === 'use-armeria') {
       const { targetPlayerId, targetDistrictUid } = payload;
@@ -1891,6 +1984,7 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
     useLaboratorio: useCallback((cardUid: string) => act('use-laboratorio', { cardUid }), [act]),
     useArmeria: useCallback((targetPlayerId: string, targetDistrictUid: string) => act('use-armeria', { targetPlayerId, targetDistrictUid }), [act]),
     useImpalcatura: useCallback((cardUid: string) => act('use-impalcatura', { cardUid }), [act]),
+    necropoliBuild: useCallback((cardUid: string, destroyDistrictUid: string) => act('necropoli-build', { cardUid, destroyDistrictUid }), [act]),
     artistEmbellish: useCallback((districtUids: string[]) =>
       act('artist-embellish', { districtUids }), [act]),
     rematch: useCallback(() => act('rematch'), [act]),

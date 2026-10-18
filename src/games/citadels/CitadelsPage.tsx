@@ -409,6 +409,7 @@ export default function CitadelsPage() {
               onNavigatorChoose={game.navigatorChoose}
               onUseArmeria={game.useArmeria}
               onUseImpalcatura={game.useImpalcatura}
+              onNecropoliBuild={game.necropoliBuild}
             />
           )}
 

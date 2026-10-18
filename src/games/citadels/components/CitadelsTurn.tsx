@@ -39,6 +39,7 @@ interface CitadelsTurnProps {
   onNavigatorChoose?: (choice: 'gold' | 'cards') => void;
   onUseArmeria?: (targetPlayerId: string, targetDistrictUid: string) => void;
   onUseImpalcatura?: (cardUid: string) => void;
+  onNecropoliBuild?: (cardUid: string, destroyDistrictUid: string) => void;
 }
 
 const DISTRICT_COLORS: Record<string, { label: string; bg: string; text: string; border: string; icon: string }> = {
@@ -69,6 +70,7 @@ export default function CitadelsTurn({
   onNavigatorChoose,
   onUseArmeria,
   onUseImpalcatura,
+  onNecropoliBuild,
 }: CitadelsTurnProps) {
   // Only visible when isMyTurn is true
   if (!isMyTurn) return null;
@@ -80,6 +82,7 @@ export default function CitadelsTurn({
   const [covoDiscards, setCovoDiscards] = useState<string[]>([]);
   const [armeriaTarget, setArmeriaTarget] = useState<{ playerId: string; districtUid: string } | null>(null);
   const [showArmeriaModal, setShowArmeriaModal] = useState(false);
+  const [necropoliCardUid, setNecropoliCardUid] = useState<string | null>(null);
 
   const character = myPlayer.characterId ? getCharacterById(myPlayer.characterId) : null;
   const isBewitched = state.effectContext?.type === 'bewitched-gather';
@@ -1306,6 +1309,11 @@ export default function CitadelsTurn({
                       {isEligibleToBuild ? (
                         <button
                           onClick={() => {
+                            // Necropoli (516): offer destroy-district option
+                            if (district.id === 516 && myPlayer.builtDistricts.length > 0 && onNecropoliBuild) {
+                              setNecropoliCardUid(card.uid);
+                              return;
+                            }
                             const hasCovo = myPlayer.builtDistricts.some(bd => bd.districtId === 506);
                             if (hasCovo && onCovoBuild && myPlayer.hand.length > 1) {
                               setCovoBuildUid(card.uid); setCovoDiscards([]);
@@ -1593,6 +1601,125 @@ export default function CitadelsTurn({
           </div>
         </div>
       )}
+
+      {/* Necropoli Modal — Choose: pay gold or destroy a district */}
+      {necropoliCardUid && onNecropoliBuild && (() => {
+        const necroCard = myPlayer.hand.find(c => c.uid === necropoliCardUid);
+        if (!necroCard) return null;
+        const necroDistrict = getDistrictById(necroCard.districtId);
+        let effectiveCostNecro = necroDistrict.cost;
+        if (necroDistrict.isUnique && hasFabbrica) effectiveCostNecro = Math.max(0, necroDistrict.cost - 1);
+        const canPayGold = myPlayer.gold >= effectiveCostNecro;
+
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.85)',
+              zIndex: 1000,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: '1rem',
+            }}
+            onClick={() => setNecropoliCardUid(null)}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: 'linear-gradient(135deg, #1a1520, #2d1f3d)',
+                borderRadius: '16px',
+                border: '2px solid #8e44ad',
+                padding: '1.5rem',
+                width: '100%',
+                maxWidth: '500px',
+                maxHeight: '80vh',
+                overflow: 'auto',
+                color: '#f4ede2',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#d29bfe' }}>
+                  💀 Necropoli — Come vuoi costruirla?
+                </h3>
+                <button
+                  onClick={() => setNecropoliCardUid(null)}
+                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Option 1: Pay gold normally */}
+              <button
+                disabled={!canPayGold}
+                onClick={() => {
+                  onBuildDistrict(necropoliCardUid);
+                  setNecropoliCardUid(null);
+                }}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  marginBottom: '1rem',
+                  background: canPayGold
+                    ? 'linear-gradient(135deg, #c9a84c 0%, #8c681e 100%)'
+                    : 'rgba(255,255,255,0.1)',
+                  border: canPayGold ? '1px solid #fae596' : '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '10px',
+                  color: canPayGold ? '#1a1520' : 'rgba(255,255,255,0.3)',
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  cursor: canPayGold ? 'pointer' : 'not-allowed',
+                }}
+              >
+                🪙 Paga Oro Normalmente (-{effectiveCostNecro} 🪙)
+              </button>
+
+              {/* Option 2: Destroy a district */}
+              <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '0.75rem' }}>
+                Oppure distruggi un distretto della tua città per costruirla gratuitamente:
+              </p>
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                gap: '0.5rem',
+              }}>
+                {myPlayer.builtDistricts.map((bd) => {
+                  const d = getDistrictById(bd.districtId);
+                  return (
+                    <div
+                      key={bd.uid}
+                      onClick={() => {
+                        onNecropoliBuild(necropoliCardUid, bd.uid);
+                        setNecropoliCardUid(null);
+                      }}
+                      style={{
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        border: '2px solid rgba(231, 76, 60, 0.6)',
+                        cursor: 'pointer',
+                        background: 'rgba(231, 76, 60, 0.1)',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#e74c3c'; e.currentTarget.style.background = 'rgba(231, 76, 60, 0.25)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(231, 76, 60, 0.6)'; e.currentTarget.style.background = 'rgba(231, 76, 60, 0.1)'; }}
+                    >
+                      <div style={{ height: '70px', width: '100%', overflow: 'hidden' }}>
+                        <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      <div style={{ padding: '0.3rem', textAlign: 'center' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.7rem', color: '#fff' }}>{d.nameIt}</div>
+                        <div style={{ fontSize: '0.6rem', color: '#e74c3c' }}>Distruggi</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
