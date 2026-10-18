@@ -1575,6 +1575,127 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
       sync({ ...s, players: updatedPlayers, districtDeck: newDeck });
     }
 
+    // ========== ARMERIA (DESTROY SELF TO DESTROY ANOTHER DISTRICT) ==========
+    else if (action === 'use-armeria') {
+      const { targetPlayerId, targetDistrictUid } = payload;
+      const p = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!p) return;
+
+      // Verify the active player has Armeria (501) built in their city
+      const armeriaBd = p.builtDistricts.find(bd => bd.districtId === 501);
+      if (!armeriaBd) return;
+
+      // Find the target player and target district
+      const target = s.players.find(pl => pl.id === targetPlayerId);
+      if (!target) return;
+
+      const targetBd = target.builtDistricts.find(bd => bd.uid === targetDistrictUid);
+      if (!targetBd) return;
+
+      // Mastio (512) is immune to destruction
+      if (targetBd.districtId === 512) return;
+
+      // Cannot destroy Armeria itself as the target
+      if (targetBd.uid === armeriaBd.uid) return;
+
+      // Create DistrictCards for both Armeria and the destroyed district, place at bottom of deck
+      const armeriaCard: DistrictCard = { uid: armeriaBd.uid, districtId: armeriaBd.districtId };
+      const targetCard: DistrictCard = { uid: targetBd.uid, districtId: targetBd.districtId };
+      const newDeck = returnToBottom(s.districtDeck, [armeriaCard, targetCard]);
+
+      const updatedPlayers = s.players.map(pl => {
+        let bds = pl.builtDistricts;
+        if (pl.id === p.id) {
+          bds = bds.filter(bd => bd.uid !== armeriaBd.uid);
+        }
+        if (pl.id === target.id) {
+          bds = bds.filter(bd => bd.uid !== targetBd.uid);
+        }
+        return bds !== pl.builtDistricts ? { ...pl, builtDistricts: bds } : pl;
+      });
+
+      sync({
+        ...s,
+        players: updatedPlayers,
+        districtDeck: newDeck,
+      });
+    }
+
+    // ========== IMPALCATURA (DESTROY SELF TO BUILD FOR FREE) ==========
+    else if (action === 'use-impalcatura') {
+      const { cardUid } = payload;
+      const p = s.players.find(pl => pl.id === s.activePlayerId);
+      if (!p) return;
+
+      // Verify the active player has Impalcatura (510) built in their city
+      const impalcaturaBd = p.builtDistricts.find(bd => bd.districtId === 510);
+      if (!impalcaturaBd) return;
+
+      // Find the card in the player's hand by cardUid
+      const card = p.hand.find(c => c.uid === cardUid);
+      if (!card) return;
+
+      const district = getDistrictById(card.districtId);
+
+      // Check standard build validations (ignoring gold cost)
+      if (district.id === 530) return; // Volta Segreta cannot be built
+      if (district.id === 514 && countBuiltDistricts(p) >= 5) return; // Monumento with 5+ districts
+      const remainingBuilt = p.builtDistricts.filter(bd => bd.uid !== impalcaturaBd.uid);
+      if (!hasBuiltDistrict(p, 505) && remainingBuilt.some(bd => getDistrictById(bd.districtId).nameIt === district.nameIt)) return;
+
+      // Build limit check: Scuderia (525) doesn't count toward build limit
+      const isScuderie = district.id === 525;
+      const isGreenMerchant = district.color === 'green' && p.characterId === 18;
+      if (!isScuderie && !isGreenMerchant && p.buildsUsed >= p.maxBuilds) return;
+
+      // Remove Impalcatura and place at bottom of district deck
+      const impalcaturaCard: DistrictCard = { uid: impalcaturaBd.uid, districtId: impalcaturaBd.districtId };
+      let newDeck = returnToBottom(s.districtDeck, [impalcaturaCard]);
+
+      const newBuilt: BuiltDistrict = {
+        uid: card.uid,
+        districtId: card.districtId,
+        artisanCoins: 0,
+        museumCards: 0,
+      };
+
+      // Patrizio (12): draw a card when building
+      let extraDraw: DistrictCard[] = [];
+      if (p.characterId === 12) {
+        const { drawn, remaining } = drawCards(newDeck, 1);
+        extraDraw = drawn;
+        newDeck = remaining;
+      }
+
+      const updatedPlayers = s.players.map(pl => {
+        if (pl.id !== p.id) return pl;
+        return {
+          ...pl,
+          hand: [...pl.hand.filter(c => c.uid !== cardUid), ...extraDraw],
+          builtDistricts: [...remainingBuilt, newBuilt],
+          buildsUsed: (isScuderie || isGreenMerchant) ? pl.buildsUsed : pl.buildsUsed + 1,
+        };
+      });
+
+      // Check game end trigger
+      const builder = updatedPlayers.find(pl => pl.id === p.id)!;
+      let gameEndTriggered = s.gameEndTriggered;
+      let firstTo7 = s.firstTo7PlayerId;
+      if (!gameEndTriggered && countBuiltDistricts(builder) >= 7) {
+        gameEndTriggered = true;
+        firstTo7 = p.id;
+      }
+
+      sync({
+        ...s,
+        players: updatedPlayers,
+        districtDeck: newDeck,
+        gameEndTriggered,
+        firstTo7PlayerId: firstTo7,
+        gameEndRound: gameEndTriggered && !s.gameEndTriggered ? s.roundNumber : s.gameEndRound,
+      });
+    }
+
     // ========== ARTISTA (EMBELLISH) ==========
     else if (action === 'artist-embellish') {
       const { districtUids } = payload as { districtUids: string[] }; // max 2
@@ -1768,6 +1889,8 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
     museoTuck: useCallback((cardUid: string) => act('museo-tuck', { cardUid }), [act]),
     useFucina: useCallback(() => act('use-fucina'), [act]),
     useLaboratorio: useCallback((cardUid: string) => act('use-laboratorio', { cardUid }), [act]),
+    useArmeria: useCallback((targetPlayerId: string, targetDistrictUid: string) => act('use-armeria', { targetPlayerId, targetDistrictUid }), [act]),
+    useImpalcatura: useCallback((cardUid: string) => act('use-impalcatura', { cardUid }), [act]),
     artistEmbellish: useCallback((districtUids: string[]) =>
       act('artist-embellish', { districtUids }), [act]),
     rematch: useCallback(() => act('rematch'), [act]),

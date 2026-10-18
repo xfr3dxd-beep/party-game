@@ -37,6 +37,8 @@ interface CitadelsTurnProps {
   onMuseoTuck: (cardUid: string) => void;
   onCovoBuild?: (cardUid: string, cardsToDiscard: string[]) => void;
   onNavigatorChoose?: (choice: 'gold' | 'cards') => void;
+  onUseArmeria?: (targetPlayerId: string, targetDistrictUid: string) => void;
+  onUseImpalcatura?: (cardUid: string) => void;
 }
 
 const DISTRICT_COLORS: Record<string, { label: string; bg: string; text: string; border: string; icon: string }> = {
@@ -65,15 +67,19 @@ export default function CitadelsTurn({
   onMuseoTuck,
   onCovoBuild,
   onNavigatorChoose,
+  onUseArmeria,
+  onUseImpalcatura,
 }: CitadelsTurnProps) {
   // Only visible when isMyTurn is true
   if (!isMyTurn) return null;
 
-  const [specialMode, setSpecialMode] = useState<'none' | 'laboratorio' | 'museo'>('none');
+  const [specialMode, setSpecialMode] = useState<'none' | 'laboratorio' | 'museo' | 'impalcatura'>('none');
   const [fucinaUsed, setFucinaUsed] = useState(false);
   const [incomeCollected, setIncomeCollected] = useState(false);
   const [covoBuildUid, setCovoBuildUid] = useState<string | null>(null);
   const [covoDiscards, setCovoDiscards] = useState<string[]>([]);
+  const [armeriaTarget, setArmeriaTarget] = useState<{ playerId: string; districtUid: string } | null>(null);
+  const [showArmeriaModal, setShowArmeriaModal] = useState(false);
 
   const character = myPlayer.characterId ? getCharacterById(myPlayer.characterId) : null;
   const isBewitched = state.effectContext?.type === 'bewitched-gather';
@@ -87,6 +93,8 @@ export default function CitadelsTurn({
   const hasOsservatorio = hasBuiltDistrict(myPlayer, 518);
   const hasBiblioteca = hasBuiltDistrict(myPlayer, 503);
   const hasFabbrica = hasBuiltDistrict(myPlayer, 507);
+  const hasArmeria = hasBuiltDistrict(myPlayer, 501);
+  const hasImpalcatura = hasBuiltDistrict(myPlayer, 510);
 
   // Income computation
   let incomeAmount = 0;
@@ -528,6 +536,58 @@ export default function CitadelsTurn({
           </button>
         )}
 
+        {/* Special District: Armeria */}
+        {hasArmeria && (
+          <button
+            onClick={() => setShowArmeriaModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.45rem 0.85rem',
+              background: 'rgba(142, 68, 173, 0.15)',
+              border: '1px solid #8e44ad',
+              borderRadius: '8px',
+              color: '#d29bfe',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <Swords size={15} />
+            🗡️ Armeria (Distruggi)
+          </button>
+        )}
+
+        {/* Special District: Impalcatura */}
+        {hasImpalcatura && myPlayer.hand.length > 0 && (
+          <button
+            onClick={() => setSpecialMode(specialMode === 'impalcatura' ? 'none' : 'impalcatura')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '0.45rem 0.85rem',
+              background:
+                specialMode === 'impalcatura'
+                  ? 'rgba(142, 68, 173, 0.35)'
+                  : 'rgba(142, 68, 173, 0.15)',
+              border: `1px solid ${specialMode === 'impalcatura' ? '#d29bfe' : '#8e44ad'}`,
+              borderRadius: '8px',
+              color: '#d29bfe',
+              fontWeight: 700,
+              fontSize: '0.78rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <Landmark size={15} />
+            🏗️ Impalcatura (Costruisci Gratis)
+            {specialMode === 'impalcatura' && ' (Attivo)'}
+          </button>
+        )}
+
         {/* Spacer */}
         <div style={{ flex: 1 }} />
 
@@ -578,7 +638,9 @@ export default function CitadelsTurn({
             <span>
               {specialMode === 'laboratorio'
                 ? '🧪 Clicca su una carta della tua mano qui sotto per scartarla e ottenere 2 Oro.'
-                : '🏛️ Clicca su una carta della tua mano qui sotto per conservarla sotto il Museo (+1 punto a fine partita).'}
+                : specialMode === 'museo'
+                ? '🏛️ Clicca su una carta della tua mano qui sotto per conservarla sotto il Museo (+1 punto a fine partita).'
+                : '🏗️ Clicca su una carta della tua mano qui sotto per costruirla gratuitamente (l\'Impalcatura verrà distrutta).'}
             </span>
           </div>
           <button
@@ -1072,6 +1134,64 @@ export default function CitadelsTurn({
                 );
               }
 
+              if (specialMode === 'impalcatura') {
+                // Check if this card can be built via impalcatura
+                const cantBuildImpalcatura =
+                  district.id === 530 || // Volta Segreta
+                  (district.id === 514 && countBuiltDistricts(myPlayer) >= 5) || // Monumento limit
+                  (!hasBuiltDistrict(myPlayer, 505) && myPlayer.builtDistricts.filter(bd => bd.districtId !== 510).some(bd => getDistrictById(bd.districtId).nameIt === district.nameIt)); // Duplicate check (exclude Impalcatura itself)
+
+                return (
+                  <div
+                    key={card.uid}
+                    onClick={() => {
+                      if (!cantBuildImpalcatura && onUseImpalcatura) {
+                        onUseImpalcatura(card.uid);
+                        setSpecialMode('none');
+                      }
+                    }}
+                    style={{
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      background: cantBuildImpalcatura ? 'rgba(80, 80, 80, 0.3)' : 'rgba(46, 204, 113, 0.15)',
+                      border: `2px solid ${cantBuildImpalcatura ? 'rgba(255,255,255,0.15)' : '#27ae60'}`,
+                      cursor: cantBuildImpalcatura ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                      transition: 'transform 0.15s ease',
+                      opacity: cantBuildImpalcatura ? 0.5 : 1,
+                    }}
+                    onMouseEnter={(e) => { if (!cantBuildImpalcatura) e.currentTarget.style.transform = 'translateY(-3px)'; }}
+                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+                  >
+                    <div style={{ height: '110px', width: '100%', overflow: 'hidden' }}>
+                      <img src={district.image} alt={district.nameIt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ padding: '0.6rem', textAlign: 'center' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#fff' }}>{district.nameIt}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#55efc4', marginTop: '2px' }}>Costo: {district.cost} 🪙</div>
+                      {!cantBuildImpalcatura && (
+                        <button
+                          style={{
+                            marginTop: '0.4rem',
+                            width: '100%',
+                            padding: '0.35rem',
+                            background: 'linear-gradient(135deg, #27ae60, #1e824c)',
+                            border: 'none',
+                            borderRadius: '6px',
+                            color: '#fff',
+                            fontWeight: 800,
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Costruisci Gratis
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
               // Normal building mode
               const isScuderie = district.id === 525;
               const isGreenMerchant = district.color === 'green' && character?.id === 18;
@@ -1338,6 +1458,141 @@ export default function CitadelsTurn({
           </div>
         );
       })()}
+
+      {/* Armeria Modal — Select target player & district to destroy */}
+      {showArmeriaModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.85)',
+            zIndex: 1000,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '1rem',
+          }}
+          onClick={() => { setShowArmeriaModal(false); setArmeriaTarget(null); }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(135deg, #1a1520, #2d1f3d)',
+              borderRadius: '16px',
+              border: '2px solid #8e44ad',
+              padding: '1.5rem',
+              width: '100%',
+              maxWidth: '600px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              color: '#f4ede2',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#d29bfe' }}>
+                🗡️ Armeria — Distruggi un Distretto
+              </h3>
+              <button
+                onClick={() => { setShowArmeriaModal(false); setArmeriaTarget(null); }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'rgba(255,255,255,0.7)',
+                  cursor: 'pointer',
+                  fontSize: '1.2rem',
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', marginBottom: '1rem' }}>
+              Seleziona un distretto da distruggere. L'Armeria verrà distrutta insieme ad esso. Entrambe le carte tornano in fondo al mazzo.
+            </p>
+
+            {state.players.map((pl) => {
+              const destroyable = pl.builtDistricts.filter(
+                (bd) => bd.districtId !== 512 && // Mastio immune
+                  !(pl.id === myPlayer.id && bd.districtId === 501) // Can't target own Armeria
+              );
+              if (destroyable.length === 0) return null;
+              return (
+                <div key={pl.id} style={{ marginBottom: '1rem' }}>
+                  <div style={{
+                    fontWeight: 700,
+                    fontSize: '0.9rem',
+                    marginBottom: '0.5rem',
+                    color: pl.id === myPlayer.id ? '#ffd700' : '#d29bfe',
+                  }}>
+                    {pl.name}{pl.id === myPlayer.id ? ' (Tu)' : ''}
+                  </div>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))',
+                    gap: '0.5rem',
+                  }}>
+                    {destroyable.map((bd) => {
+                      const d = getDistrictById(bd.districtId);
+                      const isSelected = armeriaTarget?.playerId === pl.id && armeriaTarget?.districtUid === bd.uid;
+                      return (
+                        <div
+                          key={bd.uid}
+                          onClick={() => setArmeriaTarget({ playerId: pl.id, districtUid: bd.uid })}
+                          style={{
+                            borderRadius: '10px',
+                            overflow: 'hidden',
+                            border: isSelected ? '2px solid #e74c3c' : '2px solid rgba(255,255,255,0.15)',
+                            cursor: 'pointer',
+                            background: isSelected ? 'rgba(231, 76, 60, 0.2)' : 'rgba(255,255,255,0.05)',
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <div style={{ height: '70px', width: '100%', overflow: 'hidden' }}>
+                            <img src={d.image} alt={d.nameIt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                          <div style={{ padding: '0.3rem', textAlign: 'center' }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.7rem', color: '#fff' }}>{d.nameIt}</div>
+                            <div style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.5)' }}>{d.cost} 🪙</div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+
+            <button
+              disabled={!armeriaTarget}
+              onClick={() => {
+                if (armeriaTarget && onUseArmeria) {
+                  onUseArmeria(armeriaTarget.playerId, armeriaTarget.districtUid);
+                  setShowArmeriaModal(false);
+                  setArmeriaTarget(null);
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '0.75rem',
+                marginTop: '0.5rem',
+                background: armeriaTarget
+                  ? 'linear-gradient(135deg, #e74c3c, #c0392b)'
+                  : 'rgba(255,255,255,0.1)',
+                border: 'none',
+                borderRadius: '10px',
+                color: armeriaTarget ? '#fff' : 'rgba(255,255,255,0.3)',
+                fontWeight: 800,
+                fontSize: '0.9rem',
+                cursor: armeriaTarget ? 'pointer' : 'not-allowed',
+              }}
+            >
+              🗡️ Distruggi Distretto Selezionato
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

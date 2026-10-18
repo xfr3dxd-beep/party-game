@@ -407,6 +407,8 @@ export default function CitadelsPage() {
               onMuseoTuck={game.museoTuck}
               onCovoBuild={game.covoBuild}
               onNavigatorChoose={game.navigatorChoose}
+              onUseArmeria={game.useArmeria}
+              onUseImpalcatura={game.useImpalcatura}
             />
           )}
 
