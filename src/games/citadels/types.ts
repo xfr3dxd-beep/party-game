@@ -139,6 +139,7 @@ export interface CitadelsState {
   // Round state
   roundNumber: number;
   crownHolderId: string;     // player who has the crown
+  roundStartCrownHolderId: string;
   currentRank: number;       // which rank is being called (1-9)
   activePlayerId: string | null;
   calledRanks: number[];     // ranks already called this round

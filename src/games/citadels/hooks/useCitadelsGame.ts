@@ -118,6 +118,7 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
         discardPile: [],
         roundNumber: 1,
         crownHolderId: gamePlayers[crownIdx].id,
+        roundStartCrownHolderId: gamePlayers[crownIdx].id,
         draftState: setupDraft(characterPool, gamePlayers.length, gamePlayers[crownIdx].id, gamePlayers),
       };
       sync(ns);
@@ -162,6 +163,7 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
           taxPool: [],
           effectContext: null,
           drawnCards: null,
+          roundStartCrownHolderId: s.crownHolderId,
         };
         sync(ns);
       } else {
@@ -187,11 +189,26 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
 
       // Check if this rank was assassinated
       if (s.assassinatedRank === rank) {
+        let assassinPlayers = [...s.players];
+        let assassinTaxPool = [...s.taxPool];
+
+        // If the assassinated character is the Tassatore, return tax to players
+        const assassinatedPlayer = findPlayerByCharacter(s.players, nextChar);
+        if (assassinatedPlayer && assassinatedPlayer.characterId === 27 && assassinTaxPool.length > 0) {
+          assassinPlayers = assassinPlayers.map(p => {
+            const refund = assassinTaxPool.filter(t => t.playerId === p.id).reduce((sum, t) => sum + t.amount, 0);
+            return refund > 0 ? { ...p, gold: p.gold + refund } : p;
+          });
+          assassinTaxPool = [];
+        }
+
         // Skip turn, but if rank 4, reveal at round end (handled in resolveRoundEnd)
         const ns = {
           ...s,
+          players: assassinPlayers,
           calledRanks: [...s.calledRanks, rank],
           currentRank: rank,
+          taxPool: assassinTaxPool,
         };
         // Auto-advance to next
         sync(ns);
@@ -262,7 +279,8 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
       }
 
       // Normal turn
-      const resetPlayers = updatedPlayers.map(p => {
+      let updatedTaxPool = [...s.taxPool];
+      let resetPlayers = updatedPlayers.map(p => {
         if (p.id === player.id) {
           // Determine max builds based on character
           let maxBuilds = 1;
@@ -273,6 +291,41 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
         return p;
       });
 
+      // Regina (25) passive bonus: gains 3 gold if sitting next to the round-start crown holder
+      if (charInfo.id === 25) {
+        const crownStartHolder = s.players.find(pl => pl.id === s.roundStartCrownHolderId);
+        if (crownStartHolder) {
+          // Check if the crown holder's character was assassinated
+          const crownCharInfo = crownStartHolder.characterId ? getCharacterById(crownStartHolder.characterId) : null;
+          const crownWasAssassinated = crownCharInfo && s.assassinatedRank === crownCharInfo.rank;
+
+          if (!crownWasAssassinated) {
+            // Check if Queen is sitting next to crown holder (adjacent seatIndex)
+            const queenSeat = player.seatIndex;
+            const crownSeat = crownStartHolder.seatIndex;
+            const totalPlayers = s.players.length;
+            const isAdjacent =
+              (queenSeat + 1) % totalPlayers === crownSeat ||
+              (queenSeat - 1 + totalPlayers) % totalPlayers === crownSeat;
+
+            if (isAdjacent) {
+              resetPlayers = resetPlayers.map(p =>
+                p.id === player.id ? { ...p, gold: p.gold + 3 } : p
+              );
+            }
+          }
+        }
+      }
+
+      // Tassatore (27): collect all tax when called
+      if (charInfo.id === 27 && updatedTaxPool.length > 0) {
+        const totalTax = updatedTaxPool.reduce((sum, t) => sum + t.amount, 0);
+        resetPlayers = resetPlayers.map(p =>
+          p.id === player.id ? { ...p, gold: p.gold + totalTax } : p
+        );
+        updatedTaxPool = []; // Collected
+      }
+
       const ns: CitadelsState = {
         ...s,
         players: resetPlayers,
@@ -280,6 +333,7 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
         currentRank: rank,
         activePlayerId: player.id,
         phase: 'turn-action',
+        taxPool: updatedTaxPool,
         effectContext: null,
         drawnCards: null,
       };
@@ -1631,6 +1685,7 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
       ...s,
       players: updatedPlayers,
       crownHolderId,
+      roundStartCrownHolderId: crownHolderId,
       roundNumber: newRound,
       phase: 'draft',
       draftState: newDraft,

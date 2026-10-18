@@ -351,6 +351,7 @@ export function createInitialState(): CitadelsState {
     draftState: null,
     roundNumber: 0,
     crownHolderId: '',
+    roundStartCrownHolderId: '',
     currentRank: 0,
     activePlayerId: null,
     calledRanks: [],
