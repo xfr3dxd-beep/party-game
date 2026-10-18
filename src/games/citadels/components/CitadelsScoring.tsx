@@ -3,13 +3,14 @@ import { CitadelsState, CitadelsPlayer, ScoreBreakdown } from '../types';
 import { getCharacterById, CROWN_IMAGE } from '../characters';
 import { getDistrictById } from '../districts';
 import { calculateScore } from '../gameLogic';
-import { Crown, Trophy, ChevronDown, ChevronUp, RotateCcw, Home, Sparkles, Building2, Palette, Award, Coins } from 'lucide-react';
+import { Crown, Trophy, ChevronDown, ChevronUp, RotateCcw, Home, Sparkles, Building2, Palette, Award, Coins, Eye } from 'lucide-react';
 
 export interface CitadelsScoringProps {
   state: CitadelsState;
   isHost: boolean;
   onRematch: () => void;
   onGoHome: () => void;
+  onViewCity?: (playerId: string) => void;
 }
 
 interface PlayerScoreEntry {
@@ -20,7 +21,7 @@ interface PlayerScoreEntry {
   };
 }
 
-export function CitadelsScoring({ state, isHost, onRematch, onGoHome }: CitadelsScoringProps) {
+export function CitadelsScoring({ state, isHost, onRematch, onGoHome, onViewCity }: CitadelsScoringProps) {
   // Compute scores for each player (using state.scores or fallback to calculateScore)
   const playersWithScores: PlayerScoreEntry[] = (state.players || []).map((player: CitadelsPlayer) => {
     const scoreData = state.scores?.[player.id] ?? calculateScore(player, state);
@@ -523,6 +524,109 @@ export function CitadelsScoring({ state, isHost, onRematch, onGoHome }: Citadels
                           {score.total} pts
                         </span>
                       </div>
+
+                      {/* Built District Cards */}
+                      {player.builtDistricts.length > 0 && (
+                        <div style={{ marginTop: '0.6rem' }}>
+                          <div
+                            style={{
+                              fontSize: '0.75rem',
+                              textTransform: 'uppercase',
+                              letterSpacing: '1px',
+                              color: '#c9a84c',
+                              fontWeight: 700,
+                              marginBottom: '0.5rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <span>Città ({player.builtDistricts.length} quartieri)</span>
+                            {onViewCity && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onViewCity(player.id); }}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.3rem',
+                                  padding: '0.25rem 0.6rem',
+                                  fontSize: '0.7rem',
+                                  fontWeight: 600,
+                                  color: '#c9a84c',
+                                  background: 'rgba(201, 168, 76, 0.12)',
+                                  border: '1px solid rgba(201, 168, 76, 0.3)',
+                                  borderRadius: '8px',
+                                  cursor: 'pointer',
+                                  textTransform: 'none',
+                                  letterSpacing: 'normal',
+                                }}
+                              >
+                                <Eye size={13} />
+                                Vedi Città
+                              </button>
+                            )}
+                          </div>
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))',
+                              gap: '0.4rem',
+                            }}
+                          >
+                            {player.builtDistricts.map((bd) => {
+                              const d = getDistrictById(bd.districtId);
+                              if (!d) return null;
+                              const colorMap: Record<string, string> = {
+                                blue: '#3b82f6', yellow: '#eab308', green: '#22c55e',
+                                red: '#ef4444', purple: '#a855f7',
+                              };
+                              const borderColor = colorMap[d.color] || '#555';
+                              return (
+                                <div
+                                  key={bd.uid}
+                                  style={{
+                                    position: 'relative',
+                                    borderRadius: '8px',
+                                    border: `2px solid ${borderColor}`,
+                                    overflow: 'hidden',
+                                    backgroundColor: 'rgba(0,0,0,0.4)',
+                                  }}
+                                >
+                                  <img
+                                    src={d.image}
+                                    alt={d.nameIt}
+                                    style={{
+                                      width: '100%',
+                                      aspectRatio: '2/3',
+                                      objectFit: 'cover',
+                                      display: 'block',
+                                    }}
+                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                  />
+                                  <div
+                                    style={{
+                                      padding: '0.2rem 0.3rem',
+                                      fontSize: '0.55rem',
+                                      fontWeight: 700,
+                                      color: '#fff',
+                                      textAlign: 'center',
+                                      lineHeight: 1.2,
+                                      backgroundColor: 'rgba(0,0,0,0.7)',
+                                    }}
+                                  >
+                                    {d.nameIt}
+                                    <span style={{ display: 'block', color: borderColor, fontSize: '0.5rem' }}>
+                                      {d.cost} 🪙
+                                      {bd.artisanCoins > 0 && ` +${bd.artisanCoins}`}
+                                      {bd.museumCards > 0 && ` 📜${bd.museumCards}`}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -550,12 +550,22 @@ export default function CitadelsPage() {
 
       {/* Game Over */}
       {currentPhase === 'game-over' && (
-        <CitadelsScoring
-          state={state}
-          isHost={room.isHost}
-          onRematch={game.rematch}
-          onGoHome={() => { room.disconnect(); navigate('/'); }}
-        />
+        <>
+          <CitadelsScoring
+            state={state}
+            isHost={room.isHost}
+            onRematch={game.rematch}
+            onGoHome={() => { room.disconnect(); navigate('/'); }}
+            onViewCity={(pid) => setViewCityPlayerId(pid)}
+          />
+          {viewCityPlayerId && (
+            <CitadelsCity
+              player={state.players.find(p => p.id === viewCityPlayerId)!}
+              isOpen={!!viewCityPlayerId}
+              onClose={() => setViewCityPlayerId(null)}
+            />
+          )}
+        </>
       )}
 
       {/* Floating hand button — always visible during draft and gameplay */}
