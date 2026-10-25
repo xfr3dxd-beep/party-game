@@ -182,6 +182,33 @@ export default function Home() {
               <span className="mind-players-badge" style={{ background: 'rgba(201, 168, 76, 0.15)', color: '#c9a84c', borderColor: 'rgba(201, 168, 76, 0.3)' }}>📱 Multiplayer online</span>
             </div>
           </div>
+
+          {/* Dixit Card */}
+          <div
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/dixit')}
+            id="game-card-dixit"
+            style={{ animationDelay: '0.7s' }}
+          >
+            <span className="game-card-badge badge-live">Giocabile</span>
+            <div className="game-card-icon" style={{ fontSize: '3.5rem' }}>
+              🐇
+            </div>
+            <h2 className="game-card-title">Dixit</h2>
+            <p className="game-card-desc">
+              Sogni, indizi e immaginazione! Il narratore dà un indizio, gli altri cercano di indovinare la sua carta tra quelle in gioco.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="mind-players-badge" style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderColor: 'rgba(124, 58, 237, 0.3)' }}>👥 3-6 giocatori</span>
+              <span className="mind-players-badge" style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderColor: 'rgba(124, 58, 237, 0.3)' }}>📱 Multiplayer online</span>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
