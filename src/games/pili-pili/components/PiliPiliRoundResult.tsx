@@ -1,17 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { PiliPiliState } from '../types';
 
 interface PiliPiliRoundResultProps {
   state: PiliPiliState;
   isHost: boolean;
-  onNextRound: () => void;
+  onDismiss: () => void;
 }
 
-export default function PiliPiliRoundResult({ state, isHost, onNextRound }: PiliPiliRoundResultProps) {
-  const [dismissed, setDismissed] = useState(false);
-
-  // Non-host players can dismiss their own view
-  if (dismissed && !isHost) return null;
+export default function PiliPiliRoundResult({ state, isHost, onDismiss }: PiliPiliRoundResultProps) {
+  const dismissedCount = state.resultDismissed?.length || 0;
+  const totalPlayers = state.players.length;
 
   return (
     <div className="animate-fade-in text-center">
@@ -47,20 +45,19 @@ export default function PiliPiliRoundResult({ state, isHost, onNextRound }: Pili
           </tbody>
         </table>
       </div>
+
+      {/* Dismiss count */}
+      <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>
+        ✓ {dismissedCount}/{totalPlayers} pronti
+      </p>
       
-      {isHost ? (
-        <button className="btn btn-primary btn-lg" onClick={onNextRound} style={{ background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)', border: 'none' }}>
-          Prossimo Round
-        </button>
-      ) : (
-        <button
-          className="btn btn-primary btn-lg"
-          onClick={() => setDismissed(true)}
-          style={{ background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)', border: 'none' }}
-        >
-          OK ✓
-        </button>
-      )}
+      <button
+        className="btn btn-primary btn-lg"
+        onClick={onDismiss}
+        style={{ background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)', border: 'none' }}
+      >
+        OK ✓
+      </button>
     </div>
   );
 }

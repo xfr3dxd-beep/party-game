@@ -103,9 +103,13 @@ export function useCitadelsRoom() {
     const room = await loadRoom(upperCode);
     if (room && room.phase === 'playing' && room.state) {
       // This is a rejoin — find matching player by stored ID or name
+      // Check both DB players list and game state players (state has the full original list)
       const pid = stored?.playerId || playerId;
+      const statePlayers = room.state?.players || [];
       const matchedPlayer = room.players.find((p: any) => p.id === pid) 
-        || room.players.find((p: any) => p.name === name);
+        || statePlayers.find((p: any) => p.id === pid)
+        || room.players.find((p: any) => p.name === name)
+        || statePlayers.find((p: any) => p.name === name);
       if (!matchedPlayer) return false; // Can't join a game in progress as a new player
       
       // Use the ORIGINAL player ID from the game state so myPlayer resolves correctly

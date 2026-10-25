@@ -27,6 +27,7 @@ const emptyState: PiliPiliState = {
   piliTransferTargets: {}, simultaneousCards: {},
   blindPlay: false, allHandsVisible: false,
   previousBetValue: null, piliEarnedThisRound: {},
+  resultDismissed: [],
 };
 
 export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast }: UsePiliPiliGameProps) {
@@ -94,6 +95,7 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
     }
     s.lastTrickCards = [...s.currentTrick]; s.lastTrickWinnerId = winnerId;
     s.phase = 'trick-result';
+    s.resultDismissed = [];
     return s;
   };
 
@@ -126,6 +128,7 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
       const piliLimit = s.spicyMode ? 10 : 7;
       s.phase = s.players.some(p => p.pilis >= piliLimit) ? 'game-over' : 'round-result';
       s.currentTrick = [];
+      s.resultDismissed = [];
     } else if (s.currentMission?.swapAfterTrick) {
       const wi = s.players.findIndex(p => p.id === wId);
       if (s.players[wi].hand.length > 0) {
@@ -331,8 +334,24 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
         } else { s.currentTurnId = getNextPlayerId(s.players, pId); sync(s); }
       }
 
-    } else if (action === 'dismiss-trick-result') {
-      const r = afterTrickDismissed(s); sync(r);
+    } else if (action === 'dismiss-trick-result' || action === 'dismiss-result') {
+      const pId = payload?.pId;
+      if (pId && !s.resultDismissed.includes(pId)) {
+        s.resultDismissed = [...s.resultDismissed, pId];
+      }
+      // Auto-proceed when ALL players have dismissed
+      if (s.resultDismissed.length >= s.players.length) {
+        if (s.phase === 'trick-result') {
+          const r = afterTrickDismissed(s); sync(r);
+        } else if (s.phase === 'round-result') {
+          // Proceed to next round (same as 'next-round' action)
+          proc('next-round', {});
+        } else {
+          sync(s);
+        }
+      } else {
+        sync(s);
+      }
 
     } else if (action === 'swap-trick-target') {
       s.swapTrickTargetId = payload.targetId; sync(s);
@@ -395,11 +414,12 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
     placeBet: useCallback((b: number) => act('bet', { pId: playerId, bet: b }), [act, playerId]),
     forceBets: useCallback(() => act('force-bets'), [act]),
     playCard: useCallback((c: number) => act('play', { pId: playerId, card: c }), [act, playerId]),
-    dismissTrickResult: useCallback(() => act('dismiss-trick-result'), [act]),
+    dismissTrickResult: useCallback(() => act('dismiss-result', { pId: playerId }), [act, playerId]),
     swapSelect: useCallback((cs: number[]) => act('swap-select', { pId: playerId, cards: cs }), [act, playerId]),
     swapTrickTarget: useCallback((t: string) => act('swap-trick-target', { targetId: t }), [act]),
     swapTrickCard: useCallback((c: number) => act('swap-trick-card', { pId: playerId, card: c }), [act, playerId]),
     nextRound: useCallback(() => act('next-round'), [act]),
+    dismissRoundResult: useCallback(() => act('dismiss-result', { pId: playerId }), [act, playerId]),
     newGame: useCallback(() => act('new-game'), [act]),
     foreheadSelect: useCallback((cs: number[]) => act('forehead-select', { pId: playerId, cards: cs }), [act, playerId]),
     piliTransferSelect: useCallback((t: string) => act('pili-transfer-select', { pId: playerId, targetId: t }), [act, playerId]),

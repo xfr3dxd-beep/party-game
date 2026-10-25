@@ -32,7 +32,7 @@ export default function PiliPiliPage() {
     startGame, proceedToBetting, autoProceedTimed,
     playCard, placeBet, forceBets, dismissTrickResult,
     swapSelect, swapTrickTarget, swapTrickCard,
-    nextRound, newGame,
+    nextRound, dismissRoundResult, newGame,
     foreheadSelect, piliTransferSelect,
   } = usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast });
 
@@ -85,7 +85,7 @@ export default function PiliPiliPage() {
           <PiliPiliSwapTrick state={state} myPlayer={myPlayer} onPickTarget={swapTrickTarget} onPickCard={swapTrickCard} />
         )}
         {currentPhase === 'round-result' && (
-          <PiliPiliRoundResult state={state} isHost={isHost} onNextRound={nextRound} />
+          <PiliPiliRoundResult state={state} isHost={isHost} onDismiss={dismissRoundResult} />
         )}
         {currentPhase === 'game-over' && (
           <PiliPiliResult state={state} isHost={isHost} onNewGame={newGame} onGoHome={() => { disconnect(); navigate('/'); }} />

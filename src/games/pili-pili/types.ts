@@ -89,6 +89,8 @@ export interface PiliPiliState {
   previousBetValue: number | null;
   // Pili earned this round (for transfer calc)
   piliEarnedThisRound: Record<string, number>;
+  // Track who dismissed the trick/round result screen
+  resultDismissed: string[];
 }
 
 export type PiliPiliBroadcast =

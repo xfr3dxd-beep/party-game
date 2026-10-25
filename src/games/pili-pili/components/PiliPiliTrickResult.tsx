@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { PiliPiliState } from '../types';
 import { getCardImage } from '../missions';
 
@@ -10,20 +10,8 @@ interface PiliPiliTrickResultProps {
 
 export default function PiliPiliTrickResult({ state, isHost, onDismiss }: PiliPiliTrickResultProps) {
   const winnerName = state.players.find(p => p.id === state.lastTrickWinnerId)?.name || '';
-  const [dismissed, setDismissed] = useState(false);
-
-  // Each player can dismiss their own view independently
-  if (dismissed && !isHost) return null;
-
-  const handleDismiss = () => {
-    if (isHost) {
-      // Host progresses the game for everyone
-      onDismiss();
-    } else {
-      // Non-host just hides their own view
-      setDismissed(true);
-    }
-  };
+  const dismissedCount = state.resultDismissed?.length || 0;
+  const totalPlayers = state.players.length;
 
   return (
     <div className="animate-fade-in" style={{
@@ -93,8 +81,13 @@ export default function PiliPiliTrickResult({ state, isHost, onDismiss }: PiliPi
           return null;
         })()}
 
+        {/* Dismiss count */}
+        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+          ✓ {dismissedCount}/{totalPlayers} pronti
+        </p>
+
         <button
-          onClick={handleDismiss}
+          onClick={onDismiss}
           style={{
             padding: '0.7rem 2rem', fontSize: '1rem', fontWeight: 700, color: '#fff',
             background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)',
@@ -102,9 +95,7 @@ export default function PiliPiliTrickResult({ state, isHost, onDismiss }: PiliPi
             boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)',
           }}
         >
-          {isHost
-            ? (state.trickNumber >= state.totalTricks ? 'Vedi Risultati' : 'Prossima Presa →')
-            : 'OK ✓'}
+          OK ✓
         </button>
       </div>
     </div>
