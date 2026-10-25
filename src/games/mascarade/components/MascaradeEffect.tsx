@@ -22,7 +22,10 @@ interface Props {
 export default function MascaradeEffect({ state, myPlayer, isHost, ...actions }: Props) {
   const [target1, setTarget1] = useState<string | null>(null);
   const [folleSwap, setFolleSwap] = useState<boolean | null>(null);
-  const activePlayer = state.players.find(p => p.seatIndex === state.turnIndex);
+  // effectUserId is the player who is using the effect (may differ from activePlayer after a challenge)
+  const effectUser = state.effectUserId
+    ? state.players.find(p => p.id === state.effectUserId)
+    : state.players.find(p => p.seatIndex === state.turnIndex);
   const others = state.players.filter(p => p.id !== myPlayer.id);
   const phase = state.phase;
 
@@ -43,7 +46,7 @@ export default function MascaradeEffect({ state, myPlayer, isHost, ...actions }:
   // Imbroglione: choose among tied richest
   if (phase === 'effect-imbroglione') {
     const richestIds: string[] = state.effectData?.richestIds || [];
-    const isUser = activePlayer?.id === myPlayer.id;
+    const isUser = effectUser?.id === myPlayer.id;
     return (
       <Wrap title="L'Imbroglione" desc="Scegli da chi rubare 2 monete:">
         {isUser ? (
@@ -57,18 +60,18 @@ export default function MascaradeEffect({ state, myPlayer, isHost, ...actions }:
               );
             })}
           </div>
-        ) : <Wait text={`${activePlayer?.name} sta scegliendo...`} />}
+        ) : <Wait text={`${effectUser?.name} sta scegliendo...`} />}
       </Wrap>
     );
   }
 
   // Spia
   if (phase === 'effect-spy') {
-    const isUser = activePlayer?.id === myPlayer.id;
+    const isUser = effectUser?.id === myPlayer.id;
     if (!state.effectTargetId) {
       return (
         <Wrap title="La Spia" desc="Scegli un giocatore per vedere la sua carta:">
-          {isUser ? <PlayerGrid onPick={actions.onSpyTarget} /> : <Wait text={`${activePlayer?.name} sta scegliendo...`} />}
+          {isUser ? <PlayerGrid onPick={actions.onSpyTarget} /> : <Wait text={`${effectUser?.name} sta scegliendo...`} />}
         </Wrap>
       );
     }
@@ -89,20 +92,20 @@ export default function MascaradeEffect({ state, myPlayer, isHost, ...actions }:
               <button onClick={() => actions.onSpyDecide(false)} style={{ ...btnStyle, background: '#666' }}>✋ Non scambiare</button>
             </div>
           </>
-        ) : <Wait text={`${activePlayer?.name} sta decidendo...`} />}
+        ) : <Wait text={`${effectUser?.name} sta decidendo...`} />}
       </Wrap>
     );
   }
 
   // Guru
   if (phase === 'effect-guru') {
-    const isUser = activePlayer?.id === myPlayer.id;
+    const isUser = effectUser?.id === myPlayer.id;
     const guruData = state.effectData;
 
     if (!state.effectTargetId) {
       return (
         <Wrap title="Il Guru" desc="Scegli un giocatore che deve indovinare il suo ruolo:">
-          {isUser ? <PlayerGrid onPick={actions.onGuruTarget} /> : <Wait text={`${activePlayer?.name} sta scegliendo...`} />}
+          {isUser ? <PlayerGrid onPick={actions.onGuruTarget} /> : <Wait text={`${effectUser?.name} sta scegliendo...`} />}
         </Wrap>
       );
     }
@@ -154,17 +157,17 @@ export default function MascaradeEffect({ state, myPlayer, isHost, ...actions }:
 
   // Sciamana
   if (phase === 'effect-sciamana') {
-    const isUser = activePlayer?.id === myPlayer.id;
+    const isUser = effectUser?.id === myPlayer.id;
     return (
       <Wrap title="La Sciamana" desc="Scegli un giocatore per scambiare tutte le monete:">
-        {isUser ? <PlayerGrid onPick={actions.onSciamana} /> : <Wait text={`${activePlayer?.name} sta scegliendo...`} />}
+        {isUser ? <PlayerGrid onPick={actions.onSciamana} /> : <Wait text={`${effectUser?.name} sta scegliendo...`} />}
       </Wrap>
     );
   }
 
   // Folle
   if (phase === 'effect-folle') {
-    const isUser = activePlayer?.id === myPlayer.id;
+    const isUser = effectUser?.id === myPlayer.id;
     return (
       <Wrap title="Il Folle" desc="Scegli 2 giocatori per scambiare (o fingere) le loro carte:">
         {isUser ? (
@@ -195,14 +198,14 @@ export default function MascaradeEffect({ state, myPlayer, isHost, ...actions }:
               </div>
             </>
           )
-        ) : <Wait text={`${activePlayer?.name} sta scegliendo...`} />}
+        ) : <Wait text={`${effectUser?.name} sta scegliendo...`} />}
       </Wrap>
     );
   }
 
   // Marionettista
   if (phase === 'effect-marionettista') {
-    const isUser = activePlayer?.id === myPlayer.id;
+    const isUser = effectUser?.id === myPlayer.id;
     return (
       <Wrap title="Il Marionettista" desc="Scegli 2 giocatori. Prendi 1🪙 da entrambi e scambiali di posto:">
         {isUser ? (
@@ -217,18 +220,18 @@ export default function MascaradeEffect({ state, myPlayer, isHost, ...actions }:
               <PlayerGrid onPick={(id) => { actions.onMarionettista(target1, id); setTarget1(null); }} exclude={[target1]} />
             </>
           )
-        ) : <Wait text={`${activePlayer?.name} sta scegliendo...`} />}
+        ) : <Wait text={`${effectUser?.name} sta scegliendo...`} />}
       </Wrap>
     );
   }
 
   // Principessa
   if (phase === 'effect-principessa') {
-    const isUser = activePlayer?.id === myPlayer.id;
+    const isUser = effectUser?.id === myPlayer.id;
     if (!state.effectTargetId) {
       return (
         <Wrap title="La Principessa" desc="Scegli un giocatore che deve mostrare la sua carta a tutti:">
-          {isUser ? <PlayerGrid onPick={actions.onPrincipessa} /> : <Wait text={`${activePlayer?.name} sta scegliendo...`} />}
+          {isUser ? <PlayerGrid onPick={actions.onPrincipessa} /> : <Wait text={`${effectUser?.name} sta scegliendo...`} />}
         </Wrap>
       );
     }

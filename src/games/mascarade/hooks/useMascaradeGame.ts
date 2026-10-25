@@ -19,7 +19,7 @@ const empty: MascaradeState = {
   pot: 0, turnIndex: 0, turnCount: 0, currentAction: null,
   swapTargetId: null, swapDidSwap: null,
   declaredRoleId: null, challenges: [], revealedCards: {},
-  effectTargetId: null, effectSecondTargetId: null, effectData: null,
+  effectTargetId: null, effectSecondTargetId: null, effectData: null, effectUserId: null,
   introIndex: 0, winnerId: null,
 };
 
@@ -57,7 +57,7 @@ export function useMascaradeGame({ playerId, isHost, roomCode, players, broadcas
     s.turnIndex = nextSeat(s.turnIndex, s.players.length);
     s.currentAction = null; s.swapTargetId = null; s.swapDidSwap = null;
     s.declaredRoleId = null; s.challenges = []; s.revealedCards = {};
-    s.effectTargetId = null; s.effectSecondTargetId = null; s.effectData = null;
+    s.effectTargetId = null; s.effectSecondTargetId = null; s.effectData = null; s.effectUserId = null;
     s.phase = 'play';
     return s;
   };
@@ -66,6 +66,8 @@ export function useMascaradeGame({ playerId, isHost, roomCode, players, broadcas
   const applyEffect = (s: MascaradeState, roleId: number, userId: string): MascaradeState => {
     const role = getRoleById(roleId);
     const user = s.players.find(p => p.id === userId)!;
+    // Track who is using this effect (for UI to show controls to the right player)
+    s.effectUserId = userId;
 
     switch (roleId) {
       case 1: // Re: +2
@@ -247,7 +249,12 @@ export function useMascaradeGame({ playerId, isHost, roomCode, players, broadcas
       sync(s);
 
     } else if (action === 'action-look') {
-      // Player looks at own card — they see it client-side, then pass turn
+      // Player looks at own card — show their role privately, then they confirm to end turn
+      s.phase = 'look-card';
+      sync(s);
+
+    } else if (action === 'look-done') {
+      // After viewing card, advance turn
       const ns = advanceTurn(s);
       sync(ns);
 
@@ -468,6 +475,7 @@ export function useMascaradeGame({ playerId, isHost, roomCode, players, broadcas
     viewedCard: useCallback(() => act('viewed-card', { pId: playerId }), [act, playerId]),
     introDone: useCallback(() => act('intro-done', { pId: playerId }), [act, playerId]),
     actionLook: useCallback(() => act('action-look', { pId: playerId }), [act, playerId]),
+    lookDone: useCallback(() => act('look-done'), [act]),
     actionSwap: useCallback((targetId: string) => act('action-swap', { targetId }), [act]),
     swapDecide: useCallback((didSwap: boolean) => act('swap-decide', { didSwap }), [act]),
     actionDeclare: useCallback((roleId: number) => act('action-declare', { roleId }), [act]),

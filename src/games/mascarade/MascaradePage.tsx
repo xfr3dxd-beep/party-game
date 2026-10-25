@@ -15,6 +15,7 @@ import MascaradeReveal from './components/MascaradeReveal';
 import MascaradeEffect from './components/MascaradeEffect';
 import MascaradeRoles from './components/MascaradeRoles';
 import MascaradeResult from './components/MascaradeResult';
+import { getRoleById } from './roles';
 
 export default function MascaradePage() {
   const navigate = useNavigate();
@@ -84,6 +85,31 @@ export default function MascaradePage() {
         {(currentPhase === 'swap-choice') && myPlayer && (
           <MascaradeSwap state={state} myPlayer={myPlayer} onDecide={game.swapDecide} />
         )}
+
+        {currentPhase === 'look-card' && myPlayer && (() => {
+          const isViewer = activePlayer?.id === myPlayer.id;
+          const myRole = isViewer ? getRoleById(myPlayer.roleId) : null;
+          return (
+            <div style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+              <h2 style={{ color: '#d4a843', marginBottom: '0.5rem' }}>👁️ Guarda la tua carta</h2>
+              {isViewer && myRole ? (
+                <>
+                  <img src={myRole.image} alt={myRole.name} style={{ width: '140px', borderRadius: '10px', marginBottom: '0.8rem', boxShadow: '0 0 20px rgba(212,168,67,0.4)' }} />
+                  <p style={{ color: '#d4a843', fontWeight: 700, fontSize: '1.2rem', marginBottom: '0.3rem' }}>{myRole.name}</p>
+                  <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: '1.5rem', textAlign: 'center', maxWidth: '300px' }}>{myRole.description}</p>
+                  <button onClick={game.lookDone} style={{
+                    padding: '0.8rem 2rem', fontSize: '1rem', fontWeight: 700, color: '#fff',
+                    background: '#d4a843', border: 'none', borderRadius: '10px', cursor: 'pointer',
+                  }}>OK, ho visto ✓</button>
+                </>
+              ) : (
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>
+                  {activePlayer?.name} sta guardando la sua carta...
+                </p>
+              )}
+            </div>
+          );
+        })()}
 
         {currentPhase === 'challenge-vote' && myPlayer && (
           <MascaradeChallenge state={state} myPlayer={myPlayer} onVote={game.challengeVote} />

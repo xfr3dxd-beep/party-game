@@ -69,6 +69,7 @@ export interface MascaradeState {
   effectTargetId: string | null;
   effectSecondTargetId: string | null;
   effectData: any; // generic data for complex effects
+  effectUserId: string | null; // who is using the current effect (may differ from active player after challenge)
 
   // Intro
   introIndex: number; // which player is introducing
