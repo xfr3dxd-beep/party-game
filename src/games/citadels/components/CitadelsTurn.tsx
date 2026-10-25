@@ -1314,8 +1314,8 @@ export default function CitadelsTurn({
                               setNecropoliCardUid(card.uid);
                               return;
                             }
-                            const hasCovo = myPlayer.builtDistricts.some(bd => bd.districtId === 506);
-                            if (hasCovo && onCovoBuild && myPlayer.hand.length > 1) {
+                            // Covo dei Ladri (506): when building THIS card, offer card payment
+                            if (district.id === 506 && onCovoBuild && myPlayer.hand.length > 1) {
                               setCovoBuildUid(card.uid); setCovoDiscards([]);
                             } else {
                               onBuildDistrict(card.uid);

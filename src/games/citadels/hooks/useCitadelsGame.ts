@@ -996,7 +996,7 @@ export function useCitadelsGame({ playerId, isHost, roomCode, players, broadcast
       
       const card = p.hand.find(c => c.uid === cardUid);
       if (!card) return;
-      if (!p.builtDistricts.some(bd => bd.districtId === 506)) return; // Must have Covo built
+      if (card.districtId !== 506) return; // This action is only for building the Covo dei Ladri itself
       
       const district = getDistrictById(card.districtId);
       const cost = district.cost;
