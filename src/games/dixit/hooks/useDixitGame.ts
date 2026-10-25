@@ -109,6 +109,27 @@ export function useDixitGame({ playerId, isHost, roomCode, players, broadcast, o
       s.phase = 'others-pick';
       sync(s);
 
+    } else if (action === 'discard-cards') {
+      // Non-narrator discards up to 2 cards and draws replacements
+      const { pId, cardIds } = payload as { pId: string; cardIds: number[] };
+      const narrator = s.players[s.narratorIndex];
+      if (narrator.id === pId) return;
+      if (cardIds.length < 1 || cardIds.length > 2) return;
+
+      s.players = s.players.map(p => {
+        if (p.id !== pId) return p;
+        // Remove discarded cards from hand
+        const newHand = p.hand.filter(c => !cardIds.includes(c));
+        // Draw replacements from deck
+        const drawCount = Math.min(cardIds.length, s.deck.length);
+        const { dealt, remaining } = dealCards(s.deck, drawCount);
+        s.deck = remaining;
+        return { ...p, hand: [...newHand, ...dealt] };
+      });
+      // Add discarded cards to discard pile (permanently removed)
+      s.discardPile = [...s.discardPile, ...cardIds];
+      sync(s);
+
     } else if (action === 'player-pick') {
       const { pId, cardIds } = payload as { pId: string; cardIds: number[] };
       const narrator = s.players[s.narratorIndex];
@@ -256,6 +277,7 @@ export function useDixitGame({ playerId, isHost, roomCode, players, broadcast, o
     selectColor: useCallback((color: string) => act('select-color', { pId: playerId, color }), [act, playerId]),
     narratorPick: useCallback((cardId: number, clue: string) => act('narrator-pick', { pId: playerId, cardId, clue }), [act, playerId]),
     playerPick: useCallback((cardIds: number[]) => act('player-pick', { pId: playerId, cardIds }), [act, playerId]),
+    discardCards: useCallback((cardIds: number[]) => act('discard-cards', { pId: playerId, cardIds }), [act, playerId]),
     vote: useCallback((position: number) => act('vote', { pId: playerId, position }), [act, playerId]),
     nextRound: useCallback(() => act('next-round'), [act]),
     rematch: useCallback(() => act('rematch'), [act]),

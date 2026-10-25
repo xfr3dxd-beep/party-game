@@ -13,12 +13,14 @@ import DixitVoting from './components/DixitVoting';
 import DixitScoring from './components/DixitScoring';
 import DixitScoreboard from './components/DixitScoreboard';
 import DixitResult from './components/DixitResult';
+import DixitCardZoom from './components/DixitCardZoom';
 
 export default function DixitPage() {
   const navigate = useNavigate();
   const [localPhase, setLocalPhase] = useState<'create' | 'lobby'>('create');
   const [isConnecting, setIsConnecting] = useState(false);
   const [scoreboardOpen, setScoreboardOpen] = useState(false);
+  const [zoomCardId, setZoomCardId] = useState<number | null>(null);
 
   const {
     roomCode, playerId, players, isHost, isConnected,
@@ -60,20 +62,24 @@ export default function DixitPage() {
         )}
 
         {currentPhase === 'narrator-pick' && (
-          <DixitNarratorPick state={state} playerId={playerId} onNarratorPick={game.narratorPick} />
+          <DixitNarratorPick state={state} playerId={playerId} onNarratorPick={game.narratorPick}
+            onZoomCard={setZoomCardId} />
         )}
 
         {currentPhase === 'others-pick' && (
-          <DixitOthersPick state={state} playerId={playerId} onPlayerPick={game.playerPick} />
+          <DixitOthersPick state={state} playerId={playerId} onPlayerPick={game.playerPick}
+            onDiscardCards={game.discardCards} onZoomCard={setZoomCardId} />
         )}
 
         {currentPhase === 'voting' && (
-          <DixitVoting state={state} playerId={playerId} onVote={game.vote} onOpenScoreboard={() => setScoreboardOpen(true)} />
+          <DixitVoting state={state} playerId={playerId} onVote={game.vote}
+            onOpenScoreboard={() => setScoreboardOpen(true)} onZoomCard={setZoomCardId} />
         )}
 
         {currentPhase === 'scoring' && (
           <DixitScoring state={state} playerId={playerId} isHost={isHost}
-            onNextRound={game.nextRound} onOpenScoreboard={() => setScoreboardOpen(true)} />
+            onNextRound={game.nextRound} onOpenScoreboard={() => setScoreboardOpen(true)}
+            onZoomCard={setZoomCardId} />
         )}
 
         {currentPhase === 'game-over' && (
@@ -81,7 +87,10 @@ export default function DixitPage() {
             onRematch={game.rematch} onGoHome={() => { disconnect(); navigate('/'); }} />
         )}
 
-        {/* Scoreboard overlay — always mountable */}
+        {/* Card zoom overlay */}
+        <DixitCardZoom cardId={zoomCardId} onClose={() => setZoomCardId(null)} />
+
+        {/* Scoreboard overlay */}
         <DixitScoreboard state={state} isOpen={scoreboardOpen} onClose={() => setScoreboardOpen(false)} />
       </div>
     </Layout>
