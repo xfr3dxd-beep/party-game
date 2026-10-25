@@ -35,8 +35,12 @@ export function useMascaradeRoom() {
 
   useEffect(() => { return () => { disconnect(); }; }, [disconnect]);
 
-  const setupChannel = async (code: string, name: string, host: boolean): Promise<boolean> => {
-    const activePlayerId = recoverSession(code)?.playerId || playerId;
+  // playerIdOverride allows joinRoom to pass the correct ID before React state updates
+  const playerIdRef = useRef(playerId);
+  playerIdRef.current = playerId;
+
+  const setupChannel = async (code: string, name: string, host: boolean, playerIdOverride?: string): Promise<boolean> => {
+    const activePlayerId = playerIdOverride || recoverSession(code)?.playerId || playerIdRef.current;
     const channel = supabase.channel(`mascarade-${code}`, { config: { presence: { key: activePlayerId } } });
     channelRef.current = channel;
     return new Promise((resolve) => {
@@ -90,26 +94,24 @@ export function useMascaradeRoom() {
   const joinRoom = useCallback(async (code: string, name: string): Promise<boolean> => {
     const upperCode = code.toUpperCase();
     
-    // Check for existing session (rejoin)
+    // Check for existing session (rejoin from same device/browser)
     const stored = recoverSession(upperCode);
-    if (stored) {
-      setPlayerId(stored.playerId);
-    }
     
-    // Check if room exists in DB with saved state (rejoin scenario)
+    // Check if room exists in DB (rejoin scenario)
     const room = await loadRoom(upperCode);
     if (room && room.phase === 'playing' && room.state) {
-      // This is a rejoin — check if the player was in this game
+      // This is a rejoin — find matching player by stored ID or name
       const pid = stored?.playerId || playerId;
-      const wasInGame = room.players.some((p: any) => p.name === name || p.id === pid);
-      if (!wasInGame) return false; // Can't join a game in progress as a new player
+      const matchedPlayer = room.players.find((p: any) => p.id === pid) 
+        || room.players.find((p: any) => p.name === name);
+      if (!matchedPlayer) return false; // Can't join a game in progress as a new player
       
-      // Use the stored player ID if found, otherwise use current
-      const rejoiningId = stored?.playerId || pid;
-      if (stored) setPlayerId(rejoiningId);
+      // Use the ORIGINAL player ID from the game state so myPlayer resolves correctly
+      const rejoiningId = matchedPlayer.id;
+      setPlayerId(rejoiningId);
       
-      // Check if host is online
-      const result = await setupChannel(upperCode, name, false);
+      // Try joining as non-host first (check if host is online)
+      const result = await setupChannel(upperCode, name, false, rejoiningId);
       if (result) {
         storeSession(upperCode, rejoiningId, name, 'mascarade');
         return true;
@@ -117,14 +119,28 @@ export function useMascaradeRoom() {
       
       // Host is offline — this player becomes the new host
       await updateRoomHost(upperCode, rejoiningId);
-      const hostResult = await setupChannel(upperCode, name, true);
+      const hostResult = await setupChannel(upperCode, name, true, rejoiningId);
       if (hostResult) {
         storeSession(upperCode, rejoiningId, name, 'mascarade');
       }
       return hostResult;
     }
     
-    // Normal join (lobby phase)
+    // Room exists in DB but not in playing state — treat as lobby rejoin
+    if (room && room.phase === 'lobby') {
+      const result = await setupChannel(upperCode, name, false);
+      if (result) {
+        storeSession(upperCode, playerId, name, 'mascarade');
+        return true;
+      }
+      // Host might be offline, try becoming host
+      await updateRoomHost(upperCode, playerId);
+      const hostResult = await setupChannel(upperCode, name, true);
+      if (hostResult) storeSession(upperCode, playerId, name, 'mascarade');
+      return hostResult;
+    }
+    
+    // Normal join (no room in DB — live lobby only)
     const result = await setupChannel(upperCode, name, false);
     if (result) {
       storeSession(upperCode, playerId, name, 'mascarade');

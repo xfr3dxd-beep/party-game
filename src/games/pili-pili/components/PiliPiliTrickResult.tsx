@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PiliPiliState } from '../types';
 import { getCardImage } from '../missions';
 
@@ -10,6 +10,20 @@ interface PiliPiliTrickResultProps {
 
 export default function PiliPiliTrickResult({ state, isHost, onDismiss }: PiliPiliTrickResultProps) {
   const winnerName = state.players.find(p => p.id === state.lastTrickWinnerId)?.name || '';
+  const [dismissed, setDismissed] = useState(false);
+
+  // Each player can dismiss their own view independently
+  if (dismissed && !isHost) return null;
+
+  const handleDismiss = () => {
+    if (isHost) {
+      // Host progresses the game for everyone
+      onDismiss();
+    } else {
+      // Non-host just hides their own view
+      setDismissed(true);
+    }
+  };
 
   return (
     <div className="animate-fade-in" style={{
@@ -79,21 +93,19 @@ export default function PiliPiliTrickResult({ state, isHost, onDismiss }: PiliPi
           return null;
         })()}
 
-        {isHost ? (
-          <button
-            onClick={onDismiss}
-            style={{
-              padding: '0.7rem 2rem', fontSize: '1rem', fontWeight: 700, color: '#fff',
-              background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)',
-              border: 'none', borderRadius: '10px', cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)',
-            }}
-          >
-            {state.trickNumber >= state.totalTricks ? 'Vedi Risultati' : 'Prossima Presa →'}
-          </button>
-        ) : (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>In attesa dell'host...</p>
-        )}
+        <button
+          onClick={handleDismiss}
+          style={{
+            padding: '0.7rem 2rem', fontSize: '1rem', fontWeight: 700, color: '#fff',
+            background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)',
+            border: 'none', borderRadius: '10px', cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(234, 88, 12, 0.3)',
+          }}
+        >
+          {isHost
+            ? (state.trickNumber >= state.totalTricks ? 'Vedi Risultati' : 'Prossima Presa →')
+            : 'OK ✓'}
+        </button>
       </div>
     </div>
   );

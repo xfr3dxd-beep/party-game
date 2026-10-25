@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PiliPiliState } from '../types';
 
 interface PiliPiliRoundResultProps {
@@ -8,6 +8,11 @@ interface PiliPiliRoundResultProps {
 }
 
 export default function PiliPiliRoundResult({ state, isHost, onNextRound }: PiliPiliRoundResultProps) {
+  const [dismissed, setDismissed] = useState(false);
+
+  // Non-host players can dismiss their own view
+  if (dismissed && !isHost) return null;
+
   return (
     <div className="animate-fade-in text-center">
       <h2 className="mb-xl" style={{ fontSize: '2.5rem', color: '#ea580c' }}>Fine Round {state.roundNumber}</h2>
@@ -48,9 +53,13 @@ export default function PiliPiliRoundResult({ state, isHost, onNextRound }: Pili
           Prossimo Round
         </button>
       ) : (
-        <p className="text-muted" style={{ fontSize: '1.2rem' }}>
-          In attesa che l'host inizi il prossimo round...
-        </p>
+        <button
+          className="btn btn-primary btn-lg"
+          onClick={() => setDismissed(true)}
+          style={{ background: 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)', border: 'none' }}
+        >
+          OK ✓
+        </button>
       )}
     </div>
   );

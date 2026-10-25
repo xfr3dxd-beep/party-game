@@ -215,8 +215,42 @@ export default function CitadelsPage() {
     const targetName = state.players.find(p => p.id === targetPlayerId)?.name || '';
     const colorNames: Record<string, string> = { blue: 'Blu', green: 'Verde', yellow: 'Giallo', red: 'Rosso' };
     const colorMap: Record<string, string> = { blue: '#3b82f6', green: '#22c55e', yellow: '#eab308', red: '#ef4444', purple: '#a855f7' };
-    const isActive = state.activePlayerId === myPlayer.id;
+    const isSpy = state.activePlayerId === myPlayer.id;
 
+    // Non-spy players see only a summary notification
+    if (!isSpy) {
+      const spyName = state.players.find(p => p.id === state.activePlayerId)?.name || 'La Spia';
+      return (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 150,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem',
+        }}>
+          <div style={{
+            background: 'rgba(26,21,32,0.95)', border: '1px solid rgba(201,168,76,0.3)',
+            borderRadius: '16px', padding: '2rem', maxWidth: '400px', textAlign: 'center',
+          }}>
+            <h3 style={{ color: '#c9a84c', marginBottom: '1rem' }}>🕵️ Effetto Spia</h3>
+            <p style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '0.5rem' }}>
+              {spyName} sta spiando la mano di <strong>{targetName}</strong>
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '0.5rem' }}>
+              Colore scelto: <strong style={{ color: colorMap[color] }}>{colorNames[color] || color}</strong>
+            </p>
+            <p style={{ color: '#c9a84c', fontWeight: 700, marginBottom: '0.5rem' }}>
+              {matchCount} {matchCount === 1 ? 'carta trovata' : 'carte trovate'}
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.6)' }}>
+              Ricompensa: +{matchCount} 🪙  +{matchCount} 🃏
+            </p>
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '1rem' }}>
+              In attesa della conferma della Spia...
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    // Spy sees the full hand
     return (
       <div style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 150,
@@ -256,7 +290,7 @@ export default function CitadelsPage() {
         <p style={{ color: 'rgba(255,255,255,0.7)', marginBottom: '1rem' }}>
           Ricompensa: <strong style={{ color: '#c9a84c' }}>+{matchCount} 🪙 +{matchCount} 🃏</strong>
         </p>
-        {isActive && (
+        {isSpy && (
           <button onClick={game.spyConfirm} style={{
             padding: '0.8rem 2rem', fontSize: '1rem', fontWeight: 700, cursor: 'pointer',
             background: 'linear-gradient(135deg, #c9a84c, #8b6914)',
