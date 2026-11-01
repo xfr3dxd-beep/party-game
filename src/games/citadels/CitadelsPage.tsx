@@ -379,8 +379,8 @@ export default function CitadelsPage() {
     );
   };
 
-  // Show lobby code banner during gameplay (not in create/lobby)
-  const showBanner = room.roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';
+  // Show lobby code banner during gameplay (create/lobby returned early above)
+  const showBanner = !!room.roomCode;
 
   return (
     <div style={{
@@ -390,7 +390,8 @@ export default function CitadelsPage() {
       position: 'relative',
       paddingTop: showBanner ? '2.2rem' : undefined,
     }}>
-      {showBanner && <RoomCodeBanner roomCode={room.roomCode!} />}      {/* Draft phase — show player info bar + draft + hand button */}
+      {showBanner && <RoomCodeBanner roomCode={room.roomCode!} />}
+      {/* Draft phase — show player info bar + draft + hand button */}
       {currentPhase === 'draft' && (
         <>
           <PlayerInfoBar />
