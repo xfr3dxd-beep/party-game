@@ -34,17 +34,19 @@ export function dealCards(players: PiliPiliPlayer[], cardsPerPlayer: number, _in
   });
 }
 
-export function resolveTrick(trick: PlayedCard[], invertWinner: boolean = false): string {
-  let winner = trick[0];
+export function resolveTrick(trick: PlayedCard[], invertWinner: boolean = false, jokerChoices: Record<string, number> = {}): string {
+  // Build effective trick: replace joker card values with the player's chosen value
+  const effectiveTrick = trick.map(t => {
+    if (t.card === JOKER_VALUE && jokerChoices[t.playerId] !== undefined) {
+      return { ...t, card: jokerChoices[t.playerId] };
+    }
+    return t;
+  });
 
-  for (let i = 1; i < trick.length; i++) {
-    const card = trick[i];
-    if (card.card === JOKER_VALUE) {
-      return card.playerId; // Joker always wins
-    }
-    if (winner.card === JOKER_VALUE) {
-      continue; // Winner is Joker, skip
-    }
+  let winner = effectiveTrick[0];
+
+  for (let i = 1; i < effectiveTrick.length; i++) {
+    const card = effectiveTrick[i];
 
     if (invertWinner) {
       if (card.card < winner.card) {

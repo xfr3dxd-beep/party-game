@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Layout from '../../components/Layout';
+import RoomCodeBanner from '../../components/RoomCodeBanner';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { usePiliPiliRoom } from './hooks/usePiliPiliRoom';
@@ -33,10 +34,13 @@ export default function PiliPiliPage() {
     playCard, placeBet, forceBets, dismissTrickResult,
     swapSelect, swapTrickTarget, swapTrickCard,
     nextRound, dismissRoundResult, newGame,
-    foreheadSelect, piliTransferSelect,
+    foreheadSelect, piliTransferSelect, jokerChoose,
   } = usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast });
 
   const currentPhase = state.phase !== 'create' ? state.phase : localPhase;
+
+  // Show lobby code banner during gameplay (not in create/lobby)
+  const showBanner = roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';
 
   const handleCreateRoom = async (pName: string) => {
     setIsConnecting(true); await createRoom(pName); setIsConnecting(false); setLocalPhase('lobby');
@@ -48,7 +52,8 @@ export default function PiliPiliPage() {
 
   return (
     <Layout>
-      <div className="container container-md">
+      {showBanner && <RoomCodeBanner roomCode={roomCode!} />}
+      <div className="container container-md" style={showBanner ? { paddingTop: '2.5rem' } : undefined}>
         {(currentPhase === 'create' || currentPhase === 'lobby') && (
           <button className="btn btn-secondary mb-lg pili-back-btn" onClick={() => { disconnect(); navigate('/'); }}>
             <ArrowLeft size={16} /> Torna ai Giochi
@@ -76,7 +81,7 @@ export default function PiliPiliPage() {
           <PiliPiliSwap state={state} myPlayer={myPlayer} onSwapSelect={swapSelect} />
         )}
         {currentPhase === 'play' && myPlayer && (
-          <PiliPiliPlay state={state} myPlayer={myPlayer} onPlayCard={playCard} />
+          <PiliPiliPlay state={state} myPlayer={myPlayer} onPlayCard={playCard} onJokerChoose={jokerChoose} />
         )}
         {currentPhase === 'trick-result' && (
           <PiliPiliTrickResult state={state} isHost={isHost} onDismiss={dismissTrickResult} />

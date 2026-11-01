@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Layout from '../../components/Layout';
+import RoomCodeBanner from '../../components/RoomCodeBanner';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useTheMindRoom } from './hooks/useTheMindRoom';
@@ -85,9 +86,13 @@ export default function TheMindPage() {
     ? getLevelConfig(state.level, state.players.length, state.mode)
     : null;
 
+  // Show lobby code banner during gameplay (not in create/lobby)
+  const showBanner = roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';
+
   return (
     <Layout>
-      <div className="container container-md">
+      {showBanner && <RoomCodeBanner roomCode={roomCode!} />}
+      <div className="container container-md" style={showBanner ? { paddingTop: '2.5rem' } : undefined}>
         {/* Back button in create/lobby */}
         {(currentPhase === 'create' || currentPhase === 'lobby') && (
           <button

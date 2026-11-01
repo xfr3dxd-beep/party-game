@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { PiliPiliState, PiliPiliPlayer } from '../types';
 import { getCardImage, getPiliImage, getCardBack } from '../missions';
+import { JOKER_VALUE } from '../gameLogic';
 
 interface PiliPiliPlayProps {
   state: PiliPiliState;
   myPlayer: PiliPiliPlayer;
   onPlayCard: (card: number) => void;
+  onJokerChoose: (value: number) => void;
 }
 
-export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPlayProps) {
+export default function PiliPiliPlay({ state, myPlayer, onPlayCard, onJokerChoose }: PiliPiliPlayProps) {
   const isSimultaneous = !!state.currentMission?.simultaneousPlay;
   const isMyTurn = isSimultaneous ? !state.simultaneousCards[myPlayer.id] : state.currentTurnId === myPlayer.id;
   const [showMission, setShowMission] = useState(false);
   const [showPili, setShowPili] = useState(false);
   const [selectedSimCard, setSelectedSimCard] = useState<number | null>(null);
+  const [showJokerChoice, setShowJokerChoice] = useState(false);
 
   // For mustPlayHighLow: only lowest and highest are playable
   const playableCards = (() => {
@@ -26,6 +29,16 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
   const canPlay = (card: number) => isMyTurn && playableCards.includes(card);
 
   const handlePlay = (card: number) => {
+    if (card === JOKER_VALUE) {
+      // Show joker choice modal instead of playing immediately
+      if (isSimultaneous) {
+        setSelectedSimCard(card);
+        setShowJokerChoice(true);
+      } else if (canPlay(card)) {
+        setShowJokerChoice(true);
+      }
+      return;
+    }
     if (isSimultaneous) {
       setSelectedSimCard(card);
     } else if (canPlay(card)) {
@@ -33,8 +46,23 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
     }
   };
 
+  const handleJokerConfirm = (value: number) => {
+    onJokerChoose(value);
+    setShowJokerChoice(false);
+    if (isSimultaneous && selectedSimCard === JOKER_VALUE) {
+      // Don't play yet in simultaneous — wait for confirm button
+    } else {
+      onPlayCard(JOKER_VALUE);
+    }
+  };
+
   const confirmSimultaneous = () => {
     if (selectedSimCard !== null) {
+      if (selectedSimCard === JOKER_VALUE && !state.jokerChoices?.[myPlayer.id] && state.jokerChoices?.[myPlayer.id] !== 0) {
+        // Need to choose joker value first
+        setShowJokerChoice(true);
+        return;
+      }
       onPlayCard(selectedSimCard);
       setSelectedSimCard(null);
     }
@@ -309,6 +337,54 @@ export default function PiliPiliPlay({ state, myPlayer, onPlayCard }: PiliPiliPl
             🌶️ I tuoi Pili: {myPlayer.pilis}
           </div>
           <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginTop: '1.5rem' }}>Tocca per chiudere</p>
+        </div>
+      )}
+
+      {/* Joker choice modal */}
+      {showJokerChoice && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1100, padding: '1.5rem',
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(30,20,50,0.98), rgba(40,25,60,0.98))',
+            border: '2px solid rgba(251,191,36,0.5)', borderRadius: '20px',
+            padding: '2rem 1.5rem', maxWidth: '400px', width: '100%', textAlign: 'center',
+            boxShadow: '0 16px 48px rgba(0,0,0,0.7)',
+          }}>
+            <img src={getCardImage(JOKER_VALUE)} alt="Joker" style={{
+              width: '120px', height: 'auto', borderRadius: '12px', marginBottom: '1rem',
+              boxShadow: '0 8px 24px rgba(251,191,36,0.4)', border: '2px solid rgba(251,191,36,0.5)',
+            }} />
+            <h3 style={{ color: '#fbbf24', fontSize: '1.3rem', marginBottom: '0.5rem' }}>
+              🃏 Joker — Scegli il valore!
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.5 }}>
+              {state.currentMission?.invertWinner
+                ? 'Attenzione: i valori sono invertiti! La carta più bassa vince.'
+                : 'Il Joker può valere come la carta più alta o più bassa.'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+              <button onClick={() => handleJokerConfirm(JOKER_VALUE)} style={{
+                padding: '1rem', fontSize: '1.1rem', fontWeight: 700,
+                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(34,197,94,0.4)',
+              }}>
+                ⬆️ Valore 56 — Il più alto
+              </button>
+              <button onClick={() => handleJokerConfirm(0)} style={{
+                padding: '1rem', fontSize: '1.1rem', fontWeight: 700,
+                background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                color: '#fff', border: 'none', borderRadius: '12px', cursor: 'pointer',
+                boxShadow: '0 4px 16px rgba(239,68,68,0.4)',
+              }}>
+                ⬇️ Valore 0 — Il più basso
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

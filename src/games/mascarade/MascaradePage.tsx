@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Layout from '../../components/Layout';
+import RoomCodeBanner from '../../components/RoomCodeBanner';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useMascaradeRoom } from './hooks/useMascaradeRoom';
@@ -36,9 +37,10 @@ export default function MascaradePage() {
   const handleCreate = async (name: string) => {
     setIsConnecting(true); await createRoom(name); setIsConnecting(false); setLocalPhase('lobby');
   };
-  const handleJoin = async (code: string, name: string): Promise<boolean> => {
-    setIsConnecting(true); const ok = await joinRoom(code, name); setIsConnecting(false);
-    if (ok) setLocalPhase('lobby'); return ok;
+  const handleJoin = async (code: string, name: string): Promise<boolean | 'name-taken'> => {
+    setIsConnecting(true); const result = await joinRoom(code, name); setIsConnecting(false);
+    if (result === true) setLocalPhase('lobby');
+    return result;
   };
 
   const effectPhases = [
@@ -46,9 +48,13 @@ export default function MascaradePage() {
     'effect-marionettista', 'effect-imbroglione', 'effect-principessa', 'effect-sciamana', 'effect-mendicante',
   ];
 
+  // Show lobby code banner during gameplay (not in create/lobby)
+  const showBanner = roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';
+
   return (
     <Layout>
-      <div className="container container-md">
+      {showBanner && <RoomCodeBanner roomCode={roomCode!} />}
+      <div className="container container-md" style={showBanner ? { paddingTop: '2.5rem' } : undefined}>
         {(currentPhase === 'create' || currentPhase === 'lobby') && (
           <button className="btn btn-secondary mb-lg" onClick={() => { disconnect(); navigate('/'); }}>
             <ArrowLeft size={16} /> Torna ai Giochi

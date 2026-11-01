@@ -14,6 +14,7 @@ import CitadelsEffect from './components/CitadelsEffect';
 import CitadelsScoring from './components/CitadelsScoring';
 import CitadelsCharacterRef from './components/CitadelsCharacterRef';
 import CitadelsCity from './components/CitadelsCity';
+import RoomCodeBanner from '../../components/RoomCodeBanner';
 import { useNavigate } from 'react-router-dom';
 import { DistrictCard } from './types';
 
@@ -378,14 +379,18 @@ export default function CitadelsPage() {
     );
   };
 
+  // Show lobby code banner during gameplay (not in create/lobby)
+  const showBanner = room.roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';
+
   return (
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(180deg, #1a1520 0%, #0d0a12 100%)',
       color: '#fff',
       position: 'relative',
+      paddingTop: showBanner ? '2.2rem' : undefined,
     }}>
-      {/* Draft phase — show player info bar + draft + hand button */}
+      {showBanner && <RoomCodeBanner roomCode={room.roomCode!} />}      {/* Draft phase — show player info bar + draft + hand button */}
       {currentPhase === 'draft' && (
         <>
           <PlayerInfoBar />

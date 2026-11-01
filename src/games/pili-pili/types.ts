@@ -91,6 +91,8 @@ export interface PiliPiliState {
   piliEarnedThisRound: Record<string, number>;
   // Track who dismissed the trick/round result screen
   resultDismissed: string[];
+  // Joker value choices: playerId -> chosen value (56 = highest, 0 = lowest)
+  jokerChoices: Record<string, number>;
 }
 
 export type PiliPiliBroadcast =

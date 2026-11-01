@@ -3,7 +3,7 @@ import { User, KeyRound, Sparkles, AlertCircle, Loader2, Users, Crown } from 'lu
 
 export interface MascaradeCreateProps {
   onCreateRoom: (name: string) => void;
-  onJoinRoom: (code: string, name: string) => Promise<boolean>;
+  onJoinRoom: (code: string, name: string) => Promise<boolean | 'name-taken'>;
   isConnecting: boolean;
 }
 
@@ -36,8 +36,10 @@ export default function MascaradeCreate({
       return;
     }
     setError('');
-    const success = await onJoinRoom(code.toUpperCase(), name.trim());
-    if (!success) {
+    const result = await onJoinRoom(code.toUpperCase(), name.trim());
+    if (result === 'name-taken') {
+      setError('Nome già in uso! Scegli un nome diverso. In Mascarade ogni giocatore deve avere un nome unico.');
+    } else if (!result) {
       setError('Stanza non trovata o host non raggiungibile. Verifica il codice.');
     }
   };

@@ -28,6 +28,7 @@ const emptyState: PiliPiliState = {
   blindPlay: false, allHandsVisible: false,
   previousBetValue: null, piliEarnedThisRound: {},
   resultDismissed: [],
+  jokerChoices: {},
 };
 
 export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast, onBroadcast }: UsePiliPiliGameProps) {
@@ -224,6 +225,7 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
       s.piliTransferTargets = {}; s.simultaneousCards = {};
       s.blindPlay = false; s.allHandsVisible = false;
       s.previousBetValue = null; s.piliEarnedThisRound = {};
+      s.jokerChoices = {};
       if (m.drawAfterBet) {
         const used = s.players.flatMap((p: any) => p.hand);
         s.extraDeck = shuffle(Array.from({ length: 55 }, (_, i) => i + 1).filter(c => !used.includes(c)));
@@ -244,7 +246,12 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
       sync(s);
 
     } else if (action === 'auto-proceed-timed') {
-      s.phase = 'betting'; s.currentTurnId = null; // simultaneous
+      // When timed + transferPili combo: do transfer select FIRST, then betting
+      if (s.currentMission?.transferPili) {
+        s.phase = 'pili-transfer-select'; s.piliTransferTargets = {};
+      } else {
+        s.phase = 'betting'; s.currentTurnId = null; // simultaneous
+      }
       sync(s);
 
     } else if (action === 'forehead-select') {
@@ -263,7 +270,9 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
       const { pId, targetId } = payload;
       s.piliTransferTargets = { ...s.piliTransferTargets, [pId]: targetId };
       if (Object.keys(s.piliTransferTargets).length === s.players.length) {
-        s.phase = 'betting'; s.currentTurnId = getNextPlayerId(s.players, s.dealerId!);
+        s.phase = 'betting';
+        // If timed mission, use simultaneous betting (null turn); otherwise sequential
+        s.currentTurnId = s.currentMission?.timedView ? null : getNextPlayerId(s.players, s.dealerId!);
       }
       sync(s);
 
@@ -319,7 +328,7 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
           }));
           s.currentTrick = s.players.map(p => ({ playerId: p.id, card: s.simultaneousCards[p.id] }));
           s.simultaneousCards = {};
-          const wId = resolveTrick(s.currentTrick, s.currentMission?.invertWinner);
+          const wId = resolveTrick(s.currentTrick, s.currentMission?.invertWinner, s.jokerChoices);
           const r = afterTrick(s, wId); sync(r);
         } else { sync(s); }
       } else {
@@ -329,7 +338,7 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
         s.players[pi] = { ...s.players[pi], hand: s.players[pi].hand.filter(c => c !== card) };
         s.currentTrick = [...s.currentTrick, { playerId: pId, card }];
         if (s.currentTrick.length === s.players.length) {
-          const wId = resolveTrick(s.currentTrick, s.currentMission?.invertWinner);
+          const wId = resolveTrick(s.currentTrick, s.currentMission?.invertWinner, s.jokerChoices);
           const r = afterTrick(s, wId); sync(r);
         } else { s.currentTurnId = getNextPlayerId(s.players, pId); sync(s); }
       }
@@ -370,6 +379,12 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
         s.swapTrickWinnerId = null; s.swapTrickTargetId = null;
         s.swapTrickWinnerCard = null; s.swapTrickTargetCard = null;
       }
+      sync(s);
+
+    } else if (action === 'joker-choose') {
+      // Player chose the joker value: 56 (highest) or 0 (lowest)
+      const { pId, value } = payload;
+      s.jokerChoices = { ...s.jokerChoices, [pId]: value };
       sync(s);
 
     } else if (action === 'new-game') {
@@ -423,5 +438,6 @@ export function usePiliPiliGame({ playerId, isHost, roomCode, players, broadcast
     newGame: useCallback(() => act('new-game'), [act]),
     foreheadSelect: useCallback((cs: number[]) => act('forehead-select', { pId: playerId, cards: cs }), [act, playerId]),
     piliTransferSelect: useCallback((t: string) => act('pili-transfer-select', { pId: playerId, targetId: t }), [act, playerId]),
+    jokerChoose: useCallback((value: number) => act('joker-choose', { pId: playerId, value }), [act, playerId]),
   };
 }

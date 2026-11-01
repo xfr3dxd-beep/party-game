@@ -39,7 +39,7 @@ export function useMascaradeRoom() {
   const playerIdRef = useRef(playerId);
   playerIdRef.current = playerId;
 
-  const setupChannel = async (code: string, name: string, host: boolean, playerIdOverride?: string): Promise<boolean> => {
+  const setupChannel = async (code: string, name: string, host: boolean, playerIdOverride?: string): Promise<boolean | 'name-taken'> => {
     const activePlayerId = playerIdOverride || recoverSession(code)?.playerId || playerIdRef.current;
     const channel = supabase.channel(`mascarade-${code}`, { config: { presence: { key: activePlayerId } } });
     channelRef.current = channel;
@@ -61,6 +61,24 @@ export function useMascaradeRoom() {
         })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
+            // Check for duplicate name BEFORE tracking (only for non-host joins)
+            if (!host) {
+              const cs = channel.presenceState();
+              let nameTaken = false;
+              Object.values(cs).forEach(pr => pr.forEach((p: any) => {
+                if (p.name && p.name.toLowerCase() === name.toLowerCase() && p.id !== activePlayerId) {
+                  nameTaken = true;
+                }
+              }));
+              if (nameTaken) {
+                channel.unsubscribe();
+                supabase.removeChannel(channel);
+                channelRef.current = null;
+                resolve('name-taken');
+                return;
+              }
+            }
+
             await channel.track({ id: activePlayerId, name, isHost: host });
             setIsConnected(true); setRoomCode(code); setPlayerName(name); setIsHost(host);
             if (!host) {
@@ -91,7 +109,7 @@ export function useMascaradeRoom() {
     storeSession(code, playerId, name, 'mascarade');
   }, [playerId]);
 
-  const joinRoom = useCallback(async (code: string, name: string): Promise<boolean> => {
+  const joinRoom = useCallback(async (code: string, name: string): Promise<boolean | 'name-taken'> => {
     const upperCode = code.toUpperCase();
     
     // Check for existing session (rejoin from same device/browser)
@@ -116,40 +134,42 @@ export function useMascaradeRoom() {
       
       // Try joining as non-host first (check if host is online)
       const result = await setupChannel(upperCode, name, false, rejoiningId);
-      if (result) {
+      if (result === true) {
         storeSession(upperCode, rejoiningId, name, 'mascarade');
         return true;
       }
+      if (result === 'name-taken') return 'name-taken';
       
       // Host is offline — this player becomes the new host
       await updateRoomHost(upperCode, rejoiningId);
       const hostResult = await setupChannel(upperCode, name, true, rejoiningId);
-      if (hostResult) {
+      if (hostResult === true) {
         storeSession(upperCode, rejoiningId, name, 'mascarade');
       }
-      return hostResult;
+      return hostResult === true ? true : (hostResult === 'name-taken' ? 'name-taken' : false);
     }
     
     // Room exists in DB but not in playing state — treat as lobby rejoin
     if (room && room.phase === 'lobby') {
       const result = await setupChannel(upperCode, name, false);
-      if (result) {
+      if (result === true) {
         storeSession(upperCode, playerId, name, 'mascarade');
         return true;
       }
+      if (result === 'name-taken') return 'name-taken';
       // Host might be offline, try becoming host
       await updateRoomHost(upperCode, playerId);
       const hostResult = await setupChannel(upperCode, name, true);
-      if (hostResult) storeSession(upperCode, playerId, name, 'mascarade');
-      return hostResult;
+      if (hostResult === true) storeSession(upperCode, playerId, name, 'mascarade');
+      return hostResult === true ? true : (hostResult === 'name-taken' ? 'name-taken' : false);
     }
     
     // Normal join (no room in DB — live lobby only)
     const result = await setupChannel(upperCode, name, false);
-    if (result) {
+    if (result === true) {
       storeSession(upperCode, playerId, name, 'mascarade');
     }
-    return result;
+    return result === true ? true : (result === 'name-taken' ? 'name-taken' : false);
   }, [playerId]);
 
   const broadcast = useCallback((event: MascaradeBroadcast) => {

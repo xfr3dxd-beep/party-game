@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Layout from '../../components/Layout';
+import RoomCodeBanner from '../../components/RoomCodeBanner';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useDixitRoom } from './hooks/useDixitRoom';
@@ -43,9 +44,13 @@ export default function DixitPage() {
   // Show persistent scoreboard button during gameplay phases
   const showScoreboardBtn = ['narrator-pick', 'others-pick', 'voting', 'scoring', 'game-over'].includes(currentPhase);
 
+  // Show lobby code banner during gameplay (not in create/lobby)
+  const showBanner = roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';
+
   return (
     <Layout>
-      <div className="container container-md">
+      {showBanner && <RoomCodeBanner roomCode={roomCode!} />}
+      <div className="container container-md" style={showBanner ? { paddingTop: '2.5rem' } : undefined}>
         {(currentPhase === 'create' || currentPhase === 'lobby') && (
           <button className="btn btn-secondary mb-lg" onClick={() => { disconnect(); navigate('/'); }}>
             <ArrowLeft size={16} /> Torna ai Giochi
