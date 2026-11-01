@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, KeyRound, Sparkles, AlertCircle, Loader2, Users, Crown } from 'lucide-react';
+import { User, KeyRound, Sparkles, AlertCircle, Loader2, Users, Crown, BookOpen, X } from 'lucide-react';
 
 export interface DixitCreateProps {
   onCreateRoom: (name: string) => void;
@@ -12,6 +12,7 @@ export default function DixitCreate({ onCreateRoom, onJoinRoom, isConnecting }: 
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
+  const [showRules, setShowRules] = useState(false);
 
   const accent = '#7c3aed';
   const accentLight = '#a78bfa';
@@ -49,24 +50,37 @@ export default function DixitCreate({ onCreateRoom, onJoinRoom, isConnecting }: 
         </p>
       </div>
 
-      {/* Tabs */}
-      <div style={{
-        display: 'flex', gap: '0.6rem', padding: '0.35rem',
-        background: 'rgba(20, 18, 40, 0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
-        borderRadius: '14px', border: `1px solid rgba(124, 58, 237, 0.25)`, marginBottom: '1.75rem',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-      }}>
-        {(['create', 'join'] as const).map(t => (
-          <button key={t} onClick={() => { setTab(t); setError(''); }} style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.6rem', borderRadius: '10px', border: 'none',
-            fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s ease',
-            color: tab === t ? '#1a0833' : 'rgba(255,255,255,0.7)',
-            background: tab === t ? `linear-gradient(135deg, #c4b5fd 0%, ${accent} 50%, #5b21b6 100%)` : 'transparent',
-            boxShadow: tab === t ? `0 4px 15px ${accentGlow}, inset 0 1px 0 rgba(255,255,255,0.3)` : 'none',
+      {/* Tabs + Rules Button */}
+      <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', marginBottom: '1.75rem' }}>
+        <div style={{
+          display: 'flex', gap: '0.6rem', padding: '0.35rem',
+          background: 'rgba(20, 18, 40, 0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          borderRadius: '14px', border: `1px solid rgba(124, 58, 237, 0.25)`,
+          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+        }}>
+          {(['create', 'join'] as const).map(t => (
+            <button key={t} onClick={() => { setTab(t); setError(''); }} style={{
+              display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.75rem 1.6rem', borderRadius: '10px', border: 'none',
+              fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s ease',
+              color: tab === t ? '#1a0833' : 'rgba(255,255,255,0.7)',
+              background: tab === t ? `linear-gradient(135deg, #c4b5fd 0%, ${accent} 50%, #5b21b6 100%)` : 'transparent',
+              boxShadow: tab === t ? `0 4px 15px ${accentGlow}, inset 0 1px 0 rgba(255,255,255,0.3)` : 'none',
+            }}>
+              {t === 'create' ? <><Crown size={18} /> Crea Stanza</> : <><Users size={18} /> Unisciti</>}
+            </button>
+          ))}
+        </div>
+
+        {/* Rules Button */}
+        <button onClick={() => setShowRules(true)} title="Regolamento"
+          style={{
+            background: 'rgba(124, 58, 237, 0.12)', border: '1px solid rgba(124, 58, 237, 0.35)',
+            color: accentLight, padding: '0.75rem', borderRadius: '12px', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            transition: 'all 0.2s ease',
           }}>
-            {t === 'create' ? <><Crown size={18} /> Crea Stanza</> : <><Users size={18} /> Unisciti</>}
-          </button>
-        ))}
+          <BookOpen size={20} />
+        </button>
       </div>
 
       {/* Form */}
@@ -147,13 +161,91 @@ export default function DixitCreate({ onCreateRoom, onJoinRoom, isConnecting }: 
           display: 'flex', alignItems: 'center', justifyContent: 'space-around',
           color: 'rgba(255,255,255,0.65)', fontSize: '0.8rem', textAlign: 'center',
         }}>
-          <div><div style={{ color: accentLight, fontWeight: 700 }}>3 - 6</div><div>Giocatori</div></div>
+          <div><div style={{ color: accentLight, fontWeight: 700 }}>3 - 12</div><div>Giocatori</div></div>
           <div style={{ width: '1px', height: '24px', background: 'rgba(124, 58, 237, 0.2)' }} />
-          <div><div style={{ color: accentLight, fontWeight: 700 }}>30 Punti</div><div>Per Vincere</div></div>
+          <div><div style={{ color: accentLight, fontWeight: 700 }}>25 Punti</div><div>Per Vincere</div></div>
           <div style={{ width: '1px', height: '24px', background: 'rgba(124, 58, 237, 0.2)' }} />
           <div><div style={{ color: accentLight, fontWeight: 700 }}>Sogni</div><div>& Indizi</div></div>
         </div>
       </div>
+
+      {/* ===== RULES MODAL ===== */}
+      {showRules && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 100,
+          background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '1rem',
+        }} onClick={() => setShowRules(false)}>
+          <div onClick={e => e.stopPropagation()} style={{
+            width: '100%', maxWidth: '600px', maxHeight: '85vh', overflowY: 'auto',
+            background: 'rgba(22, 18, 45, 0.95)', borderRadius: '20px',
+            padding: '1.5rem', border: '1px solid rgba(124, 58, 237, 0.3)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+          }}>
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(124,58,237,0.25)', paddingBottom: '0.85rem', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <BookOpen size={22} color={accentLight} />
+                <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 800, color: '#e0d4fc' }}>Regolamento di Dixit</h3>
+              </div>
+              <button onClick={() => setShowRules(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', padding: '0.2rem' }}>
+                <X size={22} />
+              </button>
+            </div>
+
+            {/* Rules content */}
+            <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9rem', lineHeight: 1.7 }}>
+              <Section title="🎯 Obiettivo">
+                Essere il primo giocatore a raggiungere <b>25 punti</b> sul tabellone punteggio. Se più giocatori raggiungono 25 punti nello stesso round, vincono tutti!
+              </Section>
+
+              <Section title="🃏 Preparazione">
+                Ogni giocatore sceglie un <b>token coniglio</b> colorato e riceve <b>6 carte</b> dalla mano. Nel caso di 3 giocatori, ogni giocatore riceve 7 carte.
+              </Section>
+
+              <Section title="📖 Turno di Gioco">
+                <ol style={{ paddingLeft: '1.2rem', margin: '0.3rem 0' }}>
+                  <li><b>Il Narratore</b> sceglie una carta dalla mano e scrive un indizio ad essa associato.</li>
+                  <li>Gli <b>altri giocatori</b> scelgono dalla propria mano una carta che possa confondersi con quella del narratore.</li>
+                  <li>Tutte le carte vengono <b>mescolate</b> e mostrate scoperte sul tavolo.</li>
+                  <li>Ogni giocatore (tranne il narratore) <b>vota</b> quale carta crede sia quella del narratore. Non si può votare la propria carta.</li>
+                </ol>
+              </Section>
+
+              <Section title="⭐ Punteggio">
+                <ul style={{ paddingLeft: '1.2rem', margin: '0.3rem 0' }}>
+                  <li><b>Tutti indovinano</b>: Narratore 0 punti, tutti gli altri +2 punti.</li>
+                  <li><b>Nessuno indovina</b>: Narratore 0 punti, tutti gli altri +1 punto.</li>
+                  <li><b>Indovinato parzialmente</b>: Narratore +3 punti, chi ha indovinato +3 punti.</li>
+                  <li><b>Bonus</b>: Per ogni voto sbagliato ricevuto sulla propria carta, il proprietario guadagna +1 punto.</li>
+                </ul>
+              </Section>
+
+              <Section title="🗑️ Scarto Carte">
+                Prima di scegliere la carta da giocare, i giocatori non narratori possono <b>scartare fino a 2 carte</b> dalla mano e pescarne di nuove dal mazzo. Questa azione può essere ripetuta fino a <b>3 volte per turno</b>.
+              </Section>
+
+              <Section title="👥 Variante 3 Giocatori">
+                Con 3 giocatori, ogni giocatore riceve 7 carte. I giocatori non narratori scelgono <b>2 carte</b> ciascuno invece di 1, per avere abbastanza carte sul tavolo.
+              </Section>
+
+              <Section title="🏁 Fine Partita">
+                La partita termina quando un giocatore raggiunge <b>25 punti</b>. Pareggi possibili: se più giocatori superano 25 nello stesso round, vincono tutti!
+              </Section>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: '1.2rem' }}>
+      <h4 style={{ margin: '0 0 0.4rem', fontSize: '1rem', fontWeight: 700, color: '#c4b5fd' }}>{title}</h4>
+      <div>{children}</div>
     </div>
   );
 }

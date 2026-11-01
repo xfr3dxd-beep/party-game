@@ -28,6 +28,7 @@ export const CARD_BACK = '/Dixit/Carte/carta_dorso.jpg';
 // Board images
 export const BOARD_DORSO = '/Dixit/Tabellone da gioco/Tabellone da gioco (dorso).png';
 export const BOARD_FACCIA = '/Dixit/Tabellone da gioco/Tabellone da gioco (faccia).png';
+export const BOARD_SCELTA = '/Dixit/Tabellone da gioco/Tabellone da gioco (scelta carte).png';
 export const SCOREBOARD_IMAGE = '/Dixit/Tabellone da gioco/Tabellone punteggio conigli.png';
 
 // All 12 available colors

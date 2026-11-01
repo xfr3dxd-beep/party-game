@@ -205,7 +205,7 @@ export default function Home() {
               justifyContent: 'center',
               marginTop: '0.5rem',
             }}>
-              <span className="mind-players-badge" style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderColor: 'rgba(124, 58, 237, 0.3)' }}>👥 3-6 giocatori</span>
+              <span className="mind-players-badge" style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderColor: 'rgba(124, 58, 237, 0.3)' }}>👥 3-12 giocatori</span>
               <span className="mind-players-badge" style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderColor: 'rgba(124, 58, 237, 0.3)' }}>📱 Multiplayer online</span>
             </div>
           </div>

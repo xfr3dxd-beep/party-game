@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DixitState } from '../types';
-import { getCardImagePath, CARD_BACK } from '../cards';
+import { getCardImagePath, CARD_BACK, BOARD_SCELTA } from '../cards';
 import { Send, Eye } from 'lucide-react';
 
 interface Props {
@@ -25,6 +25,9 @@ export default function DixitNarratorPick({ state, playerId, onNarratorPick, onZ
     }
   };
 
+  // Card slot positions on the scelta carte board (6 slots)
+  const sceltaSlotsX = [16, 29.5, 43, 56.5, 70, 83.5];
+
   return (
     <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1.5rem 1rem', color: '#fff' }}>
       {/* Round Header */}
@@ -45,35 +48,80 @@ export default function DixitNarratorPick({ state, playerId, onNarratorPick, onZ
             Seleziona una carta dalla tua mano e scrivi un indizio che la descriva. Non deve essere troppo facile né troppo difficile!
           </p>
 
-          {/* Hand */}
+          {/* Board with cards overlaid */}
           <div style={{
-            display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'center', marginBottom: '1.5rem', maxWidth: '700px',
+            position: 'relative', width: '100%', maxWidth: '650px', marginBottom: '1.5rem',
+            borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.2)',
           }}>
-            {myPlayer.hand.map(cardId => (
-              <div key={cardId} onClick={() => setSelectedCard(cardId)}
-                style={{
-                  width: '110px', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', position: 'relative',
-                  border: selectedCard === cardId ? '3px solid #7c3aed' : '2px solid rgba(124, 58, 237, 0.2)',
-                  boxShadow: selectedCard === cardId ? '0 0 20px rgba(124, 58, 237, 0.5)' : 'none',
-                  transform: selectedCard === cardId ? 'translateY(-8px) scale(1.05)' : 'none',
-                  transition: 'all 0.2s ease',
-                }}>
-                {/* Eye zoom button */}
-                <button onClick={e => { e.stopPropagation(); onZoomCard(cardId); }}
+            <img src={BOARD_SCELTA} alt="Tabellone scelta" style={{ width: '100%', display: 'block' }} />
+
+            {/* Overlay cards on the board slots */}
+            {myPlayer.hand.map((cardId, i) => {
+              const slotX = i < sceltaSlotsX.length ? sceltaSlotsX[i] : null;
+              if (slotX === null) return null;
+              const isSelected = selectedCard === cardId;
+              return (
+                <div key={cardId}
+                  onClick={() => setSelectedCard(cardId)}
                   style={{
-                    position: 'absolute', top: '4px', right: '4px', zIndex: 2,
-                    background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(124,58,237,0.5)',
-                    color: '#a78bfa', borderRadius: '50%', width: '24px', height: '24px',
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: 0,
-                  }}><Eye size={13} /></button>
-                <img src={getCardImagePath(cardId)} alt={`Carta ${cardId}`}
-                  style={{ width: '100%', display: 'block' }}
-                  onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }}
-                />
-              </div>
-            ))}
+                    position: 'absolute',
+                    top: '38%', left: `${slotX}%`, transform: 'translateX(-50%)',
+                    width: '12%', cursor: 'pointer',
+                    border: isSelected ? '3px solid #7c3aed' : '2px solid transparent',
+                    borderRadius: '6px', overflow: 'hidden',
+                    boxShadow: isSelected ? '0 0 20px rgba(124, 58, 237, 0.6)' : '0 2px 8px rgba(0,0,0,0.4)',
+                    transition: 'all 0.2s ease',
+                    zIndex: isSelected ? 3 : 1,
+                  }}>
+                  <img src={getCardImagePath(cardId)} alt={`Carta ${cardId}`}
+                    style={{ width: '100%', display: 'block' }}
+                    onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }} />
+                  {/* Eye zoom */}
+                  <button onClick={e => { e.stopPropagation(); onZoomCard(cardId); }}
+                    style={{
+                      position: 'absolute', top: '3px', right: '3px', zIndex: 4,
+                      background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(124,58,237,0.5)',
+                      color: '#a78bfa', borderRadius: '50%', width: '20px', height: '20px',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                    }}><Eye size={10} /></button>
+                  {isSelected && (
+                    <div style={{
+                      position: 'absolute', top: '3px', left: '3px', width: '20px', height: '20px', borderRadius: '50%',
+                      background: '#7c3aed', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontWeight: 800, fontSize: '0.65rem', zIndex: 4,
+                    }}>✓</div>
+                  )}
+                </div>
+              );
+            })}
           </div>
+
+          {/* Extra cards below board if more than 6 (7 in 3-player mode) */}
+          {myPlayer.hand.length > sceltaSlotsX.length && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.8rem', justifyContent: 'center', marginBottom: '1.5rem', maxWidth: '700px' }}>
+              {myPlayer.hand.slice(sceltaSlotsX.length).map(cardId => (
+                <div key={cardId} onClick={() => setSelectedCard(cardId)}
+                  style={{
+                    width: '100px', borderRadius: '10px', overflow: 'hidden', cursor: 'pointer', position: 'relative',
+                    border: selectedCard === cardId ? '3px solid #7c3aed' : '2px solid rgba(124, 58, 237, 0.2)',
+                    boxShadow: selectedCard === cardId ? '0 0 20px rgba(124, 58, 237, 0.5)' : 'none',
+                    transform: selectedCard === cardId ? 'translateY(-8px) scale(1.05)' : 'none',
+                    transition: 'all 0.2s ease',
+                  }}>
+                  <button onClick={e => { e.stopPropagation(); onZoomCard(cardId); }}
+                    style={{
+                      position: 'absolute', top: '4px', right: '4px', zIndex: 2,
+                      background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(124,58,237,0.5)',
+                      color: '#a78bfa', borderRadius: '50%', width: '24px', height: '24px',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                    }}><Eye size={13} /></button>
+                  <img src={getCardImagePath(cardId)} alt={`Carta ${cardId}`}
+                    style={{ width: '100%', display: 'block' }}
+                    onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }} />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Clue Input */}
           {selectedCard !== null && (
@@ -114,26 +162,55 @@ export default function DixitNarratorPick({ state, playerId, onNarratorPick, onZ
             Attendi mentre il narratore sceglie una carta e scrive un indizio.
           </p>
 
-          {/* Show own hand (preview only) */}
-          <div style={{ marginTop: '2rem' }}>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', marginBottom: '0.5rem', textAlign: 'center' }}>La tua mano:</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
-              {myPlayer.hand.map(cardId => (
+          {/* Show own hand on the board */}
+          <div style={{
+            position: 'relative', width: '100%', maxWidth: '650px', marginTop: '2rem',
+            borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.15)',
+          }}>
+            <img src={BOARD_SCELTA} alt="Tabellone" style={{ width: '100%', display: 'block', opacity: 0.7 }} />
+
+            {myPlayer.hand.map((cardId, i) => {
+              const slotX = i < sceltaSlotsX.length ? sceltaSlotsX[i] : null;
+              if (slotX === null) return null;
+              return (
+                <div key={cardId} style={{
+                  position: 'absolute',
+                  top: '38%', left: `${slotX}%`, transform: 'translateX(-50%)',
+                  width: '12%', borderRadius: '5px', overflow: 'hidden', opacity: 0.8,
+                  border: '1px solid rgba(124, 58, 237, 0.15)',
+                }}>
+                  <button onClick={e => { e.stopPropagation(); onZoomCard(cardId); }}
+                    style={{
+                      position: 'absolute', top: '3px', right: '3px', zIndex: 2,
+                      background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(124,58,237,0.5)',
+                      color: '#a78bfa', borderRadius: '50%', width: '20px', height: '20px',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+                    }}><Eye size={10} /></button>
+                  <img src={getCardImagePath(cardId)} alt={`Carta ${cardId}`} style={{ width: '100%', display: 'block' }}
+                    onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }} />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Extra cards below board if more than 6 */}
+          {myPlayer.hand.length > sceltaSlotsX.length && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginTop: '0.8rem' }}>
+              {myPlayer.hand.slice(sceltaSlotsX.length).map(cardId => (
                 <div key={cardId} style={{ width: '80px', borderRadius: '8px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.15)', opacity: 0.7, position: 'relative' }}>
                   <button onClick={e => { e.stopPropagation(); onZoomCard(cardId); }}
                     style={{
                       position: 'absolute', top: '3px', right: '3px', zIndex: 2,
                       background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(124,58,237,0.5)',
                       color: '#a78bfa', borderRadius: '50%', width: '22px', height: '22px',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      padding: 0,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
                     }}><Eye size={11} /></button>
                   <img src={getCardImagePath(cardId)} alt={`Carta ${cardId}`} style={{ width: '100%', display: 'block' }}
                     onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }} />
                 </div>
               ))}
             </div>
-          </div>
+          )}
         </div>
       )}
     </div>

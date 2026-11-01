@@ -40,6 +40,9 @@ export default function DixitPage() {
     if (ok) setLocalPhase('lobby'); return ok;
   };
 
+  // Show persistent scoreboard button during gameplay phases
+  const showScoreboardBtn = ['narrator-pick', 'others-pick', 'voting', 'scoring', 'game-over'].includes(currentPhase);
+
   return (
     <Layout>
       <div className="container container-md">
@@ -85,6 +88,26 @@ export default function DixitPage() {
         {currentPhase === 'game-over' && (
           <DixitResult state={state} isHost={isHost}
             onRematch={game.rematch} onGoHome={() => { disconnect(); navigate('/'); }} />
+        )}
+
+        {/* Persistent scoreboard floating button — always visible during gameplay */}
+        {showScoreboardBtn && (
+          <button
+            onClick={() => setScoreboardOpen(true)}
+            style={{
+              position: 'fixed', bottom: '20px', right: '20px', zIndex: 50,
+              width: '52px', height: '52px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #c4b5fd, #7c3aed)',
+              border: '2px solid rgba(255,255,255,0.2)',
+              boxShadow: '0 4px 16px rgba(124, 58, 237, 0.5)',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1.4rem', color: '#fff',
+              transition: 'transform 0.2s ease',
+            }}
+            title="Punteggio Conigli"
+          >
+            🏆
+          </button>
         )}
 
         {/* Card zoom overlay */}
