@@ -1,0 +1,318 @@
+categoria,estremo_1,estremo_2
+Quotidiano,Buono,Cattivo
+Quotidiano,Freddo,Caldo
+Quotidiano,Strano,Normale
+Quotidiano,Colorato,Incolore
+Quotidiano,Sensazione piacevole,Sensazione sgradevole
+Quotidiano,Essenziale,Superfluo
+Quotidiano,Costoso,Economico
+Quotidiano,Comune,Raro
+Quotidiano,Materia difficile,Materia facile
+Quotidiano,Famoso,Sconosciuto
+Quotidiano,Facile da usare,Difficile da usare
+Quotidiano,Pulito,Sporco
+Quotidiano,Richiede abilità,Richiede fortuna
+Quotidiano,Argomento affascinante,Argomento noioso
+Quotidiano,Hipster,Basic
+Quotidiano,Lavoro sicuro,Lavoro pericoloso
+Quotidiano,Fantascienza,Fantasy
+Quotidiano,Formale,Informale
+Quotidiano,Strapagato,Sottopagato
+Quotidiano,Bagnato,Asciutto
+Quotidiano,Abilità sopravvalutata,Abilità sottovalutata
+Quotidiano,Incoraggiato,Proibito
+Quotidiano,Canzone allegra,Canzone triste
+Quotidiano,Resistente,Fragile
+Quotidiano,Secchione,Fricchettone
+Quotidiano,Malvagio,Eroe
+Quotidiano,Buona abitudine,Cattiva abitudine
+Quotidiano,Team cani,Team gatti
+Quotidiano,Amato apertamente,Guilty pleasure
+Quotidiano,Talentuoso,Privo di talento
+Quotidiano,Chiaro,Scuro
+Quotidiano,Attore sopravvalutato,Attore sottovalutato
+Quotidiano,Facile da trovare,Difficile da trovare
+Quotidiano,Uomo bello,Uomo brutto
+Quotidiano,Facile da ricordare,Difficile da ricordare
+Quotidiano,Raffinato,Grezzo
+Quotidiano,Sano,Malsano
+Quotidiano,Uomo buono,Uomo cattivo
+Quotidiano,Storicamente irrilevante,Storicamente importante
+Quotidiano,Flessibile,Rigido
+Quotidiano,Estroverso,Introverso
+Quotidiano,Bello,Brutto
+Quotidiano,Succede all'improvviso,Succede lentamente
+Quotidiano,Carriera,Lavoro
+Quotidiano,Odiato,Amato
+Quotidiano,Persona immatura,Persona matura
+Quotidiano,Cosa sopravvalutata da possedere,Cosa sottovalutata da possedere
+Quotidiano,Persona gentile,Persona cattiva
+Quotidiano,Carico,Stanco
+Quotidiano,Credibile,Incredibile
+Quotidiano,Elegante,Cafone
+Quotidiano,Permanente,Temporaneo
+Quotidiano,Gioco,Sport
+Quotidiano,Figo,Sfigato
+Quotidiano,La migliore persona vivente,La peggiore persona vivente
+Quotidiano,Sopravvalutato,Sottovalutato
+Quotidiano,Etico,Non etico
+Quotidiano,Bel regalo,Brutto regalo
+Quotidiano,Alla moda,Fuori moda
+Quotidiano,Perdonabile,Imperdonabile
+Quotidiano,Dannoso,Innocuo
+Quotidiano,Igienico,Antigienico
+Quotidiano,Utile,Inutile
+Quotidiano,Importante,Insignificante
+Quotidiano,Parola sofisticata,Parola banale
+Quotidiano,Attività popolare,Attività impopolare
+Quotidiano,Intero,Diviso
+Quotidiano,Affidabile,Inaffidabile
+Quotidiano,Difficile da uccidere,Facile da uccidere
+Quotidiano,Stabile,Instabile
+Quotidiano,Tradizionalmente femminile,Tradizionalmente maschile
+Quotidiano,Parte del corpo utile,Parte del corpo inutile
+Quotidiano,Cult,Trend
+Quotidiano,Geniale,Stupido
+Quotidiano,Forte,Debole
+Quotidiano,Invenzione utile,Invenzione inutile
+Quotidiano,Popolare,Impopolare
+Quotidiano,Nemico,Amico
+Quotidiano,Emozionante,Noioso
+Quotidiano,Odore,Puzza
+Quotidiano,Eroe,Cattivo
+Quotidiano,Cosa sopravvalutata da fare,Cosa sottovalutata da fare
+Quotidiano,Utile in caso di emergenza,Inutile in caso di emergenza
+Quotidiano,Difficile da fare,Facile da fare
+Quotidiano,Inestimabile,Senza valore
+Quotidiano,Educazione,Maleducazione
+Quotidiano,Saluto strano,Saluto normale
+Quotidiano,Nome da gatto,Nome da cane
+Quotidiano,Evento formale,Evento informale
+Quotidiano,Buon investimento,Cattivo investimento
+Quotidiano,Argomento pesante,Chiacchiere di circostanza
+Quotidiano,Arte,Non arte
+Quotidiano,Vietato,Illegale
+Quotidiano,Elitario,Popolare
+Quotidiano,Sotto controllo,Fuori controllo
+Quotidiano,Rumoroso,Silenzioso
+Quotidiano,Di dominio pubblico,Segreto di stato
+Quotidiano,Troppo grande,Troppo piccolo
+Quotidiano,Lungo,Corto
+Quotidiano,Il miglior anno della storia,Il peggior anno della storia
+Quotidiano,Fatto noto,Fatto poco noto
+Quotidiano,Movimento,Immobile
+Quotidiano,Problema globale,Problema locale
+Quotidiano,Abilità,Talento
+Quotidiano,Epoca migliore per viaggiare nel tempo,Epoca peggiore per viaggiare nel tempo
+Quotidiano,Il migliore,Il peggiore
+Quotidiano,Falso,Vero
+Quotidiano,All'avanguardia,Antiquato
+Quotidiano,Parola bella,Parola brutta
+Quotidiano,Minuscolo,Piccolo
+Quotidiano,Naturale,Innaturale
+Quotidiano,Persona falsa,Persona genuina
+Quotidiano,Originale,Pezzotto
+Quotidiano,Avvantaggia tutti,Avvantaggia te
+Quotidiano,Potente,Senza potere
+Quotidiano,Argomento serio,Argomento divertente
+Quotidiano,Notizie,Pettegolezzi
+Quotidiano,Troppo,Troppo poco
+Quotidiano,Verticale,Orizzontale
+Quotidiano,Profumato,Inodore
+Quotidiano,Da non abbracciare,Da abbracciare
+Quotidiano,Omogeneo,Eterogeneo
+Quotidiano,Esclusivo,Inclusivo
+Quotidiano,Commercio,Arte
+Quotidiano,Buon consiglio,Cattivo consiglio
+Quotidiano,Radicale,Tradizionale
+Quotidiano,Legale,Illegale
+Quotidiano,Informazione buona,Informazione scadente
+Quotidiano,Sempre puntuale,Mai puntuale
+Quotidiano,Buon presidente,Cattivo presidente
+Quotidiano,Insolito,Bizzarro
+Quotidiano,Famigerato,Famoso
+Quotidiano,Persona divertente,Persona noiosa
+Quotidiano,La miglior faccenda domestica,La peggior faccenda domestica
+Quotidiano,Terrificante,Elettrizzante
+Quotidiano,Inatteso,Atteso
+Quotidiano,Persona che ti picchierebbe,Persona che potresti picchiare
+Quotidiano,Gioco sopravvalutato,Gioco sottovalutato
+Quotidiano,Persone malvagie,Persone buone
+Quotidiano,Sportivo,Nerd
+Quotidiano,Religione,Scienza
+Divertenti,Arma sopravvalutata,Arma sottovalutata
+Divertenti,Non sembra una persona,Sembra una persona
+Divertenti,Battuta da papà,Umorismo nero
+Divertenti,Cinepanettone,Cult
+Divertenti,Figo senza volerlo,Si sforza di sembrare figo
+Divertenti,Messaggio da ubriaco,Pentimento da sobrio
+Divertenti,Incidente d'abbigliamento,Outfit perfetto
+Divertenti,Silenzio imbarazzante,Troppe confidenze
+Divertenti,Calzini con i sandali,Scalzo
+Divertenti,Correzione automatica geniale,Correzione automatica disastrosa
+Divertenti,Miglior cibo,Peggior cibo
+Divertenti,Fare ghosting,Affrontare la persona
+Coppie,Gesto romantico,Regalo pratico
+Coppie,Gesto da ti amo,Gesto di disprezzo
+Coppie,Restare a casa,Uscire
+Coppie,Geloso,Fiducioso
+Coppie,Mettere la testa a posto,Restare senza impegno
+Coppie,Da sposare,Da botta e via
+Coppie,Hobby da tutti,Hobby di nicchia
+Coppie,Colpo di fulmine,Scopamicizia
+Coppie,Anima gemella,Persona giusta al momento sbagliato
+Coppie,Azione da primo appuntamento,Azione da relazione a lungo termine
+Coppie,Coccolarsi,Dare spazio
+Coppie,Fare il primo passo,Aspettare di essere corteggiati
+Coppie,Compatibilità,Repulsione
+Coppie,Gli opposti si attraggono,Anima gemella
+Coppie,Caffè insieme,Cena elegante
+Coppie,Rimuginare su tutto,Lasciarsi trasportare
+Coppie,Chiedere scusa per primo,Tenere il muso
+Coppie,Franchezza brutale,Verità con tatto
+Coppie,Parlarne subito,Dormirci su
+Coppie,Ascoltare e annuire,Offrire soluzioni
+Coppie,Maniaco della pulizia,Disordinato ma felice
+Coppie,Mattiniero,Nottambulo
+Coppie,Tutto a metà,Paga chi può
+Coppie,Arredare insieme,Decide uno solo
+Coppie,Si fidanza e sparisce,Si fidanza ma si ricorda degli amici
+Coppie,Affetto in pubblico,Affetto in privato
+Coppie,Romanticismo spontaneo,Romanticismo programmato
+Coppie,Conversazione profonda,Silenzio complice
+Coppie,Monogamia,Poligamia
+Coppie,Brivido dell'avventura,Routine rassicurante
+Coppie,Litigare con lealtà,Vincere la discussione
+Coppie,Perdonare e dimenticare,Portare rancore
+Coppie,Bisogno dei propri spazi,Inseparabili
+Coppie,Amici in comune,Gruppi di amici separati
+Coppie,"Figli, un giorno",Mai figli
+Coppie,Vita di città,Vita di campagna
+Coppie,Conto in comune,Finanze separate
+Coppie,Viaggiare per il mondo,Stare nel proprio nido
+Coppie,Pianificare il futuro,Vivere il presente
+Coppie,Genitori di animali,Vita senza animali
+Coppie,Andare in pensione presto,Lavorare per sempre
+Coppie,Stile di coppia coordinato,Stili totalmente diversi
+Coppie,Condividere tutto,Mantenere un po' di mistero
+Coppie,Cena casalinga,Delivery e divano
+Coppie,Weekend d'avventura,Weekend pigro
+Coppie,Farsi sorprese,Organizzare tutto insieme
+Coppie,Giornata no = parlarne,Giornata no = lasciare spazio
+Coppie,Flirtare come il primo giorno,Dimenticare il romanticismo
+Per bambini,Per adulti,Per bambini
+Per bambini,Pizza,Broccoli
+Per bambini,Compiti,Ricreazione
+Per bambini,Andare a letto presto,Restare alzati fino a tardi
+Per bambini,Scienza,Complottismo
+Per bambini,Matusalemme,Novità
+Per bambini,Supereroe,Spalla
+Per bambini,Cibo da bambino,Cibo da adulto
+Per bambini,Giocare fuori,Giocare dentro
+Per bambini,Condividere,Tenere per sé
+Per bambini,Vincere,Divertirsi
+Per bambini,Insegnante,Preside
+Festa,Giorno migliore dell'anno,Giorno peggiore dell'anno
+Festa,Facile su cui sedersi,Difficile su cui sedersi
+Festa,Ballare,Stare seduti
+Festa,Beer pong,Giochi da tavolo
+Festa,Festa in maschera,Vieni come sei
+Festa,Porta da bere tu,Offre chi ospita
+Festa,Pista da ballo,Angolo chiacchiere
+Festa,Shottini,Sorsi
+Festa,Dopo-festa,Tornare a casa presto
+Modalità difficile,Utopia,Distopia
+Modalità difficile,Virtù,Vizio
+Modalità difficile,Infinito,Limitato
+Modalità difficile,Pseudoscienza,Scienza
+Modalità difficile,Pensiero superficiale,Pensiero profondo
+Cibo e bevande,Molto assuefacente,Poco assuefacente
+Cibo e bevande,Molto calorico,Poco calorico
+Cibo e bevande,Saporito,Insapore
+Cibo e bevande,Buon ingrediente per la pizza,Cattivo ingrediente per la pizza
+Cibo e bevande,Ha un buon sapore,Ha un cattivo sapore
+Cibo e bevande,Cibo che non sporca,Cibo che sporca
+Cibo e bevande,Piccante,Delicato
+Cibo e bevande,Caramella buona,Caramella cattiva
+Cibo e bevande,Bella consistenza in bocca,Brutta consistenza in bocca
+Cibo e bevande,Cibo da colazione,Cibo da cena
+Cibo e bevande,Dolce,Salato
+Cibo e bevande,Fatto in casa,Da ristorante
+Cultura pop,Meglio il film,Meglio il libro
+Cultura pop,Bel film,Brutto film
+Cultura pop,Il Lato Oscuro della Forza,Giustizia
+Cultura pop,Film d'avventura,Film d'azione
+Cultura pop,Bravo attore,Pessimo attore
+Cultura pop,Musica bella,Musica brutta
+Cultura pop,Musicista sopravvalutato,Musicista sottovalutato
+Cultura pop,Bella serie TV,Brutta serie TV
+Cultura pop,Bel personaggio Disney,Brutto personaggio Disney
+Cultura pop,Dio più potente,Dio meno potente
+Cultura pop,Libro sopravvalutato,Libro sottovalutato
+Natura e animali,Peloso,Glabro
+Natura e animali,Animale domestico esotico,Animale domestico normale
+Natura e animali,Animale appuntito,Animale tondo
+Natura e animali,Bella razza di cane,Brutta razza di cane
+Natura e animali,Specie sovrappopolata,Specie in via di estinzione
+Natura e animali,Mare,Montagna
+Natura e animali,Campeggio,Albergo
+Natura e animali,Alba,Tramonto
+Natura e animali,Oceano,Lago
+Natura e animali,Foresta,Deserto
+Natura e animali,Animale selvatico,Animale domestico
+Piccante,Sexy,Non sexy
+Piccante,Colore sexy,Colore non sexy
+Piccante,Duro,Moscio
+Piccante,Non vorresti che i tuoi genitori ti guardassero farlo,Vorresti che i tuoi genitori ti guardassero farlo
+Piccante,Sopra,Sotto
+Piccante,Luci accese,Luci spente
+Piccante,Sesso al mattino,Sesso a mezzanotte
+Piccante,Sussurrare,Urlare
+Piccante,A lume di candela,Luce al neon
+Piccante,Lento,Veloce
+Piccante,Flirt in pubblico,Tensione privata
+Piccante,Benda sugli occhi,Contatto visivo
+Piccante,Scrivere per primi,Aspettare che scrivano
+Quotidiano,Red flag,Green flag
+Quotidiano,Cringe,Iconico
+Quotidiano,Cosa da boomer,Cosa da Gen Z
+Quotidiano,Coraggio,Incoscienza
+Quotidiano,Intelligente,Furbo
+Quotidiano,Fortuna,Merito
+Quotidiano,Lusso,Necessità
+Quotidiano,Spoiler accettabile,Spoiler imperdonabile
+Quotidiano,Vale ogni centesimo,Fregatura
+Quotidiano,Cosa da Nord,Cosa da Sud
+Quotidiano,Bugia a fin di bene,Verità scomoda
+Quotidiano,Prima impressione,Vera natura
+Quotidiano,Dolce far niente,Produttività
+Quotidiano,Social,Vita reale
+Quotidiano,Giusta reazione,Reazione esagerata
+Quotidiano,Scelta saggia,Scelta da pazzi
+Quotidiano,Nostalgia,Speranza nel futuro
+Quotidiano,Cosa che si dice,Cosa che si pensa
+Divertenti,Vocale da 5 minuti,Ti chiamo
+Divertenti,Foto da Gruppo WhatsApp di lavoro,Foto da gruppo WhatsApp con amici
+Divertenti,Messaggio che ti fa ghostare,Messaggio da risposta immediata
+Divertenti,Ci sono quasi (attesa di 20 minuti),Puntuale
+Divertenti,Plot twist,Prevedibile
+Divertenti,Fare finta di niente,Fare scenata
+Divertenti,Nota Instagram,No social
+Coppie,Gelosia sana,Gelosia tossica
+Coppie,Restare amici con l’ex,Bloccarlo ovunque
+Coppie,Dire “ti amo” alla prima uscita,Anaffettivo
+Coppie,Convivenza,Case separate
+Coppie,App di incontri,Casa e chiesa
+Coppie,Canzone da dedicare,Canzone da discoteca
+Piccante,Dominante,Sottomesso
+Piccante,Classico,Stravagante
+Festa,Ospite perfetto,Ospite imbucato
+Festa,Ultimo ad andare via,Primo ad andare via
+Festa,Discoteca,Casa di amici
+Modalità difficile,Libero arbitrio,Destino
+Modalità difficile,Caos,Ordine
+Modalità difficile,Verità,Opinione
+Modalità difficile,Realtà,Illusione
+Modalità difficile,Individuo,Società
+Modalità difficile,Giustizia,Vendetta
+Modalità difficile,Ottimismo,Realismo

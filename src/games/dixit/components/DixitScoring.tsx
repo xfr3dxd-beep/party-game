@@ -26,7 +26,7 @@ export default function DixitScoring({ state, playerId, isHost, onNextRound, onO
   });
 
   // Card slot positions on the faccia board
-  const facciaSlotsX = [13.5, 27.5, 41.5, 55.5, 69.5, 83.5];
+  const facciaSlotsX = [16, 29.5, 43, 56.5, 70, 83.5];
 
   return (
     <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 0.5rem', color: '#fff' }}>
@@ -72,7 +72,7 @@ export default function DixitScoring({ state, playerId, isHost, onNextRound, onO
           return (
             <div key={tc.position} style={{
               position: 'absolute', top: '8%', left: `${facciaSlotsX[slotIdx]}%`,
-              width: '14%', transform: 'translateX(-50%)',
+              width: '12%', transform: 'translateX(-50%)',
             }}>
               {/* Position number */}
               <div style={{

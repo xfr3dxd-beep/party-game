@@ -92,8 +92,8 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
           <img src={CARD_BACK} alt="Carta narratore"
             style={{
               position: 'absolute',
-              top: '2%', left: '50%', transform: 'translateX(-50%)',
-              width: '14%', borderRadius: '4px',
+              top: '4%', left: '48.5%', transform: 'translateX(-50%)',
+              width: '12.5%', borderRadius: '4px',
               boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
             }} />
         )}
@@ -101,7 +101,7 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
         {/* Non-narrator cards (bottom row, center outward) */}
         {(() => {
           // Bottom row slot positions (% from left edge of image)
-          const bottomSlotX = [14.5, 28, 41.5, 55, 68.5]; // 5 slots equally spaced
+          const bottomSlotX = [14, 30.5, 47, 63.5, 80]; // 5 slots with wider gaps
           const filledSlots: number[] = [];
           // Fill from center outward
           for (let i = 0; i < nonNarratorCards.length && i < 5; i++) {
@@ -112,7 +112,7 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
               style={{
                 position: 'absolute',
                 bottom: '5%', left: `${bottomSlotX[slotIdx]}%`,
-                width: '14%', borderRadius: '4px',
+                width: '12.5%', borderRadius: '4px',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
               }} />
           ));
