@@ -9,6 +9,7 @@ const SOGLIE: [number, number][] = [[3, 4], [8, 3], [12, 2]];
 // Image paths
 const ARC_IMG = '/Wavelenght/Arco (giocatore di turno)/Arco_wavelenght.png';
 const FASCIA_IMG = '/Wavelenght/Arco (giocatore di turno)/fascia_punteggi.png';
+const BG_IMG = '/Wavelenght/Sfondo wavelength.jpg';
 
 interface WavelengthActivePlayerProps {
   state: WavelengthState;
@@ -26,15 +27,19 @@ function ArcWithScoring({ bersaglio }: { bersaglio: number }) {
   });
 
   return (
-    <div style={{ position: 'relative', width: '100%', maxWidth: 800, userSelect: 'none', margin: '0 auto' }}>
-      <img src={ARC_IMG} alt="" draggable={false}
-           style={{ width: '100%', display: 'block' }} />
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
-                    clipPath: `inset(0 0 ${(1 - CY) * 100}% 0)` }}>
-        <img src={FASCIA_IMG} alt="" draggable={false} style={stileFascia(0)} />
-        <img src={FASCIA_IMG} alt="" draggable={false} style={stileFascia(180)} />
-        <img src={FASCIA_IMG} alt="" draggable={false} style={stileFascia(-180)} />
+    <div style={{ width: '100%', maxWidth: 800, userSelect: 'none', margin: '0 auto' }}>
+      <div style={{ position: 'relative' }}>
+        <img src={ARC_IMG} alt="" draggable={false}
+             style={{ width: '100%', display: 'block' }} />
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
+                      clipPath: `inset(0 0 ${(1 - CY) * 100}% 0)` }}>
+          <img src={FASCIA_IMG} alt="" draggable={false} style={stileFascia(0)} />
+          <img src={FASCIA_IMG} alt="" draggable={false} style={stileFascia(180)} />
+          <img src={FASCIA_IMG} alt="" draggable={false} style={stileFascia(-180)} />
+        </div>
       </div>
+      <img src={BG_IMG} alt="" draggable={false}
+           style={{ width: '100%', display: 'block', borderRadius: '12px', marginTop: '-2px' }} />
     </div>
   );
 }

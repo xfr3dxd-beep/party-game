@@ -8,6 +8,7 @@ const CY = 0.7451;
 // Image paths
 const ARC_IMG = '/Wavelenght/Arco (giocatore di turno)/Arco_wavelenght.png';
 const FASCIA_IMG = '/Wavelenght/Arco (giocatore di turno)/fascia_punteggi.png';
+const BG_IMG = '/Wavelenght/Sfondo wavelength.jpg';
 
 interface WavelengthScoringProps {
   state: WavelengthState;
@@ -57,61 +58,64 @@ export default function WavelengthScoring({ state, isHost, onNextRound }: Wavele
       </div>
 
       {/* Arc with scoring zones revealed + guess dots */}
-      <div style={{ position: 'relative', width: '100%', maxWidth: 800, userSelect: 'none', margin: '0 auto' }}>
-        <img src={ARC_IMG} alt="" draggable={false}
-             style={{ width: '100%', display: 'block' }} />
+      <div style={{ width: '100%', maxWidth: 800, userSelect: 'none', margin: '0 auto' }}>
+        <div style={{ position: 'relative' }}>
+          <img src={ARC_IMG} alt="" draggable={false}
+               style={{ width: '100%', display: 'block' }} />
 
-        {/* Scoring band */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
-                      clipPath: `inset(0 0 ${(1 - CY) * 100}% 0)` }}>
-          {[0, 180, -180].map(extra => (
-            <img key={extra} src={FASCIA_IMG} alt="" draggable={false}
-                 style={{
-                   position: 'absolute', inset: 0, width: '100%', height: '100%', maxWidth: 'none',
-                   transformOrigin: `${CX * 100}% ${CY * 100}%`,
-                   transform: `rotate(${state.targetAngle! - 90 + extra}deg)`,
-                   pointerEvents: 'none',
-                 }} />
-          ))}
+          {/* Scoring band */}
+          <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none',
+                        clipPath: `inset(0 0 ${(1 - CY) * 100}% 0)` }}>
+            {[0, 180, -180].map(extra => (
+              <img key={extra} src={FASCIA_IMG} alt="" draggable={false}
+                   style={{
+                     position: 'absolute', inset: 0, width: '100%', height: '100%', maxWidth: 'none',
+                     transformOrigin: `${CX * 100}% ${CY * 100}%`,
+                     transform: `rotate(${state.targetAngle! - 90 + extra}deg)`,
+                     pointerEvents: 'none',
+                   }} />
+            ))}
+          </div>
+
+          {/* Guess markers */}
+          {state.guesses.map((g, i) => {
+            const rad = (g.angle) * Math.PI / 180;
+            const radius = 0.38;
+            const x = CX - radius * Math.cos(rad);
+            const y = CY - radius * Math.sin(rad);
+            const player = state.players.find(p => p.id === g.playerId);
+            return (
+              <div key={g.playerId} style={{
+                position: 'absolute',
+                left: `${x * 100}%`,
+                top: `${y * 100}%`,
+                transform: 'translate(-50%, -50%)',
+                pointerEvents: 'none',
+                textAlign: 'center',
+              }}>
+                <div style={{
+                  width: '24px', height: '24px', borderRadius: '50%',
+                  background: scoreColor(g.score),
+                  border: '2px solid white',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '0.7rem', fontWeight: 800, color: 'white',
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                }}>
+                  {g.score}
+                </div>
+                <div style={{
+                  fontSize: '0.6rem', color: 'white', fontWeight: 700,
+                  textShadow: '0 1px 3px rgba(0,0,0,0.8)',
+                  whiteSpace: 'nowrap', marginTop: '2px',
+                }}>
+                  {player?.name}
+                </div>
+              </div>
+            );
+          })}
         </div>
-
-        {/* Guess markers */}
-        {state.guesses.map((g, i) => {
-          const rad = (g.angle) * Math.PI / 180;
-          // Position on the arc: 0° = left, 180° = right
-          const radius = 0.38; // fraction of container width
-          const x = CX - radius * Math.cos(rad);
-          const y = CY - radius * Math.sin(rad);
-          const player = state.players.find(p => p.id === g.playerId);
-          return (
-            <div key={g.playerId} style={{
-              position: 'absolute',
-              left: `${x * 100}%`,
-              top: `${y * 100}%`,
-              transform: 'translate(-50%, -50%)',
-              pointerEvents: 'none',
-              textAlign: 'center',
-            }}>
-              <div style={{
-                width: '24px', height: '24px', borderRadius: '50%',
-                background: scoreColor(g.score),
-                border: '2px solid white',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.7rem', fontWeight: 800, color: 'white',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-              }}>
-                {g.score}
-              </div>
-              <div style={{
-                fontSize: '0.6rem', color: 'white', fontWeight: 700,
-                textShadow: '0 1px 3px rgba(0,0,0,0.8)',
-                whiteSpace: 'nowrap', marginTop: '2px',
-              }}>
-                {player?.name}
-              </div>
-            </div>
-          );
-        })}
+        <img src={BG_IMG} alt="" draggable={false}
+             style={{ width: '100%', display: 'block', borderRadius: '12px', marginTop: '-2px' }} />
       </div>
 
       {/* Round scores */}
