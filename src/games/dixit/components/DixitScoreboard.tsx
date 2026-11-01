@@ -1,6 +1,7 @@
 import React from 'react';
 import { DixitState } from '../types';
 import { SCOREBOARD_IMAGE, getRabbitTokenPath, COLOR_HEX, COLOR_LABELS } from '../cards';
+import { WIN_SCORE } from '../gameLogic';
 import { X } from 'lucide-react';
 
 interface Props {
@@ -60,7 +61,7 @@ export default function DixitScoreboard({ state, isOpen, onClose }: Props) {
   // Group players by score for stacking on same position
   const scoreGroups: Record<number, typeof state.players> = {};
   state.players.forEach(p => {
-    const pos = Math.min(Math.max(p.score, 0), 30); // clamp to 0-30
+    const pos = Math.min(Math.max(p.score, 0), 30); // clamp to 0-30 (board has 30 spaces)
     if (!scoreGroups[pos]) scoreGroups[pos] = [];
     scoreGroups[pos].push(p);
   });
@@ -86,14 +87,14 @@ export default function DixitScoreboard({ state, isOpen, onClose }: Props) {
         🏆 Tabellone Punteggio
       </h2>
 
-      {/* Board with positioned tokens */}
+      {/* Board with positioned tokens — ensure full image visible */}
       <div style={{
-        position: 'relative', width: '100%', maxWidth: '650px', marginBottom: '1.5rem',
+        position: 'relative', width: '100%', maxWidth: '550px', marginBottom: '1.5rem',
         borderRadius: '12px', overflow: 'hidden', border: '2px solid rgba(124, 58, 237, 0.3)',
         boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
       }}>
         <img src={SCOREBOARD_IMAGE} alt="Tabellone Punteggio"
-          style={{ width: '100%', display: 'block' }}
+          style={{ width: '100%', height: 'auto', display: 'block', objectFit: 'contain' }}
         />
 
         {/* Render rabbit tokens at their score positions */}
@@ -140,6 +141,7 @@ export default function DixitScoreboard({ state, isOpen, onClose }: Props) {
       <div style={{
         width: '100%', maxWidth: '500px', background: 'rgba(22, 18, 45, 0.9)',
         borderRadius: '16px', padding: '1.25rem', border: '1px solid rgba(124, 58, 237, 0.25)',
+        marginBottom: '2rem',
       }}>
         {sorted.map((player, rank) => (
           <div key={player.id} style={{
@@ -172,18 +174,18 @@ export default function DixitScoreboard({ state, isOpen, onClose }: Props) {
             {/* Score */}
             <div style={{
               fontWeight: 800, fontSize: '1.3rem',
-              color: player.score >= 30 ? '#4ade80' : '#c4b5fd',
+              color: player.score >= WIN_SCORE ? '#4ade80' : '#c4b5fd',
             }}>
               {player.score}
             </div>
-            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)' }}>/30</div>
+            <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)' }}>/{WIN_SCORE}</div>
 
             {/* Progress bar */}
             <div style={{ width: '60px', height: '6px', borderRadius: '3px', background: 'rgba(124, 58, 237, 0.15)', overflow: 'hidden' }}>
               <div style={{
                 height: '100%', borderRadius: '3px',
-                width: `${Math.min(100, (player.score / 30) * 100)}%`,
-                background: player.score >= 30
+                width: `${Math.min(100, (player.score / WIN_SCORE) * 100)}%`,
+                background: player.score >= WIN_SCORE
                   ? 'linear-gradient(90deg, #4ade80, #22c55e)'
                   : 'linear-gradient(90deg, #a78bfa, #7c3aed)',
                 transition: 'width 0.5s ease',
