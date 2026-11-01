@@ -209,6 +209,32 @@ export default function Home() {
               <span className="mind-players-badge" style={{ background: 'rgba(124, 58, 237, 0.15)', color: '#a78bfa', borderColor: 'rgba(124, 58, 237, 0.3)' }}>📱 Multiplayer online</span>
             </div>
           </div>
+          {/* Wavelength Card */}
+          <div
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/wavelength')}
+            id="game-card-wavelength"
+            style={{ animationDelay: '0.8s' }}
+          >
+            <span className="game-card-badge badge-live">Giocabile</span>
+            <div className="game-card-icon" style={{ fontSize: '3.5rem' }}>
+              📡
+            </div>
+            <h2 className="game-card-title">Wavelength</h2>
+            <p className="game-card-desc">
+              Sintonizzati sulla stessa lunghezza d'onda! Il giocatore attivo dà un indizio, gli altri cercano di indovinare il bersaglio sull'arco.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="mind-players-badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', borderColor: 'rgba(6, 182, 212, 0.3)' }}>👥 2+ giocatori</span>
+              <span className="mind-players-badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', borderColor: 'rgba(6, 182, 212, 0.3)' }}>📱 Multiplayer online</span>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
