@@ -14,7 +14,7 @@ export default function DixitLobby({ roomCode, players, isHost, onStartGame }: D
   const accent = '#7c3aed';
   const accentLight = '#a78bfa';
 
-  const canStart = players.length >= 3 && players.length <= 6;
+  const canStart = players.length >= 3 && players.length <= 12;
 
   const handleCopy = () => {
     if (navigator.clipboard) { navigator.clipboard.writeText(roomCode); setCopied(true); setTimeout(() => setCopied(false), 2000); }
@@ -62,8 +62,8 @@ export default function DixitLobby({ roomCode, players, isHost, onStartGame }: D
             <Users size={20} />
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Giocatori ({players.length}/6)</h3>
-            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)' }}>Minimo 3 • Massimo 6</span>
+            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800 }}>Giocatori ({players.length}/12)</h3>
+            <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.55)' }}>Minimo 3 • Massimo 12</span>
           </div>
         </div>
 
@@ -71,20 +71,20 @@ export default function DixitLobby({ roomCode, players, isHost, onStartGame }: D
         <div style={{
           padding: '0.65rem 0.9rem', borderRadius: '10px', fontSize: '0.82rem', marginBottom: '1rem',
           display: 'flex', alignItems: 'center', gap: '0.5rem',
-          background: players.length < 3 ? 'rgba(245,158,11,0.12)' : players.length > 6 ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.12)',
-          border: `1px solid ${players.length < 3 ? 'rgba(245,158,11,0.3)' : players.length > 6 ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
-          color: players.length < 3 ? '#fbbf24' : players.length > 6 ? '#f87171' : '#4ade80',
+          background: players.length < 3 ? 'rgba(245,158,11,0.12)' : players.length > 12 ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.12)',
+          border: `1px solid ${players.length < 3 ? 'rgba(245,158,11,0.3)' : players.length > 12 ? 'rgba(239,68,68,0.3)' : 'rgba(34,197,94,0.3)'}`,
+          color: players.length < 3 ? '#fbbf24' : players.length > 12 ? '#f87171' : '#4ade80',
         }}>
           <Info size={16} style={{ flexShrink: 0 }} />
           <span>
             {players.length < 3 ? `Mancano ancora ${3 - players.length} giocatori per poter iniziare`
-              : players.length > 6 ? 'Stanza piena! Il massimo consentito è 6 giocatori'
+              : players.length > 12 ? 'Stanza piena! Il massimo consentito è 12 giocatori'
               : 'Numero di giocatori ottimale per iniziare!'}
           </span>
         </div>
 
         {/* Player Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.65rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '0.65rem' }}>
           {players.map((p, idx) => (
             <div key={p.id} style={{
               background: 'rgba(30, 27, 50, 0.8)', borderRadius: '10px', padding: '0.65rem 0.5rem', textAlign: 'center',
@@ -113,7 +113,7 @@ export default function DixitLobby({ roomCode, players, isHost, onStartGame }: D
           ))}
 
           {/* Empty slots */}
-          {Array.from({ length: Math.max(0, 6 - players.length) }).map((_, i) => (
+          {Array.from({ length: Math.max(0, 3 - players.length) }).map((_, i) => (
             <div key={`empty-${i}`} style={{
               background: 'rgba(15, 14, 30, 0.4)', borderRadius: '10px', padding: '0.65rem 0.5rem', textAlign: 'center',
               border: '1px dashed rgba(124, 58, 237, 0.18)', display: 'flex', flexDirection: 'column',
@@ -142,7 +142,7 @@ export default function DixitLobby({ roomCode, players, isHost, onStartGame }: D
           </button>
           {!canStart && (
             <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', marginTop: '0.85rem' }}>
-              {players.length < 3 ? `Servono da 3 a 6 giocatori (attualmente: ${players.length})` : `Troppi giocatori (max 6, attualmente: ${players.length})`}
+              {players.length < 3 ? `Servono da 3 a 12 giocatori (attualmente: ${players.length})` : `Troppi giocatori (max 12, attualmente: ${players.length})`}
             </p>
           )}
         </div>

@@ -28,6 +28,68 @@ export default function DixitScoring({ state, playerId, isHost, onNextRound, onO
   // Card slot positions on the faccia board
   const facciaSlotsX = [16, 29.5, 43, 56.5, 70, 83.5];
 
+  // Split into two boards if more than 6 cards
+  const needsDualBoard = sorted.length > 6;
+  const firstBoardCards = sorted.slice(0, 6);
+  const secondBoardCards = needsDualBoard ? sorted.slice(6) : [];
+
+  const renderCard = (tc: typeof sorted[0], slotX: number) => {
+    const isNarratorCard = tc.ownerId === narrator.id;
+    const owner = state.players.find(p => p.id === tc.ownerId);
+    const voters = votesMap[tc.position] || [];
+
+    return (
+      <div key={tc.position} style={{
+        position: 'absolute', top: '8%', left: `${slotX}%`,
+        width: '12%', transform: 'translateX(-50%)',
+      }}>
+        {/* Position number */}
+        <div style={{
+          position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)',
+          width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: isNarratorCard ? '#7c3aed' : 'rgba(0,0,0,0.7)',
+          color: '#fff', fontWeight: 800, fontSize: '0.7rem', zIndex: 5,
+          border: isNarratorCard ? '2px solid #a78bfa' : '1px solid rgba(255,255,255,0.3)',
+        }}>{tc.position}</div>
+
+        {/* Card */}
+        <div style={{
+          borderRadius: '5px', overflow: 'hidden',
+          border: isNarratorCard ? '3px solid #7c3aed' : '1px solid rgba(255,255,255,0.15)',
+          boxShadow: isNarratorCard ? '0 0 14px rgba(124,58,237,0.5)' : '0 2px 6px rgba(0,0,0,0.4)',
+        }}>
+          <img src={getCardImagePath(tc.cardId)} alt={`Pos ${tc.position}`}
+            style={{ width: '100%', display: 'block' }}
+            onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }} />
+        </div>
+
+        {/* Eye zoom */}
+        <button onClick={e => { e.stopPropagation(); onZoomCard(tc.cardId); }}
+          style={{
+            position: 'absolute', bottom: '4px', right: '4px', zIndex: 6,
+            background: 'rgba(0,0,0,0.75)', border: '1px solid rgba(124,58,237,0.5)',
+            color: '#a78bfa', borderRadius: '50%', width: '18px', height: '18px',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+          }}><Eye size={9} /></button>
+
+        {/* Owner name */}
+        <div style={{
+          textAlign: 'center', fontSize: '0.5rem', fontWeight: 700, marginTop: '2px',
+          color: isNarratorCard ? '#a78bfa' : owner?.color ? COLOR_HEX[owner.color] : 'rgba(255,255,255,0.5)',
+        }}>
+          {isNarratorCard ? `⭐ ${owner?.name}` : owner?.name}
+        </div>
+
+        {/* Votes */}
+        {voters.length > 0 && (
+          <div style={{ textAlign: 'center', fontSize: '0.45rem', color: 'rgba(255,255,255,0.4)', marginTop: '1px' }}>
+            Voti: {voters.join(', ')}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 0.5rem', color: '#fff' }}>
       <h2 style={{
@@ -55,72 +117,34 @@ export default function DixitScoring({ state, playerId, isHost, onNextRound, onO
         🏆 Punteggio Generale
       </button>
 
-      {/* ===== BOARD (faccia) with results ===== */}
+      {/* ===== BOARD 1 (faccia) — first 6 cards ===== */}
       <div style={{
-        position: 'relative', width: '100%', maxWidth: '650px', marginBottom: '1.2rem',
+        position: 'relative', width: '100%', maxWidth: '650px', marginBottom: needsDualBoard ? '0.5rem' : '1.2rem',
         borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.2)',
       }}>
         <img src={BOARD_FACCIA} alt="Tabellone" style={{ width: '100%', display: 'block' }} />
 
-        {sorted.map(tc => {
+        {firstBoardCards.map(tc => {
           const slotIdx = tc.position - 1;
           if (slotIdx < 0 || slotIdx >= facciaSlotsX.length) return null;
-          const isNarratorCard = tc.ownerId === narrator.id;
-          const owner = state.players.find(p => p.id === tc.ownerId);
-          const voters = votesMap[tc.position] || [];
-
-          return (
-            <div key={tc.position} style={{
-              position: 'absolute', top: '8%', left: `${facciaSlotsX[slotIdx]}%`,
-              width: '12%', transform: 'translateX(-50%)',
-            }}>
-              {/* Position number */}
-              <div style={{
-                position: 'absolute', top: '-14px', left: '50%', transform: 'translateX(-50%)',
-                width: '20px', height: '20px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: isNarratorCard ? '#7c3aed' : 'rgba(0,0,0,0.7)',
-                color: '#fff', fontWeight: 800, fontSize: '0.7rem', zIndex: 5,
-                border: isNarratorCard ? '2px solid #a78bfa' : '1px solid rgba(255,255,255,0.3)',
-              }}>{tc.position}</div>
-
-              {/* Card */}
-              <div style={{
-                borderRadius: '5px', overflow: 'hidden',
-                border: isNarratorCard ? '3px solid #7c3aed' : '1px solid rgba(255,255,255,0.15)',
-                boxShadow: isNarratorCard ? '0 0 14px rgba(124,58,237,0.5)' : '0 2px 6px rgba(0,0,0,0.4)',
-              }}>
-                <img src={getCardImagePath(tc.cardId)} alt={`Pos ${tc.position}`}
-                  style={{ width: '100%', display: 'block' }}
-                  onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }} />
-              </div>
-
-              {/* Eye zoom */}
-              <button onClick={e => { e.stopPropagation(); onZoomCard(tc.cardId); }}
-                style={{
-                  position: 'absolute', bottom: '4px', right: '4px', zIndex: 6,
-                  background: 'rgba(0,0,0,0.75)', border: '1px solid rgba(124,58,237,0.5)',
-                  color: '#a78bfa', borderRadius: '50%', width: '18px', height: '18px',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-                }}><Eye size={9} /></button>
-
-              {/* Owner name */}
-              <div style={{
-                textAlign: 'center', fontSize: '0.5rem', fontWeight: 700, marginTop: '2px',
-                color: isNarratorCard ? '#a78bfa' : owner?.color ? COLOR_HEX[owner.color] : 'rgba(255,255,255,0.5)',
-              }}>
-                {isNarratorCard ? `⭐ ${owner?.name}` : owner?.name}
-              </div>
-
-              {/* Votes */}
-              {voters.length > 0 && (
-                <div style={{ textAlign: 'center', fontSize: '0.45rem', color: 'rgba(255,255,255,0.4)', marginTop: '1px' }}>
-                  Voti: {voters.join(', ')}
-                </div>
-              )}
-            </div>
-          );
+          return renderCard(tc, facciaSlotsX[slotIdx]);
         })}
       </div>
+
+      {/* ===== BOARD 2 (faccia) — remaining cards for 7+ players ===== */}
+      {needsDualBoard && secondBoardCards.length > 0 && (
+        <div style={{
+          position: 'relative', width: '100%', maxWidth: '650px', marginBottom: '1.2rem',
+          borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.2)',
+        }}>
+          <img src={BOARD_FACCIA} alt="Tabellone 2" style={{ width: '100%', display: 'block' }} />
+
+          {secondBoardCards.map((tc, i) => {
+            if (i >= facciaSlotsX.length) return null;
+            return renderCard(tc, facciaSlotsX[i]);
+          })}
+        </div>
+      )}
 
       {/* Score Breakdown */}
       <div style={{

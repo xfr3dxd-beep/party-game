@@ -28,8 +28,64 @@ export default function DixitVoting({ state, playerId, onVote, onOpenScoreboard,
   };
 
   // Card slot positions on the faccia board image (6 slots in a row)
-  // Percentage from left edge for each slot 1–6
   const facciaSlotsX = [16, 29.5, 43, 56.5, 70, 83.5];
+
+  // Split into two boards if more than 6 cards
+  const needsDualBoard = sorted.length > 6;
+  const firstBoardCards = sorted.slice(0, 6);
+  const secondBoardCards = needsDualBoard ? sorted.slice(6) : [];
+
+  const renderCard = (tc: typeof sorted[0], slotX: number) => {
+    const isMyCard = myCardPositions.includes(tc.position);
+    const isSelected = selectedPos === tc.position;
+    const canSelect = !isNarrator && !myPlayer.hasVoted && !isMyCard;
+
+    return (
+      <div key={tc.position}
+        onClick={() => canSelect && setSelectedPos(tc.position)}
+        style={{
+          position: 'absolute',
+          top: '10%', left: `${slotX}%`,
+          width: '12%', transform: 'translateX(-50%)',
+          cursor: canSelect ? 'pointer' : 'default',
+          opacity: isMyCard && !isNarrator ? 0.5 : 1,
+          transition: 'all 0.2s ease',
+        }}>
+        {/* Position number */}
+        <div style={{
+          position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)',
+          width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: isSelected ? '#7c3aed' : 'rgba(0,0,0,0.7)',
+          color: '#fff', fontWeight: 800, fontSize: '0.75rem', zIndex: 5,
+          border: isSelected ? '2px solid #a78bfa' : '1px solid rgba(255,255,255,0.3)',
+        }}>{tc.position}</div>
+
+        {/* Card image */}
+        <div style={{
+          borderRadius: '5px', overflow: 'hidden',
+          border: isSelected ? '3px solid #7c3aed' : isMyCard ? '2px dashed rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.1)',
+          boxShadow: isSelected ? '0 0 16px rgba(124, 58, 237, 0.6)' : '0 2px 8px rgba(0,0,0,0.4)',
+        }}>
+          <img src={getCardImagePath(tc.cardId)} alt={`Pos ${tc.position}`}
+            style={{ width: '100%', display: 'block' }}
+            onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }} />
+        </div>
+
+        {/* Eye zoom */}
+        <button onClick={e => { e.stopPropagation(); onZoomCard(tc.cardId); }}
+          style={{
+            position: 'absolute', bottom: '4px', right: '4px', zIndex: 6,
+            background: 'rgba(0,0,0,0.75)', border: '1px solid rgba(124,58,237,0.5)',
+            color: '#a78bfa', borderRadius: '50%', width: '20px', height: '20px',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
+          }}><Eye size={10} /></button>
+
+        {isMyCard && !isNarrator && (
+          <div style={{ textAlign: 'center', fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>La tua</div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 0.5rem', color: '#fff' }}>
@@ -54,68 +110,34 @@ export default function DixitVoting({ state, playerId, onVote, onOpenScoreboard,
         🏆 Punteggio
       </button>
 
-      {/* ===== BOARD (faccia) with face-up cards ===== */}
+      {/* ===== BOARD 1 (faccia) — first 6 cards ===== */}
       <div style={{
-        position: 'relative', width: '100%', maxWidth: '650px', marginBottom: '1rem',
+        position: 'relative', width: '100%', maxWidth: '650px', marginBottom: needsDualBoard ? '0.5rem' : '1rem',
         borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.2)',
       }}>
         <img src={BOARD_FACCIA} alt="Tabellone" style={{ width: '100%', display: 'block' }} />
 
-        {/* Overlay cards on the faccia slots */}
-        {sorted.map(tc => {
-          const slotIdx = tc.position - 1; // 0-based
+        {firstBoardCards.map(tc => {
+          const slotIdx = tc.position - 1;
           if (slotIdx < 0 || slotIdx >= facciaSlotsX.length) return null;
-          const isMyCard = myCardPositions.includes(tc.position);
-          const isSelected = selectedPos === tc.position;
-          const canSelect = !isNarrator && !myPlayer.hasVoted && !isMyCard;
-
-          return (
-            <div key={tc.position}
-              onClick={() => canSelect && setSelectedPos(tc.position)}
-              style={{
-                position: 'absolute',
-                top: '10%', left: `${facciaSlotsX[slotIdx]}%`,
-                width: '12%', transform: 'translateX(-50%)',
-                cursor: canSelect ? 'pointer' : 'default',
-                opacity: isMyCard && !isNarrator ? 0.5 : 1,
-                transition: 'all 0.2s ease',
-              }}>
-              {/* Position number */}
-              <div style={{
-                position: 'absolute', top: '-16px', left: '50%', transform: 'translateX(-50%)',
-                width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: isSelected ? '#7c3aed' : 'rgba(0,0,0,0.7)',
-                color: '#fff', fontWeight: 800, fontSize: '0.75rem', zIndex: 5,
-                border: isSelected ? '2px solid #a78bfa' : '1px solid rgba(255,255,255,0.3)',
-              }}>{tc.position}</div>
-
-              {/* Card image */}
-              <div style={{
-                borderRadius: '5px', overflow: 'hidden',
-                border: isSelected ? '3px solid #7c3aed' : isMyCard ? '2px dashed rgba(255,255,255,0.3)' : '1px solid rgba(255,255,255,0.1)',
-                boxShadow: isSelected ? '0 0 16px rgba(124, 58, 237, 0.6)' : '0 2px 8px rgba(0,0,0,0.4)',
-              }}>
-                <img src={getCardImagePath(tc.cardId)} alt={`Pos ${tc.position}`}
-                  style={{ width: '100%', display: 'block' }}
-                  onError={e => { (e.target as HTMLImageElement).src = CARD_BACK; }} />
-              </div>
-
-              {/* Eye zoom */}
-              <button onClick={e => { e.stopPropagation(); onZoomCard(tc.cardId); }}
-                style={{
-                  position: 'absolute', bottom: '4px', right: '4px', zIndex: 6,
-                  background: 'rgba(0,0,0,0.75)', border: '1px solid rgba(124,58,237,0.5)',
-                  color: '#a78bfa', borderRadius: '50%', width: '20px', height: '20px',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-                }}><Eye size={10} /></button>
-
-              {isMyCard && !isNarrator && (
-                <div style={{ textAlign: 'center', fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>La tua</div>
-              )}
-            </div>
-          );
+          return renderCard(tc, facciaSlotsX[slotIdx]);
         })}
       </div>
+
+      {/* ===== BOARD 2 (faccia) — remaining cards for 7+ players ===== */}
+      {needsDualBoard && secondBoardCards.length > 0 && (
+        <div style={{
+          position: 'relative', width: '100%', maxWidth: '650px', marginBottom: '1rem',
+          borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.2)',
+        }}>
+          <img src={BOARD_FACCIA} alt="Tabellone 2" style={{ width: '100%', display: 'block' }} />
+
+          {secondBoardCards.map((tc, i) => {
+            if (i >= facciaSlotsX.length) return null;
+            return renderCard(tc, facciaSlotsX[i]);
+          })}
+        </div>
+      )}
 
       {/* Voting Section */}
       {isNarrator ? (

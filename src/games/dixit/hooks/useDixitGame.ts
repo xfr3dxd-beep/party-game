@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { DixitState, DixitBroadcast, DixitPlayer, DixitPhase, TableCard } from '../types';
 import { RoomPlayer } from './useDixitRoom';
-import { createDeck, dealCards, getHandSize, getCardsToPlay, shuffleTableCards, calculateScores, checkWinners } from '../gameLogic';
+import { createDeck, dealCards, getHandSize, getCardsToPlay, shuffleTableCards, calculateScores, checkWinners, MAX_DISCARDS_PER_TURN } from '../gameLogic';
 import { debouncedSaveState } from '../../../lib/roomPersistence';
 
 interface Props {
@@ -54,6 +54,7 @@ export function useDixitGame({ playerId, isHost, roomCode, players, broadcast, o
       const gamePlayers: DixitPlayer[] = players.map(p => ({
         id: p.id, name: p.name, color: null, score: 0,
         hand: [], playedCardIds: [], hasPlayed: false, hasVoted: false,
+        discardsUsed: 0,
       }));
       sync({
         ...empty,
@@ -77,7 +78,7 @@ export function useDixitGame({ playerId, isHost, roomCode, players, broadcast, o
         s.players = s.players.map(p => {
           const { dealt, remaining: r } = dealCards(remaining, handSize);
           remaining = r;
-          return { ...p, hand: dealt };
+          return { ...p, hand: dealt, discardsUsed: 0 };
         });
         s.deck = remaining;
         s.discardPile = [];
@@ -111,10 +112,16 @@ export function useDixitGame({ playerId, isHost, roomCode, players, broadcast, o
 
     } else if (action === 'discard-cards') {
       // Non-narrator discards up to 2 cards and draws replacements
+      // Limited to MAX_DISCARDS_PER_TURN times per turn
       const { pId, cardIds } = payload as { pId: string; cardIds: number[] };
       const narrator = s.players[s.narratorIndex];
       if (narrator.id === pId) return;
       if (cardIds.length < 1 || cardIds.length > 2) return;
+
+      // Check discard limit
+      const player = s.players.find(p => p.id === pId);
+      if (!player) return;
+      if ((player.discardsUsed || 0) >= MAX_DISCARDS_PER_TURN) return;
 
       s.players = s.players.map(p => {
         if (p.id !== pId) return p;
@@ -124,7 +131,7 @@ export function useDixitGame({ playerId, isHost, roomCode, players, broadcast, o
         const drawCount = Math.min(cardIds.length, s.deck.length);
         const { dealt, remaining } = dealCards(s.deck, drawCount);
         s.deck = remaining;
-        return { ...p, hand: [...newHand, ...dealt] };
+        return { ...p, hand: [...newHand, ...dealt], discardsUsed: (p.discardsUsed || 0) + 1 };
       });
       // Add discarded cards to discard pile (permanently removed)
       s.discardPile = [...s.discardPile, ...cardIds];
@@ -218,9 +225,10 @@ export function useDixitGame({ playerId, isHost, roomCode, players, broadcast, o
             playedCardIds: [],
             hasPlayed: false,
             hasVoted: false,
+            discardsUsed: 0,
           };
         }
-        return { ...p, playedCardIds: [], hasPlayed: false, hasVoted: false };
+        return { ...p, playedCardIds: [], hasPlayed: false, hasVoted: false, discardsUsed: 0 };
       });
 
       // Advance narrator to next player (left = next index)
@@ -235,7 +243,7 @@ export function useDixitGame({ playerId, isHost, roomCode, players, broadcast, o
 
     } else if (action === 'rematch') {
       const gamePlayers = s.players.map(p => ({
-        ...p, score: 0, hand: [], playedCardIds: [], hasPlayed: false, hasVoted: false, color: null,
+        ...p, score: 0, hand: [], playedCardIds: [], hasPlayed: false, hasVoted: false, color: null, discardsUsed: 0,
       }));
       sync({
         ...empty,

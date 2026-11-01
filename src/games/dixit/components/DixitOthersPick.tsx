@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DixitState } from '../types';
-import { getCardImagePath, CARD_BACK, BOARD_DORSO } from '../cards';
-import { getCardsToPlay } from '../gameLogic';
+import { getCardImagePath, CARD_BACK, BOARD_DORSO, BOARD_FACCIA } from '../cards';
+import { getCardsToPlay, MAX_DISCARDS_PER_TURN } from '../gameLogic';
 import { Eye, Trash2 } from 'lucide-react';
 
 interface Props {
@@ -23,8 +23,12 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
 
   if (!myPlayer) return null;
 
+  const discardsUsed = myPlayer.discardsUsed || 0;
+  const discardsRemaining = MAX_DISCARDS_PER_TURN - discardsUsed;
+  const canDiscard = discardsRemaining > 0;
+
   const toggleCard = (cardId: number) => {
-    if (discardMode) return; // don't select for play in discard mode
+    if (discardMode) return;
     setSelected(prev => {
       if (prev.includes(cardId)) return prev.filter(c => c !== cardId);
       if (prev.length >= cardsNeeded) return prev;
@@ -35,7 +39,7 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
   const toggleDiscard = (cardId: number) => {
     setDiscardSelected(prev => {
       if (prev.includes(cardId)) return prev.filter(c => c !== cardId);
-      if (prev.length >= 2) return prev; // max 2
+      if (prev.length >= 2) return prev; // max 2 per use
       return [...prev, cardId];
     });
   };
@@ -54,17 +58,24 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
 
   const waitingFor = state.players.filter(p => p.id !== narrator.id && !p.hasPlayed);
 
-  // ---- Board View: show dorso with face-down cards appearing ----
-  // Narrator's card is always placed (index 0 in tableCards).
-  // Others' cards appear as they play them.
-  const playedCount = state.tableCards.length; // includes narrator's card
-  // The non-narrator slots: center outward. Bottom row has 5 slots.
-  // The order: center slot first, then left, right, far-left, far-right.
-  // Bottom slot positions (percentage from left of the board image):
-  // Dorso layout: top slot = narrator (center), bottom 5 slots = others
-  // Slots indexed 0-4 from center outward: 2, 1, 3, 0, 4
-  const bottomSlotOrder = [2, 1, 3, 0, 4]; // center→outward fill order
-  const nonNarratorCards = state.tableCards.slice(1); // exclude narrator's card
+  // Board layout logic
+  const playedCount = state.tableCards.length;
+  const totalPlayers = state.players.length;
+  const needsDualBoard = totalPlayers > 6;
+
+  // Non-narrator cards (exclude narrator's card at index 0)
+  const nonNarratorCards = state.tableCards.slice(1);
+
+  // Dorso board slot positions
+  const bottomSlotX = [14, 30.5, 47, 63.5, 80];
+  const bottomSlotOrder = [2, 1, 3, 0, 4]; // center→outward fill
+
+  // For 7+ players: first board shows narrator + first 5 others, second board shows remaining
+  const firstBoardCards = nonNarratorCards.slice(0, 5);
+  const secondBoardCards = needsDualBoard ? nonNarratorCards.slice(5) : [];
+
+  // Faccia board slot positions (for second board)
+  const facciaSlotsX = [16, 29.5, 43, 56.5, 70, 83.5];
 
   return (
     <div style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 0.5rem', color: '#fff' }}>
@@ -80,9 +91,9 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
         <div style={{ color: '#e0d4fc', fontSize: '1.3rem', fontWeight: 800, fontStyle: 'italic' }}>"{state.clue}"</div>
       </div>
 
-      {/* ===== BOARD VIEW (dorso) — cards appearing progressively ===== */}
+      {/* ===== BOARD 1 (dorso) — narrator card + first 5 others ===== */}
       <div style={{
-        position: 'relative', width: '100%', maxWidth: '650px', marginBottom: '1rem',
+        position: 'relative', width: '100%', maxWidth: '650px', marginBottom: needsDualBoard ? '0.5rem' : '1rem',
         borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.2)',
       }}>
         <img src={BOARD_DORSO} alt="Tabellone" style={{ width: '100%', display: 'block' }} />
@@ -98,13 +109,10 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
             }} />
         )}
 
-        {/* Non-narrator cards (bottom row, center outward) */}
+        {/* Non-narrator cards — first 5, center outward */}
         {(() => {
-          // Bottom row slot positions (% from left edge of image)
-          const bottomSlotX = [14, 30.5, 47, 63.5, 80]; // 5 slots with wider gaps
           const filledSlots: number[] = [];
-          // Fill from center outward
-          for (let i = 0; i < nonNarratorCards.length && i < 5; i++) {
+          for (let i = 0; i < firstBoardCards.length && i < 5; i++) {
             filledSlots.push(bottomSlotOrder[i]);
           }
           return filledSlots.map((slotIdx, i) => (
@@ -119,11 +127,35 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
         })()}
       </div>
 
+      {/* ===== BOARD 2 (faccia) — remaining cards for 7+ players ===== */}
+      {needsDualBoard && (
+        <div style={{
+          position: 'relative', width: '100%', maxWidth: '650px', marginBottom: '1rem',
+          borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(124, 58, 237, 0.2)',
+        }}>
+          <img src={BOARD_FACCIA} alt="Tabellone 2" style={{ width: '100%', display: 'block' }} />
+
+          {/* Cards on second board — up to 6 slots */}
+          {secondBoardCards.map((_, i) => {
+            if (i >= 6) return null;
+            return (
+              <img key={i} src={CARD_BACK} alt="Carta giocatore"
+                style={{
+                  position: 'absolute',
+                  top: '18%', left: `${facciaSlotsX[i]}%`, transform: 'translateX(-50%)',
+                  width: '12%', borderRadius: '4px',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.5)',
+                }} />
+            );
+          })}
+        </div>
+      )}
+
       {/* Status */}
       <div style={{
         fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem', textAlign: 'center',
       }}>
-        Carte sul tavolo: {playedCount}/{state.players.length}
+        Carte sul tavolo: {playedCount}/{totalPlayers}
         {waitingFor.length > 0 && ` — In attesa di: ${waitingFor.map(p => p.name).join(', ')}`}
       </div>
 
@@ -156,15 +188,19 @@ export default function DixitOthersPick({ state, playerId, onPlayerPick, onDisca
               : 'Scegli una carta che possa confondere gli altri. Puoi anche scartarne prima.'}
           </p>
 
-          {/* Toggle discard mode */}
+          {/* Toggle discard mode — show remaining uses */}
           {!discardMode && (
             <button onClick={() => { setDiscardMode(true); setSelected([]); }}
+              disabled={!canDiscard}
               style={{
                 padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid rgba(239,68,68,0.3)',
-                background: 'rgba(239,68,68,0.1)', color: '#f87171', fontSize: '0.8rem', fontWeight: 600,
-                cursor: 'pointer', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
+                background: canDiscard ? 'rgba(239,68,68,0.1)' : 'rgba(239,68,68,0.03)',
+                color: canDiscard ? '#f87171' : 'rgba(248,113,113,0.4)',
+                fontSize: '0.8rem', fontWeight: 600,
+                cursor: canDiscard ? 'pointer' : 'not-allowed',
+                marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
               }}>
-              <Trash2 size={14} /> Scarta carte (max 2)
+              <Trash2 size={14} /> Scarta carte ({discardsRemaining}/{MAX_DISCARDS_PER_TURN} rimasti)
             </button>
           )}
 

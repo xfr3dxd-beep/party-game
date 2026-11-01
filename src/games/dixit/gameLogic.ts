@@ -3,6 +3,12 @@
 import { DixitPlayer, TableCard, DixitVote, RoundScoreEntry } from './types';
 import { ALL_CARD_IDS } from './cards';
 
+/** Win threshold — game ends when any player reaches this score */
+export const WIN_SCORE = 25;
+
+/** Max discard uses per turn (each use discards up to 2 cards) */
+export const MAX_DISCARDS_PER_TURN = 3;
+
 /** Fisher-Yates shuffle */
 export function shuffleArray<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -66,14 +72,24 @@ export function calculateScores(
   const allCorrect = correctVoters.length === totalVoters;
   const noneCorrect = correctVoters.length === 0;
 
-  if (allCorrect || noneCorrect) {
-    // Narrator 0, others +2
+  if (allCorrect) {
+    // All guessed: narrator 0, others +2
     players.forEach(p => {
       if (p.id !== narratorId) {
         pts[p.id].points += 2;
-        pts[p.id].reasons.push(allCorrect ? 'Tutti hanno indovinato (+2)' : 'Nessuno ha indovinato (+2)');
+        pts[p.id].reasons.push('Tutti hanno indovinato (+2)');
       } else {
-        pts[p.id].reasons.push(allCorrect ? 'Tutti hanno indovinato (0 pt)' : 'Nessuno ha indovinato (0 pt)');
+        pts[p.id].reasons.push('Tutti hanno indovinato (0 pt)');
+      }
+    });
+  } else if (noneCorrect) {
+    // None guessed: narrator 0, others +1
+    players.forEach(p => {
+      if (p.id !== narratorId) {
+        pts[p.id].points += 1;
+        pts[p.id].reasons.push('Nessuno ha indovinato (+1)');
+      } else {
+        pts[p.id].reasons.push('Nessuno ha indovinato (0 pt)');
       }
     });
   } else {
@@ -103,8 +119,8 @@ export function calculateScores(
   }));
 }
 
-/** Check if any player has reached 30 points, return winner IDs */
+/** Check if any player has reached the win threshold */
 export function checkWinners(players: DixitPlayer[]): string[] | null {
-  const winners = players.filter(p => p.score >= 30);
+  const winners = players.filter(p => p.score >= WIN_SCORE);
   return winners.length > 0 ? winners.map(w => w.id) : null;
 }

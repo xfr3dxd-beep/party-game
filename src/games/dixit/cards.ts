@@ -30,8 +30,11 @@ export const BOARD_DORSO = '/Dixit/Tabellone da gioco/Tabellone da gioco (dorso)
 export const BOARD_FACCIA = '/Dixit/Tabellone da gioco/Tabellone da gioco (faccia).png';
 export const SCOREBOARD_IMAGE = '/Dixit/Tabellone da gioco/Tabellone punteggio conigli.png';
 
-// Available colors
-export const COLORS: DixitColor[] = ['rosso', 'giallo', 'blu', 'bianco', 'rosa', 'verde'];
+// All 12 available colors
+export const COLORS: DixitColor[] = [
+  'rosso', 'giallo', 'blu', 'bianco', 'rosa', 'verde',
+  'arancione', 'viola', 'nero', 'grigio', 'marrone', 'turchese',
+];
 
 export const COLOR_LABELS: Record<DixitColor, string> = {
   rosso: 'Rosso',
@@ -40,6 +43,12 @@ export const COLOR_LABELS: Record<DixitColor, string> = {
   bianco: 'Bianco',
   rosa: 'Rosa',
   verde: 'Verde',
+  arancione: 'Arancione',
+  viola: 'Viola',
+  nero: 'Nero',
+  grigio: 'Grigio',
+  marrone: 'Marrone',
+  turchese: 'Turchese',
 };
 
 export const COLOR_HEX: Record<DixitColor, string> = {
@@ -49,6 +58,12 @@ export const COLOR_HEX: Record<DixitColor, string> = {
   bianco: '#e5e5e5',
   rosa: '#ec4899',
   verde: '#22c55e',
+  arancione: '#f97316',
+  viola: '#8b5cf6',
+  nero: '#525252',
+  grigio: '#9ca3af',
+  marrone: '#92400e',
+  turchese: '#06b6d4',
 };
 
 /** Rabbit token image */

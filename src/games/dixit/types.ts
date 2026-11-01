@@ -1,6 +1,8 @@
 // ===== Dixit Types =====
 
-export type DixitColor = 'rosso' | 'giallo' | 'blu' | 'bianco' | 'rosa' | 'verde';
+export type DixitColor =
+  | 'rosso' | 'giallo' | 'blu' | 'bianco' | 'rosa' | 'verde'
+  | 'arancione' | 'viola' | 'nero' | 'grigio' | 'marrone' | 'turchese';
 
 export interface DixitPlayer {
   id: string;
@@ -11,6 +13,7 @@ export interface DixitPlayer {
   playedCardIds: number[];   // cards played this round (1 normally, 2 in 3-player non-narrator)
   hasPlayed: boolean;
   hasVoted: boolean;
+  discardsUsed: number;      // how many times this player has discarded this turn (max 3)
 }
 
 export interface TableCard {
@@ -52,7 +55,7 @@ export interface DixitState {
   votes: DixitVote[];
   roundNumber: number;
   roundScores: RoundScoreEntry[] | null;
-  winners: string[] | null;  // player IDs who reached 30+
+  winners: string[] | null;  // player IDs who reached 25+
 }
 
 export type DixitBroadcast =

@@ -26,8 +26,8 @@ export default function DixitColorSelect({ state, playerId, onSelectColor }: Pro
         Seleziona il colore del tuo token coniglio
       </p>
 
-      {/* Color Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', maxWidth: '420px', width: '100%', marginBottom: '2rem' }}>
+      {/* Color Grid — 4 columns for 12 colors */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.8rem', maxWidth: '520px', width: '100%', marginBottom: '2rem' }}>
         {COLORS.map(color => {
           const isTaken = takenColors.includes(color);
           const isMine = myColor === color;
@@ -35,8 +35,8 @@ export default function DixitColorSelect({ state, playerId, onSelectColor }: Pro
           return (
             <button key={color} onClick={() => !isTaken && onSelectColor(color)} disabled={isTaken && !isMine}
               style={{
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.6rem',
-                padding: '1rem 0.5rem', borderRadius: '16px', border: 'none', cursor: isTaken && !isMine ? 'not-allowed' : 'pointer',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem',
+                padding: '0.8rem 0.4rem', borderRadius: '14px', border: 'none', cursor: isTaken && !isMine ? 'not-allowed' : 'pointer',
                 background: isMine ? `rgba(${hexToRgb(hex)}, 0.25)` : isTaken ? 'rgba(30,27,50,0.4)' : 'rgba(30,27,50,0.8)',
                 borderWidth: '2px', borderStyle: 'solid',
                 borderColor: isMine ? hex : 'rgba(124, 58, 237, 0.2)',
@@ -45,14 +45,14 @@ export default function DixitColorSelect({ state, playerId, onSelectColor }: Pro
                 transition: 'all 0.2s ease',
               }}>
               <img src={getRabbitTokenPath(color)} alt={COLOR_LABELS[color]}
-                style={{ width: '64px', height: '64px', objectFit: 'contain', filter: isTaken && !isMine ? 'grayscale(1)' : 'none' }}
+                style={{ width: '52px', height: '52px', objectFit: 'contain', filter: isTaken && !isMine ? 'grayscale(1)' : 'none' }}
               />
-              <span style={{ fontWeight: 700, fontSize: '0.85rem', color: isMine ? hex : '#fff' }}>
+              <span style={{ fontWeight: 700, fontSize: '0.75rem', color: isMine ? hex : '#fff' }}>
                 {COLOR_LABELS[color]}
               </span>
-              {isMine && <span style={{ fontSize: '0.7rem', color: hex, fontWeight: 700 }}>✓ Selezionato</span>}
+              {isMine && <span style={{ fontSize: '0.6rem', color: hex, fontWeight: 700 }}>✓ Selezionato</span>}
               {isTaken && !isMine && (
-                <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.4)' }}>
+                <span style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)' }}>
                   {state.players.find(p => p.color === color)?.name}
                 </span>
               )}
