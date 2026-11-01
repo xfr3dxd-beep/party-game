@@ -65,7 +65,7 @@ export default function DixitNarratorPick({ state, playerId, onNarratorPick, onZ
                   onClick={() => setSelectedCard(cardId)}
                   style={{
                     position: 'absolute',
-                    top: '55%', left: `${slotX}%`, transform: 'translateX(-50%)',
+                    top: '73%', left: `${slotX}%`, transform: 'translateX(-50%)',
                     width: '12%', cursor: 'pointer',
                     border: isSelected ? '3px solid #7c3aed' : '2px solid transparent',
                     borderRadius: '6px', overflow: 'hidden',
@@ -175,7 +175,7 @@ export default function DixitNarratorPick({ state, playerId, onNarratorPick, onZ
               return (
                 <div key={cardId} style={{
                   position: 'absolute',
-                  top: '55%', left: `${slotX}%`, transform: 'translateX(-50%)',
+                  top: '73%', left: `${slotX}%`, transform: 'translateX(-50%)',
                   width: '12%', borderRadius: '5px', overflow: 'hidden', opacity: 0.8,
                   border: '1px solid rgba(124, 58, 237, 0.15)',
                 }}>
