@@ -67,6 +67,8 @@ export function useDecryptoGame({
   const [state, setState] = useState<DecryptoState>(INITIAL_STATE);
   const stateRef = useRef(state);
   stateRef.current = state;
+  const playersRef = useRef(players);
+  playersRef.current = players;
 
   const syncState = useCallback((newState: DecryptoState) => {
     setState(newState);
@@ -88,11 +90,45 @@ export function useDecryptoGame({
     })();
   }, [isHost, roomCode, broadcast]);
 
+  // ---- SYNC ROOM PLAYERS INTO STATE (lobby phase) ----
+  useEffect(() => {
+    if (!isHost) return;
+    const s = stateRef.current;
+    // Only sync during create/lobby — once the game starts, players are locked
+    if (s.phase !== 'create' && s.phase !== 'lobby') return;
+    if (players.length === 0) return;
+
+    // Merge: keep existing team assignments, add new players
+    const merged: DecryptoPlayer[] = players.map(rp => {
+      const existing = s.players.find(sp => sp.id === rp.id);
+      return existing || { id: rp.id, name: rp.name, team: null };
+    });
+
+    // Only sync if something actually changed
+    const changed = merged.length !== s.players.length ||
+      merged.some((p, i) => p.id !== s.players[i]?.id || p.name !== s.players[i]?.name);
+    if (changed) {
+      const newState = { ...s, players: merged };
+      stateRef.current = newState;
+      setState(newState);
+      broadcast({ type: 'sync', payload: newState });
+    }
+  }, [isHost, players, broadcast]);
+
   // ---- JOIN TEAM ----
   const handleJoinTeam = useCallback((pid: string, team: DecryptoTeam) => {
     if (!isHost) return;
     const s = stateRef.current;
-    const updated = s.players.map(p => p.id === pid ? { ...p, team } : p);
+    let found = false;
+    const updated = s.players.map(p => {
+      if (p.id === pid) { found = true; return { ...p, team }; }
+      return p;
+    });
+    // If player not in state yet, add them from room players
+    if (!found) {
+      const rp = playersRef.current.find(p => p.id === pid);
+      if (rp) updated.push({ id: rp.id, name: rp.name, team });
+    }
     syncState({ ...s, players: updated });
   }, [isHost, syncState]);
 
