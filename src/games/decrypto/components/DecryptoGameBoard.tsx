@@ -27,23 +27,26 @@ export default function DecryptoGameBoard({ state, myTeam, children }: Props) {
 
   return (
     <div>
-      {/* 1. Word board at top */}
-      <div style={{ maxWidth: '600px', margin: '0 auto 1rem', position: 'relative' }}>
+      {/* 1. Word board at top — 4 red boxes in a horizontal row */}
+      <div style={{ maxWidth: '700px', margin: '0 auto 1rem', position: 'relative' }}>
         <img src={PAROLIERE[myTeam]} alt="Paroliere" style={{ width: '100%', borderRadius: '12px', display: 'block' }} />
-        {/* Overlay words on the red boxes — positioned as a 2x2 grid over the image */}
+        {/* Overlay words on the 4 red boxes — horizontal row in the upper portion */}
         <div style={{
-          position: 'absolute', inset: 0, display: 'grid',
-          gridTemplateColumns: '1fr 1fr', gridTemplateRows: '1fr 1fr',
-          padding: '12% 8% 8% 8%', gap: '4%',
+          position: 'absolute',
+          top: '7%', left: '3.5%', right: '9%', height: '52%',
+          display: 'flex',
+          alignItems: 'center',
         }}>
           {teamWords.map((w, i) => (
             <div key={i} style={{
+              flex: 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 900, fontSize: 'clamp(0.7rem, 2.5vw, 1.3rem)',
-              color: '#fff', textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+              fontWeight: 900, fontSize: 'clamp(0.6rem, 2vw, 1.1rem)',
+              color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.7)',
               textAlign: 'center', lineHeight: 1.2,
+              padding: '0 2%',
             }}>
-              <span><span style={{ fontSize: '0.7em', opacity: 0.7 }}>{i + 1}.</span> {w}</span>
+              {w}
             </div>
           ))}
         </div>

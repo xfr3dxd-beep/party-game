@@ -193,7 +193,7 @@ export function useDecryptoGame({
       opponentGuessSubmitted: false,
       usedBiancaCodes: newUsedBianca,
       usedNeraCodes: newUsedNera,
-      timerStartedAt: null,
+      timerStartedAt: Date.now(),
     });
   }, [isHost, syncState]);
 
@@ -206,7 +206,7 @@ export function useDecryptoGame({
       clues: clueList,
       cluesSubmitted: true,
       phase: 'guessing',
-      timerStartedAt: Date.now(),
+      timerStartedAt: null,
     });
   }, [isHost, syncState]);
 
@@ -339,7 +339,7 @@ export function useDecryptoGame({
       usedNeraCodes: newUsedNera,
       biancaTurnIndex: newBiancaTurn,
       neraTurnIndex: newNeraTurn,
-      timerStartedAt: null,
+      timerStartedAt: Date.now(),
     });
   }, [isHost, syncState]);
 
