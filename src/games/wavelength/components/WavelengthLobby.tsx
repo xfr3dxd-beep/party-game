@@ -4,10 +4,12 @@ interface WavelengthLobbyProps {
   roomCode: string;
   players: { id: string; name: string; isHost: boolean }[];
   isHost: boolean;
+  winScore: number;
+  onWinScoreChange: (score: number) => void;
   onStartGame: () => void;
 }
 
-export default function WavelengthLobby({ roomCode, players, isHost, onStartGame }: WavelengthLobbyProps) {
+export default function WavelengthLobby({ roomCode, players, isHost, winScore, onWinScoreChange, onStartGame }: WavelengthLobbyProps) {
   const [showRules, setShowRules] = useState(false);
 
   const handleCopyCode = () => {
@@ -19,6 +21,30 @@ export default function WavelengthLobby({ roomCode, players, isHost, onStartGame
       <h2>Codice Stanza</h2>
       <div className="mind-room-code" onClick={handleCopyCode} title="Copia codice">
         {roomCode}
+      </div>
+
+      {/* Win score selector */}
+      <div className="glass-panel p-md mb-md" style={{ maxWidth: '350px', margin: '0 auto 1rem' }}>
+        <label className="text-muted" style={{ fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem', textAlign: 'center' }}>
+          🏆 Punti per vincere
+        </label>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem' }}>
+          <button
+            className="btn btn-secondary"
+            style={{ width: '40px', height: '40px', padding: 0, fontSize: '1.2rem' }}
+            onClick={() => onWinScoreChange(Math.max(5, winScore - 5))}
+            disabled={!isHost || winScore <= 5}
+          >−</button>
+          <span style={{ fontSize: '1.5rem', fontWeight: 800, minWidth: '60px', textAlign: 'center' }}>
+            {winScore}
+          </span>
+          <button
+            className="btn btn-secondary"
+            style={{ width: '40px', height: '40px', padding: 0, fontSize: '1.2rem' }}
+            onClick={() => onWinScoreChange(Math.min(100, winScore + 5))}
+            disabled={!isHost || winScore >= 100}
+          >+</button>
+        </div>
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
@@ -78,17 +104,18 @@ export default function WavelengthLobby({ roomCode, players, isHost, onStartGame
               </button>
             </div>
             <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.6 }}>
-              <p><strong>🎯 Obiettivo:</strong> Raggiungere <strong>25 punti</strong> per primi!</p>
+              <p><strong>🎯 Obiettivo:</strong> Raggiungere <strong>{winScore} punti</strong> per primi!</p>
               <p><strong>📡 Come si gioca:</strong> Ogni round, un giocatore è il "giocatore attivo". Vede una coppia di opposti e un bersaglio segreto sull'arco (0°-180°). Dà un indizio per aiutare gli altri a indovinare dove si trova il bersaglio.</p>
               <p><strong>🏹 Indovinare:</strong> Gli altri giocatori spostano la propria freccia dove pensano sia il bersaglio e confermano la scelta.</p>
               <p><strong>⭐ Punteggio:</strong></p>
               <ul style={{ paddingLeft: '1.2rem', margin: '0.25rem 0' }}>
-                <li>Entro 3°: <strong>4 punti</strong></li>
-                <li>Entro 8°: <strong>3 punti</strong></li>
-                <li>Entro 12°: <strong>2 punti</strong></li>
+                <li>Entro 4°: <strong>4 punti</strong></li>
+                <li>Entro 12°: <strong>3 punti</strong></li>
+                <li>Entro 20°: <strong>2 punti</strong></li>
                 <li>Oltre: <strong>0 punti</strong></li>
               </ul>
-              <p><strong>🎭 Giocatore attivo:</strong> Riceve <strong>1 punto</strong> se almeno la metà degli altri giocatori ha puntato la freccia nel semicerchio corretto (0°-90° o 90°-180°).</p>
+              <p><strong>🎭 Giocatore attivo:</strong> Riceve <strong>1 punto</strong> se almeno la metà degli altri giocatori ha indovinato il bersaglio (ottenendo 2+ punti).</p>
+              <p><strong>🔀 Salta coppia:</strong> Il giocatore attivo può saltare la coppia fino a <strong>2 volte</strong> per turno, ottenendo una nuova coppia casuale.</p>
               <p><strong>🔄 Rotazione:</strong> Il giocatore attivo ruota ogni round.</p>
             </div>
             <button

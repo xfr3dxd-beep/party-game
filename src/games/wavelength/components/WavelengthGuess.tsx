@@ -73,8 +73,7 @@ export default function WavelengthGuess({ state, playerId, onSubmitGuess }: Wave
         <span className="text-muted" style={{ fontSize: '0.85rem' }}>Indizio di {activePlayer?.name}:</span>
         <div style={{
           fontSize: '1.5rem', fontWeight: 800, marginTop: '0.25rem',
-          background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
-          WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          color: '#000000',
         }}>
           "{state.clue}"
         </div>

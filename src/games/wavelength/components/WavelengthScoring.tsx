@@ -51,7 +51,7 @@ export default function WavelengthScoring({ state, isHost, onNextRound }: Wavele
         </div>
         <div className="text-center mt-sm">
           <span className="text-muted" style={{ fontSize: '0.85rem' }}>
-            Indizio: <strong style={{ color: '#fbbf24' }}>"{state.clue}"</strong>
+            Indizio: <strong style={{ color: '#000000' }}>"{state.clue}"</strong>
           </span>
         </div>
       </div>
@@ -166,7 +166,7 @@ export default function WavelengthScoring({ state, isHost, onNextRound }: Wavele
               {p.name}
             </span>
             <span style={{ fontWeight: 800, fontSize: '1.1rem' }}>
-              {p.totalScore} <span className="text-muted" style={{ fontSize: '0.8rem' }}>/ 25</span>
+              {p.totalScore} <span className="text-muted" style={{ fontSize: '0.8rem' }}>/ {state.winScore}</span>
             </span>
           </div>
         ))}

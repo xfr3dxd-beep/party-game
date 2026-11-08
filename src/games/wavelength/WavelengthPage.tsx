@@ -16,6 +16,7 @@ export default function WavelengthPage() {
   const navigate = useNavigate();
   const [localPhase, setLocalPhase] = useState<'create' | 'lobby'>('create');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [winScore, setWinScore] = useState(25);
 
   const {
     roomCode,
@@ -63,7 +64,7 @@ export default function WavelengthPage() {
 
   const handleStartGame = () => {
     if (roomCode) {
-      act('start', { roomCode });
+      act('start', { roomCode, winScore });
     }
   };
 
@@ -106,6 +107,8 @@ export default function WavelengthPage() {
             roomCode={roomCode}
             players={players}
             isHost={isHost}
+            winScore={winScore}
+            onWinScoreChange={setWinScore}
             onStartGame={handleStartGame}
           />
         )}
@@ -117,6 +120,7 @@ export default function WavelengthPage() {
             onPickRandomPair={() => act('pick-random-pair')}
             onPickCustomPair={(e1, e2) => act('pick-custom-pair', { extreme1: e1, extreme2: e2 })}
             onSubmitClue={(clue) => act('submit-clue', { clue })}
+            onSkipPair={() => act('skip-pair')}
           />
         )}
 
@@ -148,7 +152,7 @@ export default function WavelengthPage() {
             </p>
             <div className="glass-panel p-md" style={{ maxWidth: '350px', margin: '0 auto' }}>
               <div className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-                Il tuo indizio: <strong style={{ color: '#fbbf24' }}>"{state.clue}"</strong>
+                Il tuo indizio: <strong style={{ color: '#000000' }}>"{state.clue}"</strong>
               </div>
               {state.players.filter(p => p.id !== state.activePlayerId).map(p => (
                 <div key={p.id} style={{

@@ -4,7 +4,6 @@ import type { WavelengthState } from '../types';
 // Calibrated values — DO NOT MODIFY
 const CX = 0.4974;
 const CY = 0.7451;
-const SOGLIE: [number, number][] = [[3, 4], [8, 3], [12, 2]];
 
 // Image paths
 const ARC_IMG = '/Wavelenght/Arco (giocatore di turno)/Arco_wavelenght.png';
@@ -15,6 +14,7 @@ interface WavelengthActivePlayerProps {
   onPickRandomPair: () => void;
   onPickCustomPair: (extreme1: string, extreme2: string) => void;
   onSubmitClue: (clue: string) => void;
+  onSkipPair: () => void;
 }
 
 function ArcWithScoring({ bersaglio }: { bersaglio: number }) {
@@ -44,6 +44,7 @@ export default function WavelengthActivePlayer({
   onPickRandomPair,
   onPickCustomPair,
   onSubmitClue,
+  onSkipPair,
 }: WavelengthActivePlayerProps) {
   const [customMode, setCustomMode] = useState(false);
   const [custom1, setCustom1] = useState('');
@@ -161,6 +162,22 @@ export default function WavelengthActivePlayer({
           </div>
         )}
       </div>
+
+      {/* Skip button */}
+      {state.skipsRemaining > 0 && (
+        <div style={{ maxWidth: '500px', margin: '0 auto 0.75rem', textAlign: 'center' }}>
+          <button
+            className="btn btn-secondary"
+            style={{ fontSize: '0.9rem' }}
+            onClick={() => {
+              setClue('');
+              onSkipPair();
+            }}
+          >
+            🔀 Salta coppia ({state.skipsRemaining} rimast{state.skipsRemaining === 1 ? 'o' : 'i'})
+          </button>
+        </div>
+      )}
 
       {/* Arc with scoring zones */}
       {hasTarget && <ArcWithScoring bersaglio={state.targetAngle!} />}

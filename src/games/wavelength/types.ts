@@ -38,6 +38,10 @@ export interface WavelengthState {
   // Pool tracking
   usedPairIndices: number[];
   lastUsedCategory: string | null;
+  // Win condition
+  winScore: number;
+  // Skip tracking
+  skipsRemaining: number;
   // Winner
   winnerId: string | null;
 }

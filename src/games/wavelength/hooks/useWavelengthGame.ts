@@ -7,7 +7,8 @@ import { getRandomPair } from '../wordPairs';
 import { debouncedSaveState } from '../../../lib/roomPersistence';
 
 // Scoring thresholds: [max distance in degrees, points]
-const SOGLIE: [number, number][] = [[3, 4], [8, 3], [12, 2]];
+// Calibrated to match the fascia_punteggi.png scoring band image
+const SOGLIE: [number, number][] = [[4, 4], [12, 3], [20, 2]];
 
 /** Circular distance with 180° period */
 function distanza(angolo: number, bersaglio: number): number {
@@ -27,21 +28,6 @@ function calcolaPunteggio(angolo: number, bersaglio: number): number {
 /** Random target 0-180 with one decimal */
 function bersaglioCasuale(): number {
   return Math.round(Math.random() * 1800) / 10;
-}
-
-/** Check if an angle is in the correct semicircle relative to the target.
- *  If target is in [0, 90) → correct semicircle is [0°, 90°]
- *  If target is in (90, 180] → correct semicircle is [90°, 180°]
- *  If target is exactly 90° → either semicircle counts
- *  An angle of exactly 90° always counts as correct. */
-function isInCorrectSemicircle(guessAngle: number, targetAngle: number): boolean {
-  if (guessAngle === 90) return true;
-  if (targetAngle === 90) return true;
-  if (targetAngle < 90) {
-    return guessAngle <= 90;
-  } else {
-    return guessAngle >= 90;
-  }
 }
 
 interface UseWavelengthGameProps {
@@ -67,10 +53,10 @@ const INITIAL_STATE: WavelengthState = {
   activePlayerScore: 0,
   usedPairIndices: [],
   lastUsedCategory: null,
+  winScore: 25,
+  skipsRemaining: 2,
   winnerId: null,
 };
-
-const WIN_SCORE = 25;
 
 export function useWavelengthGame({
   playerId,
@@ -105,7 +91,7 @@ export function useWavelengthGame({
   }, [isHost, roomCode, broadcast]);
 
   // ---- HOST: Start the game ----
-  const startGame = useCallback((roomCode: string) => {
+  const startGame = useCallback((roomCode: string, winScore?: number) => {
     if (!isHost) return;
 
     const gamePlayers: WavelengthPlayer[] = players.map(p => ({
@@ -128,6 +114,8 @@ export function useWavelengthGame({
       activePlayerScore: 0,
       usedPairIndices: [],
       lastUsedCategory: null,
+      winScore: winScore ?? 25,
+      skipsRemaining: 2,
       winnerId: null,
     };
 
@@ -168,6 +156,29 @@ export function useWavelengthGame({
     });
   }, [isHost, syncState]);
 
+  // ---- HOST: Skip pair (max 2 per turn) ----
+  const handleSkipPair = useCallback(() => {
+    if (!isHost) return;
+    const s = stateRef.current;
+    if (s.skipsRemaining <= 0) return;
+
+    const result = getRandomPair(s.usedPairIndices, s.lastUsedCategory);
+    if (!result) return;
+
+    const target = bersaglioCasuale();
+
+    syncState({
+      ...s,
+      currentPair: result.pair,
+      customPair: false,
+      targetAngle: target,
+      usedPairIndices: [...s.usedPairIndices, result.index],
+      lastUsedCategory: result.pair.category,
+      skipsRemaining: s.skipsRemaining - 1,
+      clue: '',
+    });
+  }, [isHost, syncState]);
+
   // ---- HOST: Submit clue ----
   const handleSubmitClue = useCallback((clueText: string) => {
     if (!isHost) return;
@@ -199,12 +210,10 @@ export function useWavelengthGame({
     );
 
     if (allGuessed) {
-      // Calculate active player's score
-      const correctCount = newGuesses.filter(g =>
-        isInCorrectSemicircle(g.angle, s.targetAngle!)
-      ).length;
+      // Active player gets +1 if >= 50% of guessers scored 2+ points (hit the target zone)
+      const hitCount = newGuesses.filter(g => g.score >= 2).length;
       const threshold = Math.ceil(nonActivePlayers.length / 2);
-      const activeScore = correctCount >= threshold ? 1 : 0;
+      const activeScore = hitCount >= threshold ? 1 : 0;
 
       // Update player scores
       const updatedPlayers = s.players.map(p => {
@@ -218,8 +227,8 @@ export function useWavelengthGame({
         return p;
       });
 
-      // Check for winner
-      const winner = updatedPlayers.find(p => p.totalScore >= WIN_SCORE);
+      // Check for winner using configurable winScore
+      const winner = updatedPlayers.find(p => p.totalScore >= s.winScore);
 
       syncState({
         ...s,
@@ -257,6 +266,7 @@ export function useWavelengthGame({
       clue: '',
       guesses: [],
       activePlayerScore: 0,
+      skipsRemaining: 2,
     });
   }, [isHost, syncState]);
 
@@ -269,6 +279,7 @@ export function useWavelengthGame({
       phase: 'lobby' as WavelengthPhase,
       roomCode: s.roomCode,
       players: s.players.map(p => ({ ...p, totalScore: 0 })),
+      winScore: s.winScore,
     });
   }, [isHost, syncState]);
 
@@ -279,7 +290,7 @@ export function useWavelengthGame({
         if (event.type === 'action') {
           switch (event.action) {
             case 'start':
-              startGame(event.payload.roomCode);
+              startGame(event.payload.roomCode, event.payload.winScore);
               break;
             case 'pick-random-pair':
               handlePickRandomPair();
@@ -292,6 +303,9 @@ export function useWavelengthGame({
               break;
             case 'submit-guess':
               handleSubmitGuess(event.payload.playerId, event.payload.angle);
+              break;
+            case 'skip-pair':
+              handleSkipPair();
               break;
             case 'next-round':
               handleNextRound();
@@ -311,7 +325,7 @@ export function useWavelengthGame({
         }
       }
     });
-  }, [isHost, startGame, handlePickRandomPair, handlePickCustomPair, handleSubmitClue, handleSubmitGuess, handleNextRound, handleNewGame, onBroadcast, broadcast]);
+  }, [isHost, startGame, handlePickRandomPair, handlePickCustomPair, handleSubmitClue, handleSubmitGuess, handleSkipPair, handleNextRound, handleNewGame, onBroadcast, broadcast]);
 
   // ---- Player actions (broadcast to host) ----
   const act = useCallback((action: string, payload?: any) => {
@@ -320,7 +334,7 @@ export function useWavelengthGame({
       // Process locally
       switch (action) {
         case 'start':
-          startGame(payload.roomCode);
+          startGame(payload.roomCode, payload.winScore);
           break;
         case 'pick-random-pair':
           handlePickRandomPair();
@@ -334,6 +348,9 @@ export function useWavelengthGame({
         case 'submit-guess':
           handleSubmitGuess(payload.playerId, payload.angle);
           break;
+        case 'skip-pair':
+          handleSkipPair();
+          break;
         case 'next-round':
           handleNextRound();
           break;
@@ -344,7 +361,7 @@ export function useWavelengthGame({
     } else {
       broadcast(msg);
     }
-  }, [isHost, broadcast, startGame, handlePickRandomPair, handlePickCustomPair, handleSubmitClue, handleSubmitGuess, handleNextRound, handleNewGame]);
+  }, [isHost, broadcast, startGame, handlePickRandomPair, handlePickCustomPair, handleSubmitClue, handleSubmitGuess, handleSkipPair, handleNextRound, handleNewGame]);
 
   return {
     state,
