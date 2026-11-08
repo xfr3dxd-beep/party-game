@@ -11,7 +11,6 @@ import DecryptoChooseStarter from './components/DecryptoChooseStarter';
 import DecryptoGameBoard from './components/DecryptoGameBoard';
 import DecryptoClueGiving from './components/DecryptoClueGiving';
 import DecryptoGuessing from './components/DecryptoGuessing';
-import DecryptoRoundResult from './components/DecryptoRoundResult';
 import DecryptoResult from './components/DecryptoResult';
 import type { DecryptoTeam } from './types';
 
@@ -47,15 +46,14 @@ export default function DecryptoPage() {
     return success;
   };
 
-  // Sync room players into game state when in lobby
   const gamePlayers = state.players.length > 0 ? state.players : players.map(p => ({
     id: p.id, name: p.name, team: null as DecryptoTeam | null,
   }));
 
   const showBanner = !!roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';
 
-  // Determine if we need the game board wrapper (Paroliere + Scheda visible at all times)
-  const inGame = ['choose-starter', 'clue-giving', 'guessing', 'round-result', 'final-guess', 'game-over'].includes(currentPhase);
+  // Game board shown during actual gameplay (not choose-starter or lobby)
+  const inGame = ['clue-giving', 'guessing', 'final-guess', 'game-over'].includes(currentPhase);
 
   return (
     <Layout>
@@ -85,27 +83,26 @@ export default function DecryptoPage() {
           />
         )}
 
-        {/* ALL IN-GAME PHASES — wrapped in game board with Paroliere + Scheda */}
+        {/* CHOOSE STARTER — standalone, no game board */}
+        {currentPhase === 'choose-starter' && (
+          <DecryptoChooseStarter
+            isHost={isHost}
+            onChoose={(team) => act('choose-starter', { team })}
+          />
+        )}
+
+        {/* IN-GAME — wrapped in game board (Paroliere + Scheda always visible) */}
         {inGame && myTeam && (
           <DecryptoGameBoard state={state} myTeam={myTeam}>
-            {/* Choose starter */}
-            {currentPhase === 'choose-starter' && (
-              <DecryptoChooseStarter
-                isHost={isHost}
-                onChoose={(team) => act('choose-starter', { team })}
-              />
-            )}
-
-            {/* Clue giving */}
             {currentPhase === 'clue-giving' && (
               <DecryptoClueGiving
                 state={state}
                 playerId={playerId}
                 onSubmitClues={(clues) => act('submit-clues', { clues })}
+                onConfirmTurn={() => act('confirm-turn')}
               />
             )}
 
-            {/* Guessing */}
             {currentPhase === 'guessing' && (
               <DecryptoGuessing
                 state={state}
@@ -115,16 +112,6 @@ export default function DecryptoPage() {
               />
             )}
 
-            {/* Round result */}
-            {currentPhase === 'round-result' && (
-              <DecryptoRoundResult
-                state={state}
-                isHost={isHost}
-                onNextRound={() => act('next-round')}
-              />
-            )}
-
-            {/* Final guess & Game over */}
             {(currentPhase === 'final-guess' || currentPhase === 'game-over') && (
               <DecryptoResult
                 state={state}

@@ -21,46 +21,54 @@ const SHEET_IMAGES: Record<DecryptoTeam, { page1: string; page2: string }> = {
 };
 
 /*
-  Image: 1055 × 1491, 8 cards in 2 cols × 4 rows.
-  Each card ~509×360 px.
-  Internal card layout (% of card):
-    - Player name box (header banner): left 30%, top 1.5%, width 48%, height 8%
-    - Clue rows (3 gray bars):
-        Row 1: top 24%, Row 2: top 37%, Row 3: top 51%  — each height ~11%
-        Clue text: left 2%, width 70%
-        I box center: left 76.5%, width 7%
-        R box center: left 87.5%, width 7%
-    - Token circles: top 78%
-        Left circle center: left 76.5%
-        Right circle center: left 87.5%
+  Image: 1055 × 1491 — 8 round cards in 2 cols × 4 rows.
+  Each card ≈ 509 × 358 px.
+
+  Card internal layout (% of card):
+    Player name: in header banner box
+    ROUND XX line with I and R headers
+    3 clue rows (gray bars) each with I and R small squares to the right
+    Token row at bottom with 2 circles
+
+  The 6 squares: 3 under I + 3 under R
+  The 4 lines: player name + 3 clue word lines
 */
 
+// Card grid positions (% of full 1055×1491 image)
 const CARDS = [
-  { left: 0.9, top: 0.3, width: 48.4, height: 24.2 },
-  { left: 50.7, top: 0.3, width: 48.4, height: 24.2 },
-  { left: 0.9, top: 25.2, width: 48.4, height: 24.2 },
-  { left: 50.7, top: 25.2, width: 48.4, height: 24.2 },
-  { left: 0.9, top: 50.1, width: 48.4, height: 24.2 },
-  { left: 50.7, top: 50.1, width: 48.4, height: 24.2 },
-  { left: 0.9, top: 75.0, width: 48.4, height: 24.2 },
-  { left: 50.7, top: 75.0, width: 48.4, height: 24.2 },
+  { left: 1.1, top: 0.4, width: 48.2, height: 24.0 },   // Round 1
+  { left: 50.7, top: 0.4, width: 48.2, height: 24.0 },  // Round 2
+  { left: 1.1, top: 25.2, width: 48.2, height: 24.0 },  // Round 3
+  { left: 50.7, top: 25.2, width: 48.2, height: 24.0 }, // Round 4
+  { left: 1.1, top: 50.0, width: 48.2, height: 24.0 },  // Round 5
+  { left: 50.7, top: 50.0, width: 48.2, height: 24.0 }, // Round 6
+  { left: 1.1, top: 74.8, width: 48.2, height: 24.0 },  // Round 7
+  { left: 50.7, top: 74.8, width: 48.2, height: 24.0 }, // Round 8
 ];
 
-const LAYOUT = {
-  playerName: { left: 30, top: 1.5, width: 48, height: 8 },
-  clueRows: [
-    { top: 25 },
-    { top: 39 },
-    { top: 53 },
+// Internal card layout (% of card)
+// Measured from the Scheda image: each card ~509×358 px
+const L = {
+  // Player name — in header banner between robots
+  name: { left: 28, top: 1, width: 50, height: 9 },
+  // 3 clue rows — the gray bars where clue words go
+  rows: [
+    { top: 24 },   // row 1
+    { top: 38 },   // row 2
+    { top: 52 },   // row 3
   ],
-  rowHeight: 11,
-  clueText: { left: 2, width: 70 },
-  iBox: { left: 73, width: 9 },
-  rBox: { left: 84.5, width: 9 },
-  tokenRow: { top: 78 },
-  tokenHeight: 12,
-  tokenLeft: { left: 73, width: 10 },
-  tokenRight: { left: 85, width: 10 },
+  rowH: 11,
+  // Clue text area (the wide gray bar)
+  clue: { left: 2, width: 69 },
+  // I squares — center-aligned under "I" header
+  iBox: { left: 74.5, width: 7.5 },
+  // R squares — center-aligned under "R" header  
+  rBox: { left: 85.5, width: 7.5 },
+  // Token row
+  tokenTop: 78,
+  tokenH: 13,
+  tokL: { left: 74, width: 8.5 },
+  tokR: { left: 85, width: 8.5 },
 };
 
 export default function DecryptoScoreSheet({ state, team }: Props) {
@@ -75,93 +83,73 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
     const card = CARDS[cardIdx];
     if (!record) return null;
 
-    // Sort clues ascending by code number, keeping original index
+    // Sort clues ascending by code number, keeping original index for I mapping
     const sortedEntries = record.code
       .map((num, origIdx) => ({ num, origIdx, clue: record.clues[origIdx] || '' }))
       .sort((a, b) => a.num - b.num);
 
     const isActiveRound = record.activeTeam === team;
-
-    // Own team: show teamGuess; Opponent round: show opponentGuess (our interception attempt)
     const guessValues = isActiveRound ? record.teamGuess : record.opponentGuess;
-    const guessCorrect = isActiveRound ? !record.miscommunication : record.interception;
 
     return (
       <div key={cardIdx} style={{
         position: 'absolute',
-        left: `${card.left}%`,
-        top: `${card.top}%`,
-        width: `${card.width}%`,
-        height: `${card.height}%`,
+        left: `${card.left}%`, top: `${card.top}%`,
+        width: `${card.width}%`, height: `${card.height}%`,
       }}>
-        {/* Player name in header box */}
+        {/* Player name */}
         <div style={{
           position: 'absolute',
-          left: `${LAYOUT.playerName.left}%`,
-          top: `${LAYOUT.playerName.top}%`,
-          width: `${LAYOUT.playerName.width}%`,
-          height: `${LAYOUT.playerName.height}%`,
+          left: `${L.name.left}%`, top: `${L.name.top}%`,
+          width: `${L.name.width}%`, height: `${L.name.height}%`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 'clamp(0.35rem, 1vw, 0.65rem)',
-          fontWeight: 700,
-          color: '#333',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          fontSize: 'clamp(0.3rem, 0.9vw, 0.6rem)',
+          fontWeight: 700, color: '#222',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {record.activePlayerName}
         </div>
 
-        {/* 3 clue rows with I and R values */}
+        {/* 3 clue rows */}
         {sortedEntries.map((entry, i) => (
           <React.Fragment key={i}>
-            {/* Clue text */}
+            {/* Clue word — black text */}
             <div style={{
               position: 'absolute',
-              left: `${LAYOUT.clueText.left}%`,
-              top: `${LAYOUT.clueRows[i].top}%`,
-              width: `${LAYOUT.clueText.width}%`,
-              height: `${LAYOUT.rowHeight}%`,
+              left: `${L.clue.left}%`, top: `${L.rows[i].top}%`,
+              width: `${L.clue.width}%`, height: `${L.rowH}%`,
               display: 'flex', alignItems: 'center',
               paddingLeft: '3%',
-              fontSize: 'clamp(0.3rem, 0.9vw, 0.6rem)',
-              color: '#222',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
+              fontSize: 'clamp(0.25rem, 0.85vw, 0.55rem)',
+              color: '#111', fontWeight: 600,
+              overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
             }}>
-              <strong style={{ marginRight: '4px', color: '#555', flexShrink: 0 }}>{entry.num}.</strong>
+              <strong style={{ marginRight: '3px', flexShrink: 0 }}>{entry.num}.</strong>
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.clue}</span>
             </div>
 
-            {/* I (guess) box — centered in box */}
+            {/* I box — black number, centered in square */}
             <div style={{
               position: 'absolute',
-              left: `${LAYOUT.iBox.left}%`,
-              top: `${LAYOUT.clueRows[i].top}%`,
-              width: `${LAYOUT.iBox.width}%`,
-              height: `${LAYOUT.rowHeight}%`,
+              left: `${L.iBox.left}%`, top: `${L.rows[i].top}%`,
+              width: `${L.iBox.width}%`, height: `${L.rowH}%`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 'clamp(0.35rem, 1vw, 0.65rem)',
-              fontWeight: 800,
-              fontFamily: 'monospace',
-              color: guessCorrect ? '#16a34a' : '#dc2626',
+              fontSize: 'clamp(0.35rem, 1vw, 0.7rem)',
+              fontWeight: 800, fontFamily: 'monospace',
+              color: '#111',
             }}>
               {guessValues[entry.origIdx] ?? ''}
             </div>
 
-            {/* R (real code) box — centered in box */}
+            {/* R box — green number, centered in square */}
             <div style={{
               position: 'absolute',
-              left: `${LAYOUT.rBox.left}%`,
-              top: `${LAYOUT.clueRows[i].top}%`,
-              width: `${LAYOUT.rBox.width}%`,
-              height: `${LAYOUT.rowHeight}%`,
+              left: `${L.rBox.left}%`, top: `${L.rows[i].top}%`,
+              width: `${L.rBox.width}%`, height: `${L.rowH}%`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 'clamp(0.35rem, 1vw, 0.65rem)',
-              fontWeight: 800,
-              fontFamily: 'monospace',
-              color: '#111',
+              fontSize: 'clamp(0.35rem, 1vw, 0.7rem)',
+              fontWeight: 800, fontFamily: 'monospace',
+              color: '#16a34a',
             }}>
               {entry.num}
             </div>
@@ -172,25 +160,21 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
         {record.miscommunication && isActiveRound && (
           <div style={{
             position: 'absolute',
-            left: `${LAYOUT.tokenLeft.left}%`,
-            top: `${LAYOUT.tokenRow.top}%`,
-            width: `${LAYOUT.tokenLeft.width}%`,
-            height: `${LAYOUT.tokenHeight}%`,
+            left: `${L.tokL.left}%`, top: `${L.tokenTop}%`,
+            width: `${L.tokL.width}%`, height: `${L.tokenH}%`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <img src={TOKEN_MISC} alt="Err" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
+            <img src={TOKEN_MISC} alt="Err" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
           </div>
         )}
         {record.interception && !isActiveRound && (
           <div style={{
             position: 'absolute',
-            left: `${LAYOUT.tokenRight.left}%`,
-            top: `${LAYOUT.tokenRow.top}%`,
-            width: `${LAYOUT.tokenRight.width}%`,
-            height: `${LAYOUT.tokenHeight}%`,
+            left: `${L.tokR.left}%`, top: `${L.tokenTop}%`,
+            width: `${L.tokR.width}%`, height: `${L.tokenH}%`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <img src={TOKEN_INT} alt="Int" style={{ width: '70%', height: '70%', objectFit: 'contain' }} />
+            <img src={TOKEN_INT} alt="Int" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
           </div>
         )}
       </div>
@@ -199,7 +183,6 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
 
   return (
     <div>
-      {/* Controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
         <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>
           📋 Scheda — {team === 'bianca' ? 'Bianca' : 'Nera'}
@@ -216,7 +199,6 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
         </div>
       </div>
 
-      {/* Sheet image with overlaid data */}
       <div style={{
         position: 'relative',
         maxHeight: expanded ? '90vh' : '500px',
@@ -224,11 +206,9 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
         borderRadius: '8px',
         border: '1px solid rgba(255,255,255,0.1)',
       }}>
-        <img
-          src={sheetImg}
+        <img src={sheetImg}
           alt={`Scheda ${team === 'bianca' ? 'Bianca' : 'Nera'}`}
-          style={{ width: '100%', display: 'block' }}
-        />
+          style={{ width: '100%', display: 'block' }} />
         <div style={{ position: 'absolute', inset: 0 }}>
           {Array.from({ length: 8 }).map((_, i) => renderCardOverlay(i))}
         </div>

@@ -61,6 +61,38 @@ function getOpponent(team: DecryptoTeam): DecryptoTeam {
   return team === 'bianca' ? 'nera' : 'bianca';
 }
 
+/** Helper: set up next round fields on a state object */
+function setupNextRound(s: DecryptoState): Partial<DecryptoState> | null {
+  const nextTeam = getOpponent(s.activeTeam);
+  const usedCodes = nextTeam === 'bianca' ? s.usedBiancaCodes : s.usedNeraCodes;
+  const drawn = drawCode(usedCodes);
+  if (!drawn) return null;
+
+  let bTurn = s.biancaTurnIndex;
+  let nTurn = s.neraTurnIndex;
+  if (nextTeam === 'bianca') bTurn++; else nTurn++;
+
+  const order = nextTeam === 'bianca' ? s.biancaPlayerOrder : s.neraPlayerOrder;
+  const idx = nextTeam === 'bianca' ? bTurn : nTurn;
+
+  return {
+    phase: 'clue-giving' as DecryptoPhase,
+    roundNumber: s.roundNumber + 1,
+    activeTeam: nextTeam,
+    activePlayerId: order[idx % order.length],
+    currentCode: drawn.code,
+    currentCodeStr: drawn.codeStr,
+    clues: [], cluesSubmitted: false,
+    teamGuess: [], opponentGuess: [],
+    teamGuessSubmitted: false, opponentGuessSubmitted: false,
+    usedBiancaCodes: nextTeam === 'bianca' ? [...s.usedBiancaCodes, drawn.codeStr] : s.usedBiancaCodes,
+    usedNeraCodes: nextTeam === 'nera' ? [...s.usedNeraCodes, drawn.codeStr] : s.usedNeraCodes,
+    biancaTurnIndex: bTurn,
+    neraTurnIndex: nTurn,
+    timerStartedAt: null, // Timer starts when player confirms
+  };
+}
+
 export function useDecryptoGame({
   playerId, isHost, roomCode, players, broadcast, onBroadcast,
 }: UseDecryptoGameProps) {
@@ -94,17 +126,12 @@ export function useDecryptoGame({
   useEffect(() => {
     if (!isHost) return;
     const s = stateRef.current;
-    // Only sync during create/lobby — once the game starts, players are locked
     if (s.phase !== 'create' && s.phase !== 'lobby') return;
     if (players.length === 0) return;
-
-    // Merge: keep existing team assignments, add new players
     const merged: DecryptoPlayer[] = players.map(rp => {
       const existing = s.players.find(sp => sp.id === rp.id);
       return existing || { id: rp.id, name: rp.name, team: null };
     });
-
-    // Only sync if something actually changed
     const changed = merged.length !== s.players.length ||
       merged.some((p, i) => p.id !== s.players[i]?.id || p.name !== s.players[i]?.name);
     if (changed) {
@@ -124,7 +151,6 @@ export function useDecryptoGame({
       if (p.id === pid) { found = true; return { ...p, team }; }
       return p;
     });
-    // If player not in state yet, add them from room players
     if (!found) {
       const rp = playersRef.current.find(p => p.id === pid);
       if (rp) updated.push({ id: rp.id, name: rp.name, team });
@@ -132,29 +158,19 @@ export function useDecryptoGame({
     syncState({ ...s, players: updated });
   }, [isHost, syncState]);
 
-  // ---- START GAME (draw words, go to choose-starter) ----
+  // ---- START GAME ----
   const handleStartGame = useCallback(async () => {
     if (!isHost) return;
     const s = stateRef.current;
     const pool = await loadWords();
     const allWords = drawWords(pool, 8);
-    const biancaWords = allWords.slice(0, 4);
-    const neraWords = allWords.slice(4, 8);
-
-    const biancaPlayers = s.players.filter(p => p.team === 'bianca').map(p => p.id);
-    const neraPlayers = s.players.filter(p => p.team === 'nera').map(p => p.id);
-
-    // Shuffle player orders
-    const shuffledBianca = [...biancaPlayers].sort(() => Math.random() - 0.5);
-    const shuffledNera = [...neraPlayers].sort(() => Math.random() - 0.5);
-
     syncState({
       ...s,
       phase: 'choose-starter',
-      biancaWords,
-      neraWords,
-      biancaPlayerOrder: shuffledBianca,
-      neraPlayerOrder: shuffledNera,
+      biancaWords: allWords.slice(0, 4),
+      neraWords: allWords.slice(4, 8),
+      biancaPlayerOrder: [...s.players.filter(p => p.team === 'bianca').map(p => p.id)].sort(() => Math.random() - 0.5),
+      neraPlayerOrder: [...s.players.filter(p => p.team === 'nera').map(p => p.id)].sort(() => Math.random() - 0.5),
       biancaTurnIndex: 0,
       neraTurnIndex: 0,
     });
@@ -164,37 +180,34 @@ export function useDecryptoGame({
   const handleChooseStarter = useCallback((team: DecryptoTeam) => {
     if (!isHost) return;
     const s = stateRef.current;
-    // Draw code for starting team
     const usedCodes = team === 'bianca' ? s.usedBiancaCodes : s.usedNeraCodes;
     const drawn = drawCode(usedCodes);
     if (!drawn) return;
-
     const playerOrder = team === 'bianca' ? s.biancaPlayerOrder : s.neraPlayerOrder;
     const turnIndex = team === 'bianca' ? s.biancaTurnIndex : s.neraTurnIndex;
-    const activeId = playerOrder[turnIndex % playerOrder.length];
-
-    const newUsedBianca = team === 'bianca' ? [...s.usedBiancaCodes, drawn.codeStr] : s.usedBiancaCodes;
-    const newUsedNera = team === 'nera' ? [...s.usedNeraCodes, drawn.codeStr] : s.usedNeraCodes;
-
     syncState({
       ...s,
       phase: 'clue-giving',
       startingTeam: team,
       activeTeam: team,
-      activePlayerId: activeId,
+      activePlayerId: playerOrder[turnIndex % playerOrder.length],
       roundNumber: 1,
-      currentCode: drawn.code,
-      currentCodeStr: drawn.codeStr,
-      clues: [],
-      cluesSubmitted: false,
-      teamGuess: [],
-      opponentGuess: [],
-      teamGuessSubmitted: false,
-      opponentGuessSubmitted: false,
-      usedBiancaCodes: newUsedBianca,
-      usedNeraCodes: newUsedNera,
-      timerStartedAt: Date.now(),
+      currentCode: drawn.code, currentCodeStr: drawn.codeStr,
+      clues: [], cluesSubmitted: false,
+      teamGuess: [], opponentGuess: [],
+      teamGuessSubmitted: false, opponentGuessSubmitted: false,
+      usedBiancaCodes: team === 'bianca' ? [...s.usedBiancaCodes, drawn.codeStr] : s.usedBiancaCodes,
+      usedNeraCodes: team === 'nera' ? [...s.usedNeraCodes, drawn.codeStr] : s.usedNeraCodes,
+      timerStartedAt: null, // Timer starts when player confirms
     });
+  }, [isHost, syncState]);
+
+  // ---- CONFIRM TURN (active player presses start → timer begins) ----
+  const handleConfirmTurn = useCallback(() => {
+    if (!isHost) return;
+    const s = stateRef.current;
+    if (s.phase !== 'clue-giving' || s.timerStartedAt) return;
+    syncState({ ...s, timerStartedAt: Date.now() });
   }, [isHost, syncState]);
 
   // ---- SUBMIT CLUES ----
@@ -203,8 +216,7 @@ export function useDecryptoGame({
     const s = stateRef.current;
     syncState({
       ...s,
-      clues: clueList,
-      cluesSubmitted: true,
+      clues: clueList, cluesSubmitted: true,
       phase: 'guessing',
       timerStartedAt: null,
     });
@@ -215,11 +227,8 @@ export function useDecryptoGame({
     if (!isHost) return;
     const s = stateRef.current;
     const newState = { ...s, teamGuess: guess, teamGuessSubmitted: true };
-    if (newState.opponentGuessSubmitted) {
-      resolveRound(newState);
-    } else {
-      syncState(newState);
-    }
+    if (newState.opponentGuessSubmitted) resolveRound(newState);
+    else syncState(newState);
   }, [isHost, syncState]);
 
   // ---- SUBMIT OPPONENT GUESS ----
@@ -227,123 +236,57 @@ export function useDecryptoGame({
     if (!isHost) return;
     const s = stateRef.current;
     const newState = { ...s, opponentGuess: guess, opponentGuessSubmitted: true };
-    if (newState.teamGuessSubmitted) {
-      resolveRound(newState);
-    } else {
-      syncState(newState);
-    }
+    if (newState.teamGuessSubmitted) resolveRound(newState);
+    else syncState(newState);
   }, [isHost, syncState]);
 
-  // ---- RESOLVE ROUND ----
+  // ---- RESOLVE ROUND (skip round-result, go directly to next round or game end) ----
   const resolveRound = useCallback((s: DecryptoState) => {
     const miscommunication = !arraysEqual(s.teamGuess, s.currentCode);
     const interception = arraysEqual(s.opponentGuess, s.currentCode);
-
     const activePlayerName = s.players.find(p => p.id === s.activePlayerId)?.name || '?';
 
     const record: RoundRecord = {
-      roundNumber: s.roundNumber,
-      activeTeam: s.activeTeam,
-      activePlayerName,
-      code: s.currentCode,
-      clues: s.clues,
-      teamGuess: s.teamGuess,
-      opponentGuess: s.opponentGuess,
-      miscommunication,
-      interception,
+      roundNumber: s.roundNumber, activeTeam: s.activeTeam, activePlayerName,
+      code: s.currentCode, clues: s.clues,
+      teamGuess: s.teamGuess, opponentGuess: s.opponentGuess,
+      miscommunication, interception,
     };
 
-    let bm = s.biancaMiscommunications;
-    let bi = s.biancaInterceptions;
-    let nm = s.neraMiscommunications;
-    let ni = s.neraInterceptions;
+    let bm = s.biancaMiscommunications, bi = s.biancaInterceptions;
+    let nm = s.neraMiscommunications, ni = s.neraInterceptions;
+    if (miscommunication) { if (s.activeTeam === 'bianca') bm++; else nm++; }
+    if (interception) { const opp = getOpponent(s.activeTeam); if (opp === 'bianca') bi++; else ni++; }
 
-    // Miscommunication goes to active team
-    if (miscommunication) {
-      if (s.activeTeam === 'bianca') bm++;
-      else nm++;
-    }
-    // Interception goes to opposing team
-    if (interception) {
-      const opponent = getOpponent(s.activeTeam);
-      if (opponent === 'bianca') bi++;
-      else ni++;
-    }
-
-    // Check for game end
     let winner: DecryptoTeam | 'draw' | null = null;
     let losingTeam: DecryptoTeam | null = null;
     let loseReason: 'miscommunication' | 'interception' | null = null;
-    let nextPhase: DecryptoPhase = 'round-result';
 
-    // 2 interceptions = that team wins
-    if (bi >= 2) { winner = 'bianca'; losingTeam = 'nera'; loseReason = 'interception'; nextPhase = 'final-guess'; }
-    else if (ni >= 2) { winner = 'nera'; losingTeam = 'bianca'; loseReason = 'interception'; nextPhase = 'final-guess'; }
-    // 2 miscommunications = that team loses
-    if (bm >= 2) { losingTeam = 'bianca'; winner = 'nera'; loseReason = 'miscommunication'; nextPhase = 'final-guess'; }
-    else if (nm >= 2) { losingTeam = 'nera'; winner = 'bianca'; loseReason = 'miscommunication'; nextPhase = 'final-guess'; }
+    if (bi >= 2) { winner = 'bianca'; losingTeam = 'nera'; loseReason = 'interception'; }
+    else if (ni >= 2) { winner = 'nera'; losingTeam = 'bianca'; loseReason = 'interception'; }
+    if (bm >= 2) { losingTeam = 'bianca'; winner = 'nera'; loseReason = 'miscommunication'; }
+    else if (nm >= 2) { losingTeam = 'nera'; winner = 'bianca'; loseReason = 'miscommunication'; }
 
-    syncState({
+    const updated: DecryptoState = {
       ...s,
-      phase: nextPhase,
       rounds: [...s.rounds, record],
-      biancaMiscommunications: bm,
-      biancaInterceptions: bi,
-      neraMiscommunications: nm,
-      neraInterceptions: ni,
-      winner,
-      losingTeam,
-      loseReason,
-      timerStartedAt: null,
-    });
+      biancaMiscommunications: bm, biancaInterceptions: bi,
+      neraMiscommunications: nm, neraInterceptions: ni,
+      winner, losingTeam, loseReason, timerStartedAt: null,
+    };
+
+    if (winner || losingTeam) {
+      // Game ends → final-guess
+      syncState({ ...updated, phase: 'final-guess' });
+    } else {
+      // Continue → next round immediately (no round-result screen)
+      const next = setupNextRound(updated);
+      if (!next) return;
+      syncState({ ...updated, ...next });
+    }
   }, [syncState]);
 
-  // ---- NEXT ROUND ----
-  const handleNextRound = useCallback(() => {
-    if (!isHost) return;
-    const s = stateRef.current;
-
-    const nextTeam = getOpponent(s.activeTeam);
-    const usedCodes = nextTeam === 'bianca' ? s.usedBiancaCodes : s.usedNeraCodes;
-    const drawn = drawCode(usedCodes);
-    if (!drawn) return;
-
-    // Advance turn index for the next team
-    let newBiancaTurn = s.biancaTurnIndex;
-    let newNeraTurn = s.neraTurnIndex;
-    if (nextTeam === 'bianca') newBiancaTurn++;
-    else newNeraTurn++;
-
-    const playerOrder = nextTeam === 'bianca' ? s.biancaPlayerOrder : s.neraPlayerOrder;
-    const turnIndex = nextTeam === 'bianca' ? newBiancaTurn : newNeraTurn;
-    const activeId = playerOrder[turnIndex % playerOrder.length];
-
-    const newUsedBianca = nextTeam === 'bianca' ? [...s.usedBiancaCodes, drawn.codeStr] : s.usedBiancaCodes;
-    const newUsedNera = nextTeam === 'nera' ? [...s.usedNeraCodes, drawn.codeStr] : s.usedNeraCodes;
-
-    syncState({
-      ...s,
-      phase: 'clue-giving',
-      roundNumber: s.roundNumber + 1,
-      activeTeam: nextTeam,
-      activePlayerId: activeId,
-      currentCode: drawn.code,
-      currentCodeStr: drawn.codeStr,
-      clues: [],
-      cluesSubmitted: false,
-      teamGuess: [],
-      opponentGuess: [],
-      teamGuessSubmitted: false,
-      opponentGuessSubmitted: false,
-      usedBiancaCodes: newUsedBianca,
-      usedNeraCodes: newUsedNera,
-      biancaTurnIndex: newBiancaTurn,
-      neraTurnIndex: newNeraTurn,
-      timerStartedAt: Date.now(),
-    });
-  }, [isHost, syncState]);
-
-  // ---- AUTO-SKIP: if 90s timer expires during clue-giving, skip this round ----
+  // ---- AUTO-SKIP: if 90s timer expires during clue-giving, skip round ----
   useEffect(() => {
     if (!isHost) return;
     const s = stateRef.current;
@@ -352,67 +295,17 @@ export function useDecryptoGame({
     const elapsed = Date.now() - s.timerStartedAt;
     const remaining = 90000 - elapsed;
 
-    if (remaining <= 0) {
-      // Already expired — skip immediately
-      // Re-use handleNextRound logic inline to avoid stale closure
-      const cur = stateRef.current;
-      if (cur.phase !== 'clue-giving') return;
-      const nextTeam = getOpponent(cur.activeTeam);
-      const usedCodes = nextTeam === 'bianca' ? cur.usedBiancaCodes : cur.usedNeraCodes;
-      const drawn = drawCode(usedCodes);
-      if (!drawn) return;
-      let bTurn = cur.biancaTurnIndex;
-      let nTurn = cur.neraTurnIndex;
-      if (nextTeam === 'bianca') bTurn++; else nTurn++;
-      const order = nextTeam === 'bianca' ? cur.biancaPlayerOrder : cur.neraPlayerOrder;
-      const idx = nextTeam === 'bianca' ? bTurn : nTurn;
-      syncState({
-        ...cur,
-        phase: 'clue-giving',
-        roundNumber: cur.roundNumber + 1,
-        activeTeam: nextTeam,
-        activePlayerId: order[idx % order.length],
-        currentCode: drawn.code, currentCodeStr: drawn.codeStr,
-        clues: [], cluesSubmitted: false,
-        teamGuess: [], opponentGuess: [],
-        teamGuessSubmitted: false, opponentGuessSubmitted: false,
-        usedBiancaCodes: nextTeam === 'bianca' ? [...cur.usedBiancaCodes, drawn.codeStr] : cur.usedBiancaCodes,
-        usedNeraCodes: nextTeam === 'nera' ? [...cur.usedNeraCodes, drawn.codeStr] : cur.usedNeraCodes,
-        biancaTurnIndex: bTurn, neraTurnIndex: nTurn,
-        timerStartedAt: Date.now(),
-      });
-      return;
-    }
-
-    const timeout = setTimeout(() => {
+    const doSkip = () => {
       const cur = stateRef.current;
       if (cur.phase !== 'clue-giving' || cur.cluesSubmitted) return;
-      const nextTeam = getOpponent(cur.activeTeam);
-      const usedCodes = nextTeam === 'bianca' ? cur.usedBiancaCodes : cur.usedNeraCodes;
-      const drawn = drawCode(usedCodes);
-      if (!drawn) return;
-      let bTurn = cur.biancaTurnIndex;
-      let nTurn = cur.neraTurnIndex;
-      if (nextTeam === 'bianca') bTurn++; else nTurn++;
-      const order = nextTeam === 'bianca' ? cur.biancaPlayerOrder : cur.neraPlayerOrder;
-      const idx = nextTeam === 'bianca' ? bTurn : nTurn;
-      syncState({
-        ...cur,
-        phase: 'clue-giving',
-        roundNumber: cur.roundNumber + 1,
-        activeTeam: nextTeam,
-        activePlayerId: order[idx % order.length],
-        currentCode: drawn.code, currentCodeStr: drawn.codeStr,
-        clues: [], cluesSubmitted: false,
-        teamGuess: [], opponentGuess: [],
-        teamGuessSubmitted: false, opponentGuessSubmitted: false,
-        usedBiancaCodes: nextTeam === 'bianca' ? [...cur.usedBiancaCodes, drawn.codeStr] : cur.usedBiancaCodes,
-        usedNeraCodes: nextTeam === 'nera' ? [...cur.usedNeraCodes, drawn.codeStr] : cur.usedNeraCodes,
-        biancaTurnIndex: bTurn, neraTurnIndex: nTurn,
-        timerStartedAt: Date.now(),
-      });
-    }, remaining);
+      const next = setupNextRound(cur);
+      if (!next) return;
+      syncState({ ...cur, ...next });
+    };
 
+    if (remaining <= 0) { doSkip(); return; }
+
+    const timeout = setTimeout(doSkip, remaining);
     return () => clearTimeout(timeout);
   }, [isHost, state.phase, state.timerStartedAt, syncState]);
 
@@ -421,39 +314,23 @@ export function useDecryptoGame({
     if (!isHost) return;
     const s = stateRef.current;
     if (!s.losingTeam || !s.winner) return;
-
-    // The losing team guesses the winner team's 4 words
     const winnerWords = s.winner === 'bianca' ? s.biancaWords : s.winner === 'nera' ? s.neraWords : [];
-    const correct = winnerWords.length === 4 &&
-      words.length === 4 &&
+    const correct = winnerWords.length === 4 && words.length === 4 &&
       words.every((w, i) => w.trim().toLowerCase() === winnerWords[i].trim().toLowerCase());
-
-    syncState({
-      ...s,
-      phase: 'game-over',
-      finalGuessWords: words,
-      finalGuessCorrect: correct,
-      winner: correct ? 'draw' : s.winner,
-    });
+    syncState({ ...s, phase: 'game-over', finalGuessWords: words, finalGuessCorrect: correct, winner: correct ? 'draw' : s.winner });
   }, [isHost, syncState]);
 
   // ---- SKIP FINAL GUESS ----
   const handleSkipFinalGuess = useCallback(() => {
     if (!isHost) return;
-    const s = stateRef.current;
-    syncState({ ...s, phase: 'game-over', finalGuessCorrect: false });
+    syncState({ ...stateRef.current, phase: 'game-over', finalGuessCorrect: false });
   }, [isHost, syncState]);
 
   // ---- NEW GAME ----
   const handleNewGame = useCallback(() => {
     if (!isHost) return;
     const s = stateRef.current;
-    syncState({
-      ...INITIAL_STATE,
-      phase: 'lobby' as DecryptoPhase,
-      roomCode: s.roomCode,
-      players: s.players.map(p => ({ ...p, team: p.team })),
-    });
+    syncState({ ...INITIAL_STATE, phase: 'lobby' as DecryptoPhase, roomCode: s.roomCode, players: s.players.map(p => ({ ...p, team: p.team })) });
   }, [isHost, syncState]);
 
   // ---- BROADCAST LISTENER ----
@@ -466,28 +343,26 @@ export function useDecryptoGame({
             case 'join-team': handleJoinTeam(payload.playerId, payload.team); break;
             case 'start-game': handleStartGame(); break;
             case 'choose-starter': handleChooseStarter(payload.team); break;
+            case 'confirm-turn': handleConfirmTurn(); break;
             case 'submit-clues': handleSubmitClues(payload.clues); break;
             case 'submit-team-guess': handleSubmitTeamGuess(payload.guess); break;
             case 'submit-opponent-guess': handleSubmitOpponentGuess(payload.guess); break;
-            case 'next-round': handleNextRound(); break;
             case 'final-guess': handleFinalGuess(payload.words); break;
             case 'skip-final-guess': handleSkipFinalGuess(); break;
             case 'new-game': handleNewGame(); break;
           }
         } else if (event.type === 'request-sync') {
-          if (stateRef.current.phase !== 'create') {
-            broadcast({ type: 'sync', payload: stateRef.current });
-          }
+          if (stateRef.current.phase !== 'create') broadcast({ type: 'sync', payload: stateRef.current });
         }
       } else {
         if (event.type === 'sync') setState(event.payload);
       }
     });
   }, [isHost, onBroadcast, broadcast, handleJoinTeam, handleStartGame, handleChooseStarter,
-      handleSubmitClues, handleSubmitTeamGuess, handleSubmitOpponentGuess,
-      handleNextRound, handleFinalGuess, handleSkipFinalGuess, handleNewGame]);
+      handleConfirmTurn, handleSubmitClues, handleSubmitTeamGuess, handleSubmitOpponentGuess,
+      handleFinalGuess, handleSkipFinalGuess, handleNewGame]);
 
-  // ---- ACT (local or broadcast) ----
+  // ---- ACT ----
   const act = useCallback((action: string, payload?: any) => {
     const msg: DecryptoBroadcast = { type: 'action', action, payload };
     if (isHost) {
@@ -495,10 +370,10 @@ export function useDecryptoGame({
         case 'join-team': handleJoinTeam(payload.playerId, payload.team); break;
         case 'start-game': handleStartGame(); break;
         case 'choose-starter': handleChooseStarter(payload.team); break;
+        case 'confirm-turn': handleConfirmTurn(); break;
         case 'submit-clues': handleSubmitClues(payload.clues); break;
         case 'submit-team-guess': handleSubmitTeamGuess(payload.guess); break;
         case 'submit-opponent-guess': handleSubmitOpponentGuess(payload.guess); break;
-        case 'next-round': handleNextRound(); break;
         case 'final-guess': handleFinalGuess(payload.words); break;
         case 'skip-final-guess': handleSkipFinalGuess(); break;
         case 'new-game': handleNewGame(); break;
@@ -507,8 +382,8 @@ export function useDecryptoGame({
       broadcast(msg);
     }
   }, [isHost, broadcast, handleJoinTeam, handleStartGame, handleChooseStarter,
-      handleSubmitClues, handleSubmitTeamGuess, handleSubmitOpponentGuess,
-      handleNextRound, handleFinalGuess, handleSkipFinalGuess, handleNewGame]);
+      handleConfirmTurn, handleSubmitClues, handleSubmitTeamGuess, handleSubmitOpponentGuess,
+      handleFinalGuess, handleSkipFinalGuess, handleNewGame]);
 
   return { state, act, setState };
 }
