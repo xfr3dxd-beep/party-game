@@ -235,6 +235,32 @@ export default function Home() {
               <span className="mind-players-badge" style={{ background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', borderColor: 'rgba(6, 182, 212, 0.3)' }}>📱 Multiplayer online</span>
             </div>
           </div>
+          {/* Decrypto Card */}
+          <div
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/decrypto')}
+            id="game-card-decrypto"
+            style={{ animationDelay: '0.9s' }}
+          >
+            <span className="game-card-badge badge-live">Giocabile</span>
+            <div className="game-card-icon" style={{ fontSize: '3.5rem' }}>
+              🔐
+            </div>
+            <h2 className="game-card-title">Decrypto</h2>
+            <p className="game-card-desc">
+              Crittografa i codici per la tua squadra senza farti intercettare! Due squadre si sfidano a colpi di indizi e deduzioni.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="mind-players-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}>👥 4+ giocatori</span>
+              <span className="mind-players-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}>📱 Multiplayer online</span>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

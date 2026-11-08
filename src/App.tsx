@@ -12,6 +12,7 @@ import MascaradePage from './games/mascarade/MascaradePage';
 import CitadelsPage from './games/citadels/CitadelsPage';
 import DixitPage from './games/dixit/DixitPage';
 import WavelengthPage from './games/wavelength/WavelengthPage';
+import DecryptoPage from './games/decrypto/DecryptoPage';
 
 export default function App() {
   return (
@@ -88,6 +89,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <WavelengthPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/decrypto"
+            element={
+              <ProtectedRoute>
+                <DecryptoPage />
               </ProtectedRoute>
             }
           />
