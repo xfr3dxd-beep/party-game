@@ -20,56 +20,132 @@ const SHEET_IMAGES: Record<DecryptoTeam, { page1: string; page2: string }> = {
   },
 };
 
-/*
-  Image: 1055 × 1491 — 8 round cards in 2 cols × 4 rows.
-  Each card ≈ 509 × 358 px.
+// ─── Auto-generated from image analysis (1055×1491) — DO NOT EDIT MANUALLY ───
+// All values are percentages of the full image dimensions.
+// Clue rows, I boxes, R boxes and tokens are positioned absolutely within the image.
+interface Rect { left: number; top: number; width: number; height: number }
+interface CardLayout {
+  nameBox: Rect;
+  rows: { clue: Rect; iBox: Rect; rBox: Rect }[];
+  tokens: Rect[];
+}
 
-  Card internal layout (% of card):
-    Player name: in header banner box
-    ROUND XX line with I and R headers
-    3 clue rows (gray bars) each with I and R small squares to the right
-    Token row at bottom with 2 circles
-
-  The 6 squares: 3 under I + 3 under R
-  The 4 lines: player name + 3 clue word lines
-*/
-
-// Card grid positions (% of full 1055×1491 image)
-const CARDS = [
-  { left: 1.1, top: 0.4, width: 48.2, height: 24.0 },   // Round 1
-  { left: 50.7, top: 0.4, width: 48.2, height: 24.0 },  // Round 2
-  { left: 1.1, top: 25.2, width: 48.2, height: 24.0 },  // Round 3
-  { left: 50.7, top: 25.2, width: 48.2, height: 24.0 }, // Round 4
-  { left: 1.1, top: 50.0, width: 48.2, height: 24.0 },  // Round 5
-  { left: 50.7, top: 50.0, width: 48.2, height: 24.0 }, // Round 6
-  { left: 1.1, top: 74.8, width: 48.2, height: 24.0 },  // Round 7
-  { left: 50.7, top: 74.8, width: 48.2, height: 24.0 }, // Round 8
+const MEASURED_CARDS: CardLayout[] = [
+  { // Card 0
+    nameBox: { left: 11.943, top: 0.201, width: 26.351, height: 2.482 },
+    rows: [
+      { clue: { left: 1.439, top: 7.378, width: 37.697, height: 2.75 }, iBox: { left: 40.095, top: 7.378, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 7.445, width: 3.128, height: 2.683 } },
+      { clue: { left: 1.439, top: 11.469, width: 37.697, height: 2.75 }, iBox: { left: 40.095, top: 11.469, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 11.469, width: 3.128, height: 2.75 } },
+      { clue: { left: 1.439, top: 15.56, width: 37.697, height: 2.75 }, iBox: { left: 40.095, top: 15.56, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 15.56, width: 3.128, height: 2.75 } },
+    ],
+    tokens: [
+      { left: 39.431, top: 20.255, width: 3.886, height: 2.683 },
+      { left: 44.739, top: 20.255, width: 3.033, height: 2.683 },
+    ],
+  },
+  { // Card 1
+    nameBox: { left: 60.948, top: 0.201, width: 28.531, height: 2.482 },
+    rows: [
+      { clue: { left: 49.523, top: 7.445, width: 38.725, height: 2.75 }, iBox: { left: 89.289, top: 7.445, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 7.445, width: 3.886, height: 2.75 } },
+      { clue: { left: 49.523, top: 11.469, width: 38.725, height: 2.75 }, iBox: { left: 89.289, top: 11.469, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 11.469, width: 3.886, height: 2.75 } },
+      { clue: { left: 49.523, top: 15.56, width: 38.725, height: 2.75 }, iBox: { left: 89.289, top: 15.56, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 15.56, width: 3.886, height: 2.75 } },
+    ],
+    tokens: [
+      { left: 88.72, top: 20.389, width: 3.886, height: 2.75 },
+      { left: 93.839, top: 20.389, width: 3.886, height: 2.75 },
+    ],
+  },
+  { // Card 2
+    nameBox: { left: 11.943, top: 25.151, width: 26.351, height: 2.482 },
+    rows: [
+      { clue: { left: 1.439, top: 32.193, width: 37.697, height: 2.75 }, iBox: { left: 40.095, top: 32.193, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 32.193, width: 3.128, height: 2.75 } },
+      { clue: { left: 1.439, top: 36.284, width: 37.697, height: 2.683 }, iBox: { left: 40.095, top: 36.284, width: 3.791, height: 2.683 }, rBox: { left: 44.645, top: 36.284, width: 3.128, height: 2.683 } },
+      { clue: { left: 1.439, top: 40.309, width: 37.697, height: 2.75 }, iBox: { left: 40.095, top: 40.309, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 40.309, width: 3.128, height: 2.75 } },
+    ],
+    tokens: [
+      { left: 39.431, top: 45.137, width: 3.886, height: 2.683 },
+      { left: 44.645, top: 45.137, width: 3.128, height: 2.683 },
+    ],
+  },
+  { // Card 3
+    nameBox: { left: 60.948, top: 25.151, width: 28.531, height: 2.482 },
+    rows: [
+      { clue: { left: 49.523, top: 32.193, width: 38.725, height: 2.75 }, iBox: { left: 89.289, top: 32.193, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 32.193, width: 3.886, height: 2.75 } },
+      { clue: { left: 49.523, top: 36.217, width: 38.725, height: 2.683 }, iBox: { left: 89.289, top: 36.217, width: 3.791, height: 2.683 }, rBox: { left: 93.839, top: 36.217, width: 3.886, height: 2.75 } },
+      { clue: { left: 49.523, top: 40.241, width: 38.725, height: 2.75 }, iBox: { left: 89.289, top: 40.241, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 40.241, width: 3.886, height: 2.75 } },
+    ],
+    tokens: [
+      { left: 88.72, top: 45.003, width: 3.886, height: 2.75 },
+      { left: 93.839, top: 45.003, width: 3.886, height: 2.75 },
+    ],
+  },
+  { // Card 4
+    nameBox: { left: 11.943, top: 50.101, width: 26.351, height: 2.482 },
+    rows: [
+      { clue: { left: 1.439, top: 57.143, width: 37.602, height: 2.75 }, iBox: { left: 40, top: 57.143, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 57.143, width: 3.128, height: 2.75 } },
+      { clue: { left: 1.439, top: 61.234, width: 37.602, height: 2.75 }, iBox: { left: 40, top: 61.234, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 61.234, width: 3.128, height: 2.683 } },
+      { clue: { left: 1.439, top: 65.325, width: 37.507, height: 2.75 }, iBox: { left: 39.905, top: 65.325, width: 3.886, height: 2.75 }, rBox: { left: 44.645, top: 65.325, width: 3.128, height: 2.75 } },
+    ],
+    tokens: [
+      { left: 39.431, top: 70.02, width: 3.886, height: 2.683 },
+      { left: 44.645, top: 70.02, width: 3.128, height: 2.683 },
+    ],
+  },
+  { // Card 5
+    nameBox: { left: 60.948, top: 50.101, width: 28.531, height: 2.482 },
+    rows: [
+      { clue: { left: 49.523, top: 57.21, width: 38.63, height: 2.75 }, iBox: { left: 89.194, top: 57.21, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 57.21, width: 3.886, height: 2.75 } },
+      { clue: { left: 49.523, top: 61.234, width: 38.63, height: 2.75 }, iBox: { left: 89.194, top: 61.234, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 61.234, width: 3.886, height: 2.75 } },
+      { clue: { left: 49.523, top: 65.325, width: 38.536, height: 2.75 }, iBox: { left: 89.1, top: 65.325, width: 3.886, height: 2.75 }, rBox: { left: 93.839, top: 65.325, width: 3.886, height: 2.75 } },
+    ],
+    tokens: [
+      { left: 88.72, top: 70.087, width: 3.791, height: 2.75 },
+      { left: 93.839, top: 70.087, width: 3.791, height: 2.75 },
+    ],
+  },
+  { // Card 6
+    nameBox: { left: 11.943, top: 75.05, width: 26.351, height: 2.482 },
+    rows: [
+      { clue: { left: 1.439, top: 82.16, width: 37.602, height: 2.75 }, iBox: { left: 40, top: 82.16, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 82.16, width: 3.128, height: 2.75 } },
+      { clue: { left: 1.439, top: 86.251, width: 37.602, height: 2.683 }, iBox: { left: 40, top: 86.251, width: 3.791, height: 2.683 }, rBox: { left: 44.645, top: 86.251, width: 3.128, height: 2.683 } },
+      { clue: { left: 1.439, top: 90.275, width: 37.602, height: 2.75 }, iBox: { left: 40, top: 90.275, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 90.275, width: 3.128, height: 2.75 } },
+    ],
+    tokens: [
+      { left: 39.431, top: 95.104, width: 3.886, height: 2.683 },
+      { left: 44.645, top: 95.104, width: 3.128, height: 2.683 },
+    ],
+  },
+  { // Card 7
+    nameBox: { left: 60.948, top: 75.05, width: 28.531, height: 2.482 },
+    rows: [
+      { clue: { left: 49.523, top: 82.16, width: 38.536, height: 2.75 }, iBox: { left: 89.1, top: 82.16, width: 3.886, height: 2.75 }, rBox: { left: 93.839, top: 82.16, width: 3.886, height: 2.75 } },
+      { clue: { left: 49.523, top: 86.184, width: 38.63, height: 2.75 }, iBox: { left: 89.194, top: 86.184, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 86.184, width: 3.791, height: 2.75 } },
+      { clue: { left: 49.523, top: 90.208, width: 38.63, height: 2.75 }, iBox: { left: 89.194, top: 90.208, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 90.208, width: 3.886, height: 2.75 } },
+    ],
+    tokens: [
+      { left: 88.72, top: 94.97, width: 3.791, height: 2.75 },
+      { left: 93.839, top: 94.97, width: 3.886, height: 2.75 },
+    ],
+  },
 ];
+// ─── End of auto-generated positions ───
 
-// Internal card layout (% of card)
-// Measured from the Scheda image: each card ~509×358 px
-const L = {
-  // Player name — in header banner between robots
-  name: { left: 28, top: 1, width: 50, height: 9 },
-  // 3 clue rows — the gray bars where clue words go
-  rows: [
-    { top: 24 },   // row 1
-    { top: 38 },   // row 2
-    { top: 52 },   // row 3
-  ],
-  rowH: 11,
-  // Clue text area (the wide gray bar)
-  clue: { left: 2, width: 69 },
-  // I squares — center-aligned under "I" header
-  iBox: { left: 74.5, width: 7.5 },
-  // R squares — center-aligned under "R" header  
-  rBox: { left: 85.5, width: 7.5 },
-  // Token row
-  tokenTop: 78,
-  tokenH: 13,
-  tokL: { left: 74, width: 8.5 },
-  tokR: { left: 85, width: 8.5 },
-};
+// Debug mode: set to true to show red outlines on all overlays
+const DEBUG_OUTLINES = false;
+const debugStyle = DEBUG_OUTLINES ? { outline: '1px solid red' } : {};
+
+/** Inline style helper for an absolutely-positioned overlay element */
+function absStyle(rect: Rect, extra?: React.CSSProperties): React.CSSProperties {
+  return {
+    position: 'absolute',
+    left: `${rect.left}%`,
+    top: `${rect.top}%`,
+    width: `${rect.width}%`,
+    height: `${rect.height}%`,
+    ...debugStyle,
+    ...extra,
+  };
+}
 
 export default function DecryptoScoreSheet({ state, team }: Props) {
   const [expanded, setExpanded] = useState(false);
@@ -80,7 +156,7 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
 
   const renderCardOverlay = (cardIdx: number) => {
     const record: RoundRecord | undefined = state.rounds[startIdx + cardIdx];
-    const card = CARDS[cardIdx];
+    const layout = MEASURED_CARDS[cardIdx];
     if (!record) return null;
 
     // Sort clues ascending by code number, keeping original index for I mapping
@@ -92,92 +168,74 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
     const guessValues = isActiveRound ? record.teamGuess : record.opponentGuess;
 
     return (
-      <div key={cardIdx} style={{
-        position: 'absolute',
-        left: `${card.left}%`, top: `${card.top}%`,
-        width: `${card.width}%`, height: `${card.height}%`,
-      }}>
+      <React.Fragment key={cardIdx}>
         {/* Player name */}
-        <div style={{
-          position: 'absolute',
-          left: `${L.name.left}%`, top: `${L.name.top}%`,
-          width: `${L.name.width}%`, height: `${L.name.height}%`,
+        <div style={absStyle(layout.nameBox, {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 'clamp(0.3rem, 0.9vw, 0.6rem)',
+          fontSize: '0.9cqw',
           fontWeight: 700, color: '#222',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>
+        })}>
           {record.activePlayerName}
         </div>
 
         {/* 3 clue rows */}
-        {sortedEntries.map((entry, i) => (
-          <React.Fragment key={i}>
-            {/* Clue word — black text */}
-            <div style={{
-              position: 'absolute',
-              left: `${L.clue.left}%`, top: `${L.rows[i].top}%`,
-              width: `${L.clue.width}%`, height: `${L.rowH}%`,
-              display: 'flex', alignItems: 'center',
-              paddingLeft: '3%',
-              fontSize: 'clamp(0.25rem, 0.85vw, 0.55rem)',
-              color: '#111', fontWeight: 600,
-              overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-            }}>
-              <strong style={{ marginRight: '3px', flexShrink: 0 }}>{entry.num}.</strong>
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.clue}</span>
-            </div>
+        {sortedEntries.map((entry, i) => {
+          const row = layout.rows[i];
+          if (!row) return null;
+          return (
+            <React.Fragment key={`${cardIdx}-row-${i}`}>
+              {/* Clue word — black text */}
+              <div style={absStyle(row.clue, {
+                display: 'flex', alignItems: 'center',
+                paddingLeft: '0.5%',
+                fontSize: '0.75cqw',
+                color: '#111', fontWeight: 600,
+                overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+              })}>
+                <strong style={{ marginRight: '2px', flexShrink: 0 }}>{entry.num}.</strong>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.clue}</span>
+              </div>
 
-            {/* I box — black number, centered in square */}
-            <div style={{
-              position: 'absolute',
-              left: `${L.iBox.left}%`, top: `${L.rows[i].top}%`,
-              width: `${L.iBox.width}%`, height: `${L.rowH}%`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 'clamp(0.35rem, 1vw, 0.7rem)',
-              fontWeight: 800, fontFamily: 'monospace',
-              color: '#111',
-            }}>
-              {guessValues[entry.origIdx] ?? ''}
-            </div>
+              {/* I box — black number, centered */}
+              <div style={absStyle(row.iBox, {
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1cqw',
+                fontWeight: 800, fontFamily: 'monospace',
+                color: '#111',
+              })}>
+                {guessValues[entry.origIdx] ?? ''}
+              </div>
 
-            {/* R box — green number, centered in square */}
-            <div style={{
-              position: 'absolute',
-              left: `${L.rBox.left}%`, top: `${L.rows[i].top}%`,
-              width: `${L.rBox.width}%`, height: `${L.rowH}%`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 'clamp(0.35rem, 1vw, 0.7rem)',
-              fontWeight: 800, fontFamily: 'monospace',
-              color: '#16a34a',
-            }}>
-              {entry.num}
-            </div>
-          </React.Fragment>
-        ))}
+              {/* R box — green number, centered */}
+              <div style={absStyle(row.rBox, {
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1cqw',
+                fontWeight: 800, fontFamily: 'monospace',
+                color: '#16a34a',
+              })}>
+                {entry.num}
+              </div>
+            </React.Fragment>
+          );
+        })}
 
         {/* Token circles */}
-        {record.miscommunication && isActiveRound && (
-          <div style={{
-            position: 'absolute',
-            left: `${L.tokL.left}%`, top: `${L.tokenTop}%`,
-            width: `${L.tokL.width}%`, height: `${L.tokenH}%`,
+        {record.miscommunication && isActiveRound && layout.tokens[0] && (
+          <div style={absStyle(layout.tokens[0], {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <img src={TOKEN_MISC} alt="Err" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
+          })}>
+            <img src={TOKEN_MISC} alt="Err" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
           </div>
         )}
-        {record.interception && !isActiveRound && (
-          <div style={{
-            position: 'absolute',
-            left: `${L.tokR.left}%`, top: `${L.tokenTop}%`,
-            width: `${L.tokR.width}%`, height: `${L.tokenH}%`,
+        {record.interception && !isActiveRound && layout.tokens[1] && (
+          <div style={absStyle(layout.tokens[1], {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <img src={TOKEN_INT} alt="Int" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
+          })}>
+            <img src={TOKEN_INT} alt="Int" style={{ width: '80%', height: '80%', objectFit: 'contain' }} />
           </div>
         )}
-      </div>
+      </React.Fragment>
     );
   };
 
@@ -201,6 +259,8 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
 
       <div style={{
         position: 'relative',
+        width: '100%',
+        containerType: 'inline-size' as React.CSSProperties['containerType'],
         maxHeight: expanded ? '90vh' : '500px',
         overflow: 'auto',
         borderRadius: '8px',
@@ -208,10 +268,9 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
       }}>
         <img src={sheetImg}
           alt={`Scheda ${team === 'bianca' ? 'Bianca' : 'Nera'}`}
-          style={{ width: '100%', display: 'block' }} />
-        <div style={{ position: 'absolute', inset: 0 }}>
-          {Array.from({ length: 8 }).map((_, i) => renderCardOverlay(i))}
-        </div>
+          style={{ width: '100%', height: 'auto', display: 'block' }} />
+        {/* All overlays use absolute positioning within the same container */}
+        {Array.from({ length: 8 }).map((_, i) => renderCardOverlay(i))}
       </div>
     </div>
   );
