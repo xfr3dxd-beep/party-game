@@ -54,8 +54,8 @@ export default function DecryptoPage() {
 
   const showBanner = !!roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';
 
-  // Determine if we need the game board wrapper
-  const inGame = ['clue-giving', 'guessing', 'round-result'].includes(currentPhase);
+  // Determine if we need the game board wrapper (Paroliere + Scheda visible at all times)
+  const inGame = ['choose-starter', 'clue-giving', 'guessing', 'round-result', 'final-guess', 'game-over'].includes(currentPhase);
 
   return (
     <Layout>
@@ -85,17 +85,17 @@ export default function DecryptoPage() {
           />
         )}
 
-        {/* CHOOSE STARTER */}
-        {currentPhase === 'choose-starter' && (
-          <DecryptoChooseStarter
-            isHost={isHost}
-            onChoose={(team) => act('choose-starter', { team })}
-          />
-        )}
-
-        {/* IN-GAME PHASES (wrapped in game board) */}
+        {/* ALL IN-GAME PHASES — wrapped in game board with Paroliere + Scheda */}
         {inGame && myTeam && (
           <DecryptoGameBoard state={state} myTeam={myTeam}>
+            {/* Choose starter */}
+            {currentPhase === 'choose-starter' && (
+              <DecryptoChooseStarter
+                isHost={isHost}
+                onChoose={(team) => act('choose-starter', { team })}
+              />
+            )}
+
             {/* Clue giving */}
             {currentPhase === 'clue-giving' && (
               <DecryptoClueGiving
@@ -123,20 +123,20 @@ export default function DecryptoPage() {
                 onNextRound={() => act('next-round')}
               />
             )}
-          </DecryptoGameBoard>
-        )}
 
-        {/* FINAL GUESS & GAME OVER */}
-        {(currentPhase === 'final-guess' || currentPhase === 'game-over') && (
-          <DecryptoResult
-            state={state}
-            playerId={playerId}
-            isHost={isHost}
-            onFinalGuess={(words) => act('final-guess', { words })}
-            onSkipFinalGuess={() => act('skip-final-guess')}
-            onNewGame={() => act('new-game')}
-            onGoHome={() => { disconnect(); navigate('/'); }}
-          />
+            {/* Final guess & Game over */}
+            {(currentPhase === 'final-guess' || currentPhase === 'game-over') && (
+              <DecryptoResult
+                state={state}
+                playerId={playerId}
+                isHost={isHost}
+                onFinalGuess={(words) => act('final-guess', { words })}
+                onSkipFinalGuess={() => act('skip-final-guess')}
+                onNewGame={() => act('new-game')}
+                onGoHome={() => { disconnect(); navigate('/'); }}
+              />
+            )}
+          </DecryptoGameBoard>
         )}
       </div>
     </Layout>

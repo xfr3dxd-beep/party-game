@@ -343,6 +343,79 @@ export function useDecryptoGame({
     });
   }, [isHost, syncState]);
 
+  // ---- AUTO-SKIP: if 90s timer expires during clue-giving, skip this round ----
+  useEffect(() => {
+    if (!isHost) return;
+    const s = stateRef.current;
+    if (s.phase !== 'clue-giving' || !s.timerStartedAt) return;
+
+    const elapsed = Date.now() - s.timerStartedAt;
+    const remaining = 90000 - elapsed;
+
+    if (remaining <= 0) {
+      // Already expired — skip immediately
+      // Re-use handleNextRound logic inline to avoid stale closure
+      const cur = stateRef.current;
+      if (cur.phase !== 'clue-giving') return;
+      const nextTeam = getOpponent(cur.activeTeam);
+      const usedCodes = nextTeam === 'bianca' ? cur.usedBiancaCodes : cur.usedNeraCodes;
+      const drawn = drawCode(usedCodes);
+      if (!drawn) return;
+      let bTurn = cur.biancaTurnIndex;
+      let nTurn = cur.neraTurnIndex;
+      if (nextTeam === 'bianca') bTurn++; else nTurn++;
+      const order = nextTeam === 'bianca' ? cur.biancaPlayerOrder : cur.neraPlayerOrder;
+      const idx = nextTeam === 'bianca' ? bTurn : nTurn;
+      syncState({
+        ...cur,
+        phase: 'clue-giving',
+        roundNumber: cur.roundNumber + 1,
+        activeTeam: nextTeam,
+        activePlayerId: order[idx % order.length],
+        currentCode: drawn.code, currentCodeStr: drawn.codeStr,
+        clues: [], cluesSubmitted: false,
+        teamGuess: [], opponentGuess: [],
+        teamGuessSubmitted: false, opponentGuessSubmitted: false,
+        usedBiancaCodes: nextTeam === 'bianca' ? [...cur.usedBiancaCodes, drawn.codeStr] : cur.usedBiancaCodes,
+        usedNeraCodes: nextTeam === 'nera' ? [...cur.usedNeraCodes, drawn.codeStr] : cur.usedNeraCodes,
+        biancaTurnIndex: bTurn, neraTurnIndex: nTurn,
+        timerStartedAt: Date.now(),
+      });
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const cur = stateRef.current;
+      if (cur.phase !== 'clue-giving' || cur.cluesSubmitted) return;
+      const nextTeam = getOpponent(cur.activeTeam);
+      const usedCodes = nextTeam === 'bianca' ? cur.usedBiancaCodes : cur.usedNeraCodes;
+      const drawn = drawCode(usedCodes);
+      if (!drawn) return;
+      let bTurn = cur.biancaTurnIndex;
+      let nTurn = cur.neraTurnIndex;
+      if (nextTeam === 'bianca') bTurn++; else nTurn++;
+      const order = nextTeam === 'bianca' ? cur.biancaPlayerOrder : cur.neraPlayerOrder;
+      const idx = nextTeam === 'bianca' ? bTurn : nTurn;
+      syncState({
+        ...cur,
+        phase: 'clue-giving',
+        roundNumber: cur.roundNumber + 1,
+        activeTeam: nextTeam,
+        activePlayerId: order[idx % order.length],
+        currentCode: drawn.code, currentCodeStr: drawn.codeStr,
+        clues: [], cluesSubmitted: false,
+        teamGuess: [], opponentGuess: [],
+        teamGuessSubmitted: false, opponentGuessSubmitted: false,
+        usedBiancaCodes: nextTeam === 'bianca' ? [...cur.usedBiancaCodes, drawn.codeStr] : cur.usedBiancaCodes,
+        usedNeraCodes: nextTeam === 'nera' ? [...cur.usedNeraCodes, drawn.codeStr] : cur.usedNeraCodes,
+        biancaTurnIndex: bTurn, neraTurnIndex: nTurn,
+        timerStartedAt: Date.now(),
+      });
+    }, remaining);
+
+    return () => clearTimeout(timeout);
+  }, [isHost, state.phase, state.timerStartedAt, syncState]);
+
   // ---- SUBMIT FINAL GUESS ----
   const handleFinalGuess = useCallback((words: string[]) => {
     if (!isHost) return;

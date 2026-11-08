@@ -34,10 +34,12 @@ export default function DecryptoClueGiving({ state, playerId, onSubmitClues }: P
           </p>
         </div>
 
-        {/* Code card */}
-        <div className="glass-panel p-md mb-md" style={{ maxWidth: '350px', margin: '0 auto 1rem', textAlign: 'center' }}>
-          <p className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '0.5rem' }}>Il tuo codice segreto:</p>
-          <img src={codeImgPath} alt="Codice" style={{ maxWidth: '280px', width: '100%', borderRadius: '8px' }} />
+        {/* Code card — centered */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+          <div className="glass-panel p-md" style={{ textAlign: 'center', display: 'inline-block' }}>
+            <p className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '0.5rem' }}>Il tuo codice segreto:</p>
+            <img src={codeImgPath} alt="Codice" style={{ width: '220px', maxWidth: '100%', borderRadius: '8px', display: 'block', margin: '0 auto' }} />
+          </div>
         </div>
 
         {/* Words display */}

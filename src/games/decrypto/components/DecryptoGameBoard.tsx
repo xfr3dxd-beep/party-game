@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { DecryptoState, DecryptoTeam } from '../types';
 import Hourglass from './Hourglass';
 import DecryptoScoreSheet from './DecryptoScoreSheet';
@@ -19,21 +19,17 @@ const TOKEN_MISC = '/Decrypto/Token/Token_Errata_Comunicazione.png';
 const TOKEN_INT = '/Decrypto/Token/Token_Intercettazione.png';
 
 export default function DecryptoGameBoard({ state, myTeam, children }: Props) {
-  const [showSheet, setShowSheet] = useState(false);
-  const [sheetFullscreen, setSheetFullscreen] = useState(false);
   const teamWords = myTeam === 'bianca' ? state.biancaWords : state.neraWords;
-  const teamMisc = myTeam === 'bianca' ? state.biancaMiscommunications : state.neraMiscommunications;
-  const teamInt = myTeam === 'bianca' ? state.biancaInterceptions : state.neraInterceptions;
 
   return (
     <div>
-      {/* 1. Word board at top — 4 red boxes in a horizontal row */}
+      {/* 1. Word board at top — 4 red boxes in horizontal row */}
       <div style={{ maxWidth: '700px', margin: '0 auto 1rem', position: 'relative' }}>
         <img src={PAROLIERE[myTeam]} alt="Paroliere" style={{ width: '100%', borderRadius: '12px', display: 'block' }} />
-        {/* Overlay words on the 4 red boxes — horizontal row in the upper portion */}
+        {/* Overlay words centered in each of the 4 red display boxes */}
         <div style={{
           position: 'absolute',
-          top: '7%', left: '3.5%', right: '9%', height: '52%',
+          top: '5%', left: '3%', right: '9%', height: '56%',
           display: 'flex',
           alignItems: 'center',
         }}>
@@ -41,10 +37,15 @@ export default function DecryptoGameBoard({ state, myTeam, children }: Props) {
             <div key={i} style={{
               flex: 1,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 900, fontSize: 'clamp(0.6rem, 2vw, 1.1rem)',
-              color: '#fff', textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.7)',
-              textAlign: 'center', lineHeight: 1.2,
-              padding: '0 2%',
+              fontWeight: 900,
+              fontSize: 'clamp(0.45rem, 1.5vw, 0.95rem)',
+              color: '#ff3333',
+              textShadow: '0 0 8px rgba(255,50,50,0.8), 0 0 16px rgba(255,0,0,0.5)',
+              textAlign: 'center', lineHeight: 1.15,
+              padding: '0 4%',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              maxHeight: '100%',
             }}>
               {w}
             </div>
@@ -67,9 +68,9 @@ export default function DecryptoGameBoard({ state, myTeam, children }: Props) {
           </div>
         </div>
 
-        {/* Center: Hourglass */}
+        {/* Center: Hourglass — 90 seconds, only during clue-giving */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <Hourglass durationSeconds={40} startedAt={state.timerStartedAt} />
+          <Hourglass durationSeconds={90} startedAt={state.timerStartedAt} />
           <div className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>
             Round {state.roundNumber} — {state.activeTeam === 'bianca' ? '⬜ Bianca' : '⬛ Nera'}
           </div>
@@ -89,35 +90,12 @@ export default function DecryptoGameBoard({ state, myTeam, children }: Props) {
         </div>
       </div>
 
-      {/* Score sheet toggle button */}
-      <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-        <button className="btn btn-secondary" style={{ fontSize: '0.85rem', padding: '0.4rem 1rem' }}
-          onClick={() => setShowSheet(!showSheet)}>
-          📋 {showSheet ? 'Nascondi' : 'Mostra'} Scheda
-        </button>
+      {/* 3. Scheda Compilativa — ALWAYS visible for all players */}
+      <div style={{ maxWidth: '600px', margin: '0 auto 1rem' }}>
+        <DecryptoScoreSheet state={state} team={myTeam} />
       </div>
 
-      {/* Score sheet overlay */}
-      {showSheet && !sheetFullscreen && (
-        <div style={{ maxWidth: '600px', margin: '0 auto 1rem' }}>
-          <DecryptoScoreSheet state={state} team={myTeam} />
-        </div>
-      )}
-
-      {/* Score sheet fullscreen modal */}
-      {showSheet && sheetFullscreen && (
-        <div className="mind-shuriken-modal" onClick={() => setSheetFullscreen(false)}>
-          <div className="mind-shuriken-content" style={{ maxWidth: '700px', width: '95%' }} onClick={e => e.stopPropagation()}>
-            <DecryptoScoreSheet state={state} team={myTeam} />
-            <button className="btn btn-secondary" style={{ width: '100%', marginTop: '0.5rem' }}
-              onClick={() => setSheetFullscreen(false)}>
-              Chiudi
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 3. Phase-specific content */}
+      {/* 4. Phase-specific content */}
       <div style={{ marginTop: '1rem' }}>
         {children}
       </div>
