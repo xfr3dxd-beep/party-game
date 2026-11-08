@@ -78,10 +78,12 @@ export default function WavelengthScoring({ state, isHost, onNextRound }: Wavele
         {/* Guess markers */}
         {state.guesses.map((g, i) => {
           const rad = (g.angle) * Math.PI / 180;
-          // Position on the arc: 0° = left, 180° = right
-          const radius = 0.38; // fraction of container width
-          const x = CX - radius * Math.cos(rad);
-          const y = CY - radius * Math.sin(rad);
+          // Arc radius as fraction of image width (calibrated to arc image 1699×926)
+          const RADIUS_W = 0.412;
+          // Aspect-ratio correction: top% is relative to height, so scale Y
+          const ASPECT = 1699 / 926;
+          const x = CX - RADIUS_W * Math.cos(rad);
+          const y = CY - RADIUS_W * ASPECT * Math.sin(rad);
           const player = state.players.find(p => p.id === g.playerId);
           return (
             <div key={g.playerId} style={{
