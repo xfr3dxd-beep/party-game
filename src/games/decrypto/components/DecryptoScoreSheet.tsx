@@ -32,7 +32,7 @@ interface CardLayout {
 
 const MEASURED_CARDS: CardLayout[] = [
   { // Card 0
-    nameBox: { left: 11.943, top: 0.201, width: 26.351, height: 2.482 },
+    nameBox: { left: 22.370, top: 1.677, width: 18.389, height: 2.414 },
     rows: [
       { clue: { left: 1.439, top: 7.378, width: 37.697, height: 2.75 }, iBox: { left: 40.095, top: 7.378, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 7.445, width: 3.128, height: 2.683 } },
       { clue: { left: 1.439, top: 11.469, width: 37.697, height: 2.75 }, iBox: { left: 40.095, top: 11.469, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 11.469, width: 3.128, height: 2.75 } },
@@ -44,7 +44,7 @@ const MEASURED_CARDS: CardLayout[] = [
     ],
   },
   { // Card 1
-    nameBox: { left: 60.948, top: 0.201, width: 28.531, height: 2.482 },
+    nameBox: { left: 71.611, top: 1.677, width: 18.389, height: 2.414 },
     rows: [
       { clue: { left: 49.523, top: 7.445, width: 38.725, height: 2.75 }, iBox: { left: 89.289, top: 7.445, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 7.445, width: 3.886, height: 2.75 } },
       { clue: { left: 49.523, top: 11.469, width: 38.725, height: 2.75 }, iBox: { left: 89.289, top: 11.469, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 11.469, width: 3.886, height: 2.75 } },
@@ -56,7 +56,7 @@ const MEASURED_CARDS: CardLayout[] = [
     ],
   },
   { // Card 2
-    nameBox: { left: 11.943, top: 25.151, width: 26.351, height: 2.482 },
+    nameBox: { left: 22.370, top: 26.526, width: 18.389, height: 2.414 },
     rows: [
       { clue: { left: 1.439, top: 32.193, width: 37.697, height: 2.75 }, iBox: { left: 40.095, top: 32.193, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 32.193, width: 3.128, height: 2.75 } },
       { clue: { left: 1.439, top: 36.284, width: 37.697, height: 2.683 }, iBox: { left: 40.095, top: 36.284, width: 3.791, height: 2.683 }, rBox: { left: 44.645, top: 36.284, width: 3.128, height: 2.683 } },
@@ -68,7 +68,7 @@ const MEASURED_CARDS: CardLayout[] = [
     ],
   },
   { // Card 3
-    nameBox: { left: 60.948, top: 25.151, width: 28.531, height: 2.482 },
+    nameBox: { left: 71.611, top: 26.492, width: 18.389, height: 2.414 },
     rows: [
       { clue: { left: 49.523, top: 32.193, width: 38.725, height: 2.75 }, iBox: { left: 89.289, top: 32.193, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 32.193, width: 3.886, height: 2.75 } },
       { clue: { left: 49.523, top: 36.217, width: 38.725, height: 2.683 }, iBox: { left: 89.289, top: 36.217, width: 3.791, height: 2.683 }, rBox: { left: 93.839, top: 36.217, width: 3.886, height: 2.75 } },
@@ -80,7 +80,7 @@ const MEASURED_CARDS: CardLayout[] = [
     ],
   },
   { // Card 4
-    nameBox: { left: 11.943, top: 50.101, width: 26.351, height: 2.482 },
+    nameBox: { left: 22.227, top: 51.375, width: 18.389, height: 2.414 },
     rows: [
       { clue: { left: 1.439, top: 57.143, width: 37.602, height: 2.75 }, iBox: { left: 40, top: 57.143, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 57.143, width: 3.128, height: 2.75 } },
       { clue: { left: 1.439, top: 61.234, width: 37.602, height: 2.75 }, iBox: { left: 40, top: 61.234, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 61.234, width: 3.128, height: 2.683 } },
@@ -92,7 +92,7 @@ const MEASURED_CARDS: CardLayout[] = [
     ],
   },
   { // Card 5
-    nameBox: { left: 60.948, top: 50.101, width: 28.531, height: 2.482 },
+    nameBox: { left: 71.469, top: 51.408, width: 18.389, height: 2.414 },
     rows: [
       { clue: { left: 49.523, top: 57.21, width: 38.63, height: 2.75 }, iBox: { left: 89.194, top: 57.21, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 57.21, width: 3.886, height: 2.75 } },
       { clue: { left: 49.523, top: 61.234, width: 38.63, height: 2.75 }, iBox: { left: 89.194, top: 61.234, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 61.234, width: 3.886, height: 2.75 } },
@@ -104,7 +104,7 @@ const MEASURED_CARDS: CardLayout[] = [
     ],
   },
   { // Card 6
-    nameBox: { left: 11.943, top: 75.05, width: 26.351, height: 2.482 },
+    nameBox: { left: 22.227, top: 76.392, width: 18.389, height: 2.414 },
     rows: [
       { clue: { left: 1.439, top: 82.16, width: 37.602, height: 2.75 }, iBox: { left: 40, top: 82.16, width: 3.791, height: 2.75 }, rBox: { left: 44.645, top: 82.16, width: 3.128, height: 2.75 } },
       { clue: { left: 1.439, top: 86.251, width: 37.602, height: 2.683 }, iBox: { left: 40, top: 86.251, width: 3.791, height: 2.683 }, rBox: { left: 44.645, top: 86.251, width: 3.128, height: 2.683 } },
@@ -116,7 +116,7 @@ const MEASURED_CARDS: CardLayout[] = [
     ],
   },
   { // Card 7
-    nameBox: { left: 60.948, top: 75.05, width: 28.531, height: 2.482 },
+    nameBox: { left: 71.469, top: 76.392, width: 18.389, height: 2.414 },
     rows: [
       { clue: { left: 49.523, top: 82.16, width: 38.536, height: 2.75 }, iBox: { left: 89.1, top: 82.16, width: 3.886, height: 2.75 }, rBox: { left: 93.839, top: 82.16, width: 3.886, height: 2.75 } },
       { clue: { left: 49.523, top: 86.184, width: 38.63, height: 2.75 }, iBox: { left: 89.194, top: 86.184, width: 3.791, height: 2.75 }, rBox: { left: 93.839, top: 86.184, width: 3.791, height: 2.75 } },
@@ -129,6 +129,20 @@ const MEASURED_CARDS: CardLayout[] = [
   },
 ];
 // ─── End of auto-generated positions ───
+
+// ─── Dimensioni testo (in cqw = % della larghezza della scheda) ───
+// Le righe sono alte ~3.9cqw: un font di ~2.2cqw occupa circa il 55-60% dell'altezza.
+const FONT_NAME = '2.1cqw';  // nome giocatore
+const FONT_CLUE = '2.2cqw';  // parola indizio
+const FONT_BOX  = '2.4cqw';  // numeri nelle caselle I / R
+
+// nameBox rimisurato (template matching sul campo bianco, mediana su bianca/nera e pagine 1-2).
+// ─── Colori del testo sulla scheda (cambia qui) ───
+const COLOR_NAME = '#000';   // nome giocatore (campo bianco)
+const COLOR_I = '#000';      // numeri nelle caselle I (bianche)
+const COLOR_R = '#16a34a';   // numeri nelle caselle R (verde)
+// Parole indizio: dipendono dallo sfondo delle righe (chiare sulla scheda bianca, scure sulla nera)
+const COLOR_CLUE: Record<DecryptoTeam, string> = { bianca: '#000', nera: '#f1f5f9' };
 
 // Debug mode: set to true to show red outlines on all overlays
 const DEBUG_OUTLINES = false;
@@ -172,8 +186,8 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
         {/* Player name */}
         <div style={absStyle(layout.nameBox, {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '0.9cqw',
-          fontWeight: 700, color: '#222',
+          fontSize: FONT_NAME,
+          fontWeight: 700, color: COLOR_NAME,
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         })}>
           {record.activePlayerName}
@@ -185,24 +199,26 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
           if (!row) return null;
           return (
             <React.Fragment key={`${cardIdx}-row-${i}`}>
-              {/* Clue word — black text */}
+              {/* Clue word — nero su scheda bianca, chiaro su scheda nera */}
               <div style={absStyle(row.clue, {
                 display: 'flex', alignItems: 'center',
-                paddingLeft: '0.5%',
-                fontSize: '0.75cqw',
-                color: '#111', fontWeight: 600,
+                paddingLeft: '1%',
+                fontSize: FONT_CLUE,
+                lineHeight: 1,
+                color: COLOR_CLUE[team], fontWeight: 600,
                 overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
               })}>
-                <strong style={{ marginRight: '2px', flexShrink: 0 }}>{entry.num}.</strong>
+                <strong style={{ marginRight: '0.4cqw', flexShrink: 0 }}>{entry.num}.</strong>
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{entry.clue}</span>
               </div>
 
               {/* I box — black number, centered */}
               <div style={absStyle(row.iBox, {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1cqw',
+                fontSize: FONT_BOX,
+                lineHeight: 1,
                 fontWeight: 800, fontFamily: 'monospace',
-                color: '#111',
+                color: COLOR_I,
               })}>
                 {guessValues[entry.origIdx] ?? ''}
               </div>
@@ -210,9 +226,10 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
               {/* R box — green number, centered */}
               <div style={absStyle(row.rBox, {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1cqw',
+                fontSize: FONT_BOX,
+                lineHeight: 1,
                 fontWeight: 800, fontFamily: 'monospace',
-                color: '#16a34a',
+                color: COLOR_R,
               })}>
                 {entry.num}
               </div>
@@ -257,20 +274,26 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
         </div>
       </div>
 
+      {/* Contenitore esterno: gestisce solo lo scroll */}
       <div style={{
-        position: 'relative',
         width: '100%',
-        containerType: 'inline-size' as React.CSSProperties['containerType'],
         maxHeight: expanded ? '90vh' : '500px',
         overflow: 'auto',
         borderRadius: '8px',
         border: '1px solid rgba(255,255,255,0.1)',
       }}>
-        <img src={sheetImg}
-          alt={`Scheda ${team === 'bianca' ? 'Bianca' : 'Nera'}`}
-          style={{ width: '100%', height: 'auto', display: 'block' }} />
-        {/* All overlays use absolute positioning within the same container */}
-        {Array.from({ length: 8 }).map((_, i) => renderCardOverlay(i))}
+        {/* Contenitore interno: alto quanto l'immagine intera. Le % degli overlay e le unità cqw
+            si riferiscono a QUESTO elemento, quindi restano allineate anche quando l'esterno scrolla. */}
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          containerType: 'inline-size' as React.CSSProperties['containerType'],
+        }}>
+          <img src={sheetImg}
+            alt={`Scheda ${team === 'bianca' ? 'Bianca' : 'Nera'}`}
+            style={{ width: '100%', height: 'auto', display: 'block' }} />
+          {Array.from({ length: 8 }).map((_, i) => renderCardOverlay(i))}
+        </div>
       </div>
     </div>
   );

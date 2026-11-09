@@ -128,10 +128,13 @@ export function useDecryptoGame({
     const s = stateRef.current;
     if (s.phase !== 'create' && s.phase !== 'lobby') return;
     if (players.length === 0) return;
-    const merged: DecryptoPlayer[] = players.map(rp => {
+    const humans: DecryptoPlayer[] = players.map(rp => {
       const existing = s.players.find(sp => sp.id === rp.id);
       return existing || { id: rp.id, name: rp.name, team: null };
     });
+    // DEV: i bot di test non sono nella presence, quindi vanno mantenuti a mano
+    const bots = s.players.filter(p => p.id.startsWith('bot-'));
+    const merged: DecryptoPlayer[] = [...humans, ...bots];
     const changed = merged.length !== s.players.length ||
       merged.some((p, i) => p.id !== s.players[i]?.id || p.name !== s.players[i]?.name);
     if (changed) {
@@ -141,6 +144,26 @@ export function useDecryptoGame({
       broadcast({ type: 'sync', payload: newState });
     }
   }, [isHost, players, broadcast]);
+
+  // ---- DEV ONLY: aggiunge bot per completare le squadre (2 vs 2) ----
+  // Esiste solo con `npm run dev`: in produzione (Vercel) import.meta.env.DEV è false.
+  const devAddBots = useCallback(() => {
+    if (!import.meta.env.DEV || !isHost) return;
+    const s = stateRef.current;
+    if (s.phase !== 'create' && s.phase !== 'lobby') return;
+    let b = s.players.filter(p => p.team === 'bianca').length;
+    let n = s.players.filter(p => p.team === 'nera').length;
+    let botCount = s.players.filter(p => p.id.startsWith('bot-')).length;
+    const added: DecryptoPlayer[] = [];
+    while (b < 2 || n < 2) {
+      const team: DecryptoTeam = b < 2 ? 'bianca' : 'nera';
+      if (team === 'bianca') b++; else n++;
+      botCount++;
+      added.push({ id: `bot-${Date.now()}-${botCount}`, name: `Bot ${botCount}`, team });
+    }
+    if (added.length === 0) return;
+    syncState({ ...s, players: [...s.players, ...added] });
+  }, [isHost, syncState]);
 
   // ---- JOIN TEAM ----
   const handleJoinTeam = useCallback((pid: string, team: DecryptoTeam) => {
@@ -385,5 +408,5 @@ export function useDecryptoGame({
       handleConfirmTurn, handleSubmitClues, handleSubmitTeamGuess, handleSubmitOpponentGuess,
       handleFinalGuess, handleSkipFinalGuess, handleNewGame]);
 
-  return { state, act, setState };
+  return { state, act, setState, devAddBots };
 }
