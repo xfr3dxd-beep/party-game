@@ -74,22 +74,6 @@ export default function DecryptoClueGiving({ state, playerId, onSubmitClues, onC
           </div>
         </div>
 
-        {/* Words display */}
-        <div className="glass-panel p-md mb-md" style={{ maxWidth: '500px', margin: '0 auto 1rem' }}>
-          <p className="text-muted" style={{ fontSize: '0.8rem', marginBottom: '0.5rem', textAlign: 'center' }}>Le tue parole segrete:</p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-            {teamWords.map((w, i) => (
-              <div key={i} style={{
-                background: 'rgba(239,68,68,0.15)', border: '2px solid rgba(239,68,68,0.4)',
-                borderRadius: '8px', padding: '0.5rem', textAlign: 'center', fontWeight: 700,
-              }}>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{i + 1}.</span>{' '}
-                <span style={{ fontSize: '1rem' }}>{w}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Clue inputs */}
         <div className="glass-panel p-lg" style={{ maxWidth: '450px', margin: '0 auto' }}>
           <p className="text-muted" style={{ fontSize: '0.85rem', marginBottom: '0.75rem', textAlign: 'center' }}>

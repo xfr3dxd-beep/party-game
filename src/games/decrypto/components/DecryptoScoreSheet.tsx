@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
+import { X } from 'lucide-react';
 import type { DecryptoState, DecryptoTeam, RoundRecord } from '../types';
 
 interface Props {
@@ -148,6 +150,15 @@ const COLOR_CLUE: Record<DecryptoTeam, string> = { bianca: '#000', nera: '#f1f5f
 const DEBUG_OUTLINES = false;
 const debugStyle = DEBUG_OUTLINES ? { outline: '1px solid red' } : {};
 
+// ─── Dimensione della scheda nell'overlay ───
+// A zoom 100% la scheda è larga quanto lo schermo (max 1000px) ma MAI meno di SHEET_MIN_PX:
+// su telefono è quindi più larga dello schermo e si scorre (anche in orizzontale) invece di rimpicciolire il testo.
+// Con i pulsanti +/− o il pizzico a due dita si ingrandisce ancora.
+const SHEET_MIN_PX = 640;
+const SHEET_MAX_PX = 1000;
+const ZOOM_STEPS = [0.75, 1, 1.25, 1.5, 2];
+const DEFAULT_ZOOM_IDX = 0;
+
 /** Inline style helper for an absolutely-positioned overlay element */
 function absStyle(rect: Rect, extra?: React.CSSProperties): React.CSSProperties {
   return {
@@ -162,8 +173,55 @@ function absStyle(rect: Rect, extra?: React.CSSProperties): React.CSSProperties 
 }
 
 export default function DecryptoScoreSheet({ state, team }: Props) {
-  const [expanded, setExpanded] = useState(false);
+  const [open, setOpen] = useState(false);
   const [page, setPage] = useState<1 | 2>(1);
+  const [zoomIdx, setZoomIdx] = useState(DEFAULT_ZOOM_IDX);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const zoom = ZOOM_STEPS[zoomIdx];
+
+  // Alla apertura mostra la pagina del round più recente (R.1-8 oppure R.9-16)
+  const openSheet = () => {
+    setPage(state.rounds.length > 8 ? 2 : 1);
+    setZoomIdx(DEFAULT_ZOOM_IDX);
+    setOpen(true);
+  };
+
+  // Mentre la scheda è aperta: Esc per chiudere e blocco dello scroll della pagina sotto
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
+
+  // All'apertura (e al cambio pagina) porta la vista sull'ultimo round compilato,
+  // così su telefono non devi cercarlo trascinando la scheda.
+  useEffect(() => {
+    if (!open) return;
+    const scroller = scrollRef.current;
+    const sheet = sheetRef.current;
+    if (!scroller || !sheet) return;
+    const idx = state.rounds.length - 1 - (page === 1 ? 0 : 8);
+    if (idx < 0 || idx > 7) { scroller.scrollTo({ top: 0, left: 0 }); return; }
+    const card = MEASURED_CARDS[idx];
+    const sheetRect = sheet.getBoundingClientRect();
+    const scrollRect = scroller.getBoundingClientRect();
+    const sheetLeft = sheetRect.left - scrollRect.left + scroller.scrollLeft;
+    const sheetTop = sheetRect.top - scrollRect.top + scroller.scrollTop;
+    const cx = sheetLeft + sheetRect.width * ((idx % 2 === 0 ? 25 : 75) / 100);
+    const cy = sheetTop + sheetRect.height * ((card.nameBox.top + 11) / 100);
+    scroller.scrollTo({
+      left: Math.max(0, cx - scroller.clientWidth / 2),
+      top: Math.max(0, cy - scroller.clientHeight / 2),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, page]);
 
   const sheetImg = page === 1 ? SHEET_IMAGES[team].page1 : SHEET_IMAGES[team].page2;
   const startIdx = page === 1 ? 0 : 8;
@@ -256,45 +314,124 @@ export default function DecryptoScoreSheet({ state, team }: Props) {
     );
   };
 
-  return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-        <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>
-          📋 Scheda — {team === 'bianca' ? 'Bianca' : 'Nera'}
-        </span>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
-            onClick={() => setPage(page === 1 ? 2 : 1)}>
-            {page === 1 ? 'R.9-16 →' : '← R.1-8'}
-          </button>
-          <button className="btn btn-secondary" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
-            onClick={() => setExpanded(!expanded)}>
-            {expanded ? '↙ Riduci' : '↗ Espandi'}
-          </button>
-        </div>
-      </div>
+  const teamLabel = team === 'bianca' ? 'Bianca' : 'Nera';
 
-      {/* Contenitore esterno: gestisce solo lo scroll */}
-      <div style={{
-        width: '100%',
-        maxHeight: expanded ? '90vh' : '500px',
-        overflow: 'auto',
-        borderRadius: '8px',
-        border: '1px solid rgba(255,255,255,0.1)',
-      }}>
-        {/* Contenitore interno: alto quanto l'immagine intera. Le % degli overlay e le unità cqw
-            si riferiscono a QUESTO elemento, quindi restano allineate anche quando l'esterno scrolla. */}
-        <div style={{
-          position: 'relative',
-          width: '100%',
-          containerType: 'inline-size' as React.CSSProperties['containerType'],
-        }}>
-          <img src={sheetImg}
-            alt={`Scheda ${team === 'bianca' ? 'Bianca' : 'Nera'}`}
-            style={{ width: '100%', height: 'auto', display: 'block' }} />
-          {Array.from({ length: 8 }).map((_, i) => renderCardOverlay(i))}
-        </div>
-      </div>
-    </div>
+  return (
+    <>
+      {/* Unico elemento sempre visibile in pagina: il pulsante */}
+      <button
+        className="btn btn-secondary"
+        onClick={openSheet}
+        style={{ width: '100%', maxWidth: '360px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', fontWeight: 700 }}
+      >
+        <span style={{ fontSize: '1.1rem' }}>📋</span> Scheda compilativa
+      </button>
+
+      {/* Overlay a schermo intero (portal su body per stare sopra a tutto il tavolo) */}
+      {open && createPortal(
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Scheda compilativa ${teamLabel}`}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0, 0, 0, 0.94)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+            display: 'flex', flexDirection: 'column',
+          }}
+        >
+          {/* Barra superiore FISSA: resta sempre visibile mentre scorri la scheda */}
+          <div style={{
+            flex: '0 0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            gap: '0.5rem', padding: '2.5rem 0.75rem 0.5rem', flexWrap: 'wrap', // 2.5rem = spazio del banner CODICE LOBBY, che sta sopra all'overlay
+            background: 'rgba(0,0,0,0.5)', borderBottom: '1px solid rgba(255,255,255,0.15)',
+          }}>
+            <span style={{ fontSize: '0.95rem', fontWeight: 800 }}>
+              📋 Scheda — {teamLabel}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <button className="btn btn-secondary" style={{ padding: '0.3rem 0.7rem', fontSize: '0.8rem' }}
+                onClick={() => setPage(page === 1 ? 2 : 1)}>
+                {page === 1 ? 'R.9-16 →' : '← R.1-8'}
+              </button>
+              <button className="btn btn-secondary" aria-label="Riduci"
+                style={{ padding: '0.2rem 0.7rem', fontSize: '1.1rem', fontWeight: 800, lineHeight: 1 }}
+                disabled={zoomIdx === 0}
+                onClick={() => setZoomIdx(i => Math.max(0, i - 1))}>
+                −
+              </button>
+              <button className="btn btn-secondary" aria-label="Ingrandisci"
+                style={{ padding: '0.2rem 0.7rem', fontSize: '1.1rem', fontWeight: 800, lineHeight: 1 }}
+                disabled={zoomIdx === ZOOM_STEPS.length - 1}
+                onClick={() => setZoomIdx(i => Math.min(ZOOM_STEPS.length - 1, i + 1))}>
+                +
+              </button>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="Chiudi scheda"
+                style={{
+                  background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.3)',
+                  color: '#fff', borderRadius: '50%', width: '34px', height: '34px',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Area scorrevole (verticale + orizzontale). Click sullo sfondo = chiudi. */}
+          <div
+            ref={scrollRef}
+            onClick={e => { if (e.target === e.currentTarget) setOpen(false); }}
+            style={{
+              flex: '1 1 auto', minHeight: 0, overflow: 'auto', display: 'flex',
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+            }}
+          >
+            {/* margin:auto = centrata se più piccola dell'area, senza tagliare il lato sinistro/alto quando è più grande */}
+            <div style={{ margin: 'auto', padding: '0.75rem', flex: '0 0 auto' }}>
+              {/* La scheda. Le % degli overlay e le unità cqw si riferiscono a QUESTO elemento
+                  (immagine 1055×1491, tutte e 4 le pagine hanno le stesse proporzioni). */}
+              <div
+                ref={sheetRef}
+                style={{
+                  position: 'relative',
+                  width: `calc(max(min(100vw - 1.5rem, ${SHEET_MAX_PX}px), ${SHEET_MIN_PX}px) * ${zoom})`,
+                  aspectRatio: '1055 / 1491',
+                  containerType: 'inline-size' as React.CSSProperties['containerType'],
+                  borderRadius: '8px', overflow: 'hidden',
+                  border: '1px solid rgba(255,255,255,0.2)',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                }}
+              >
+                <img src={sheetImg}
+                  alt={`Scheda ${teamLabel}`}
+                  style={{ width: '100%', height: '100%', display: 'block' }} />
+                {Array.from({ length: 8 }).map((_, i) => renderCardOverlay(i))}
+              </div>
+
+              {/* Pulsante in fondo alla scheda: si raggiunge scorrendo fino alla fine.
+                  Resta ancorato al bordo sinistro dello schermo anche se la scheda è più larga (sticky). */}
+              <div style={{
+                position: 'sticky', left: '0.75rem',
+                width: 'calc(100vw - 1.5rem)', maxWidth: '100%',
+                display: 'flex', justifyContent: 'center',
+                padding: '1rem 0 calc(1rem + env(safe-area-inset-bottom, 0px))',
+              }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setOpen(false)}
+                  style={{ width: '100%', maxWidth: '320px', fontSize: '1.05rem', fontWeight: 700, padding: '0.75rem 1rem' }}
+                >
+                  ✕ Chiudi scheda
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }

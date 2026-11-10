@@ -5,6 +5,23 @@ interface Props {
   startedAt: number | null; // timestamp ms
 }
 
+// ─── Immagini (in Public/Decrypto/Clessidra/) ───
+const HOURGLASS_IMG = '/Decrypto/Clessidra/Clessidra.png';            // cornice + vetro (PNG trasparente)
+const GLASS_MASK = '/Decrypto/Clessidra/Clessidra_vetro_mask.png';    // sagoma dell'interno del vetro: la sabbia viene ritagliata da questa
+
+// Larghezza della clessidra in pixel (l'altezza segue le proporzioni dell'immagine)
+const HOURGLASS_WIDTH = 86;
+
+// ─── Geometria dell'immagine Clessidra.png (380×661 px) ───
+// Servono per far scendere la sabbia: tutte le Y sono in pixel dell'immagine.
+const IMG_W = 380;
+const IMG_H = 661;
+const GLASS_TOP = 121;    // Y dove inizia l'interno della bolla alta
+const GLASS_NECK = 315.6; // Y del collo (punto più stretto)
+const GLASS_BOTTOM = 526; // Y dove finisce l'interno della bolla bassa
+const STREAM_X = 190.5;   // X del centro (filo di sabbia)
+const STREAM_W = 8;       // spessore del filo di sabbia
+
 export default function Hourglass({ durationSeconds, startedAt }: Props) {
   const [remaining, setRemaining] = useState(durationSeconds);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -23,49 +40,56 @@ export default function Hourglass({ durationSeconds, startedAt }: Props) {
   const progress = startedAt ? Math.min(1, (Date.now() - startedAt) / (durationSeconds * 1000)) : 0;
   const isExpired = remaining <= 0 && startedAt !== null;
   const isWarning = remaining <= 10 && remaining > 0;
+  const sandColor = isWarning ? '#ef4444' : '#fbbf24';
+
+  // Sabbia nella bolla alta: la superficie scende verso il collo
+  const topSurface = GLASS_TOP + progress * (GLASS_NECK - GLASS_TOP);
+  // Sabbia nella bolla bassa: la superficie sale dal fondo verso il collo
+  const bottomSurface = GLASS_BOTTOM - progress * (GLASS_BOTTOM - GLASS_NECK);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-      {/* Hourglass SVG */}
-      <svg width="60" height="80" viewBox="0 0 60 80" style={{ filter: isExpired ? 'grayscale(1)' : undefined }}>
-        {/* Frame */}
-        <rect x="8" y="2" width="44" height="4" rx="2" fill="#94a3b8" />
-        <rect x="8" y="74" width="44" height="4" rx="2" fill="#94a3b8" />
-        <line x1="12" y1="6" x2="12" y2="74" stroke="#94a3b8" strokeWidth="2" />
-        <line x1="48" y1="6" x2="48" y2="74" stroke="#94a3b8" strokeWidth="2" />
+      {/* Clessidra: sabbia (dietro) + immagine con cornice e vetro trasparente (davanti) */}
+      <div style={{
+        position: 'relative', width: `${HOURGLASS_WIDTH}px`, aspectRatio: `${IMG_W} / ${IMG_H}`,
+        filter: isExpired ? 'grayscale(1)' : undefined,
+      }}>
+        {/* Strato sabbia, ritagliato con la sagoma dell'interno del vetro */}
+        <div style={{
+          position: 'absolute', inset: 0,
+          WebkitMaskImage: `url(${GLASS_MASK})`, maskImage: `url(${GLASS_MASK})`,
+          WebkitMaskSize: '100% 100%', maskSize: '100% 100%',
+          WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat',
+        }}>
+          <svg viewBox={`0 0 ${IMG_W} ${IMG_H}`} preserveAspectRatio="none"
+               style={{ width: '100%', height: '100%', display: 'block' }}>
+            {/* Sand in top (shrinks) */}
+            {!isExpired && (
+              <rect x="0" y={topSurface} width={IMG_W} height={GLASS_NECK + 6 - topSurface}
+                    fill={sandColor} opacity="0.85">
+                <animate attributeName="opacity" values="0.85;0.65;0.85" dur="2s" repeatCount="indefinite" />
+              </rect>
+            )}
 
-        {/* Top bulb glass */}
-        <path d="M14,8 Q14,35 30,40 Q46,35 46,8 Z" fill="rgba(148,163,184,0.15)" stroke="#64748b" strokeWidth="1" />
-        {/* Bottom bulb glass */}
-        <path d="M14,72 Q14,45 30,40 Q46,45 46,72 Z" fill="rgba(148,163,184,0.15)" stroke="#64748b" strokeWidth="1" />
+            {/* Sand in bottom (grows) */}
+            <rect x="0" y={bottomSurface} width={IMG_W} height={GLASS_BOTTOM + 6 - bottomSurface}
+                  fill={sandColor} opacity="0.85" />
 
-        {/* Sand in top (shrinks) */}
-        {!isExpired && (
-          <clipPath id="topClip">
-            <path d="M14,8 Q14,35 30,40 Q46,35 46,8 Z" />
-          </clipPath>
-        )}
-        {!isExpired && (
-          <rect x="14" y={8 + progress * 32} width="32" height={32 - progress * 32}
-                fill={isWarning ? '#ef4444' : '#fbbf24'} clipPath="url(#topClip)" opacity="0.8">
-            <animate attributeName="opacity" values="0.8;0.6;0.8" dur="2s" repeatCount="indefinite" />
-          </rect>
-        )}
+            {/* Falling sand stream: dal collo fino alla superficie della sabbia sotto */}
+            {!isExpired && startedAt && (
+              <rect x={STREAM_X - STREAM_W / 2} y={GLASS_NECK - 10} width={STREAM_W}
+                    height={Math.max(0, bottomSurface - (GLASS_NECK - 10))}
+                    fill={sandColor} opacity="0.7">
+                <animate attributeName="opacity" values="0.7;0.4;0.7" dur="0.8s" repeatCount="indefinite" />
+              </rect>
+            )}
+          </svg>
+        </div>
 
-        {/* Sand in bottom (grows) */}
-        <clipPath id="bottomClip">
-          <path d="M14,72 Q14,45 30,40 Q46,45 46,72 Z" />
-        </clipPath>
-        <rect x="14" y={72 - progress * 32} width="32" height={progress * 32}
-              fill={isWarning ? '#ef4444' : '#fbbf24'} clipPath="url(#bottomClip)" opacity="0.8" />
-
-        {/* Falling sand stream */}
-        {!isExpired && startedAt && (
-          <line x1="30" y1="38" x2="30" y2={42 + progress * 28} stroke={isWarning ? '#ef4444' : '#fbbf24'} strokeWidth="2" opacity="0.6">
-            <animate attributeName="opacity" values="0.6;0.3;0.6" dur="0.8s" repeatCount="indefinite" />
-          </line>
-        )}
-      </svg>
+        {/* Cornice + vetro */}
+        <img src={HOURGLASS_IMG} alt="Clessidra"
+             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }} />
+      </div>
 
       {/* Timer text */}
       <div style={{

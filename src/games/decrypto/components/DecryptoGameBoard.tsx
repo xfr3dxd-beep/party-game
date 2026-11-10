@@ -36,39 +36,7 @@ export default function DecryptoGameBoard({ state, myTeam, children }: Props) {
 
   return (
     <div>
-      {/* 1. Paroliere — le 4 parole sono centrate sui 4 display rossi (misurati sui pixel) */}
-      <div style={{
-        maxWidth: '700px', margin: '0 auto 1rem', position: 'relative',
-        containerType: 'inline-size' as React.CSSProperties['containerType'],
-      }}>
-        <img src={PAROLIERE[myTeam]} alt="Paroliere" style={{ width: '100%', display: 'block' }} />
-        {teamWords.map((w, i) => {
-          const cfg = PAROLIERE_DISPLAYS[myTeam];
-          const [x0, x1] = cfg.xs[i];
-          const boxW = ((x1 - x0) / PAROLIERE_W) * 100;          // larghezza display in cqw
-          const fontCqw = Math.min(
-            PAROLIERE_FONT_MAX,
-            (boxW * PAROLIERE_FILL) / (Math.max(w.length, 1) * CHAR_WIDTH),  // si rimpicciolisce se la parola è lunga
-          );
-          return (
-            <div key={i} style={{
-              position: 'absolute',
-              left: `${(x0 / PAROLIERE_W) * 100}%`,
-              top: `${((cfg.cy - cfg.h / 2) / PAROLIERE_H) * 100}%`,
-              width: `${boxW}%`,
-              height: `${(cfg.h / PAROLIERE_H) * 100}%`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: 900, fontSize: `${fontCqw}cqw`, lineHeight: 1,
-              color: '#fff', whiteSpace: 'nowrap', textAlign: 'center',
-              textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6)',
-            }}>
-              {w}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 2. Shared visual layout: Dorso + Hourglass + Dorso */}
+      {/* 1. Shared visual layout: Dorso + Hourglass + Dorso */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
         {/* Left: Dorso Bianca + Token Errata below */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', width: '100px' }}>
@@ -105,9 +73,41 @@ export default function DecryptoGameBoard({ state, myTeam, children }: Props) {
         </div>
       </div>
 
-      {/* 3. Scheda Compilativa — ALWAYS visible for all players */}
-      <div style={{ maxWidth: '600px', margin: '0 auto 1rem' }}>
+      {/* 2. Scheda Compilativa — pulsante sempre visibile; la scheda si apre in overlay a schermo intero */}
+      <div style={{ maxWidth: '600px', margin: '0 auto 1rem', display: 'flex', justifyContent: 'center' }}>
         <DecryptoScoreSheet state={state} team={myTeam} />
+      </div>
+
+      {/* 3. Paroliere (spostato sotto la scheda, prima del codice estratto) — le 4 parole sono centrate sui 4 display rossi (misurati sui pixel) */}
+      <div style={{
+        maxWidth: '700px', margin: '0 auto 1rem', position: 'relative',
+        containerType: 'inline-size' as React.CSSProperties['containerType'],
+      }}>
+        <img src={PAROLIERE[myTeam]} alt="Paroliere" style={{ width: '100%', display: 'block' }} />
+        {teamWords.map((w, i) => {
+          const cfg = PAROLIERE_DISPLAYS[myTeam];
+          const [x0, x1] = cfg.xs[i];
+          const boxW = ((x1 - x0) / PAROLIERE_W) * 100;          // larghezza display in cqw
+          const fontCqw = Math.min(
+            PAROLIERE_FONT_MAX,
+            (boxW * PAROLIERE_FILL) / (Math.max(w.length, 1) * CHAR_WIDTH),  // si rimpicciolisce se la parola è lunga
+          );
+          return (
+            <div key={i} style={{
+              position: 'absolute',
+              left: `${(x0 / PAROLIERE_W) * 100}%`,
+              top: `${((cfg.cy - cfg.h / 2) / PAROLIERE_H) * 100}%`,
+              width: `${boxW}%`,
+              height: `${(cfg.h / PAROLIERE_H) * 100}%`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontWeight: 900, fontSize: `${fontCqw}cqw`, lineHeight: 1,
+              color: '#fff', whiteSpace: 'nowrap', textAlign: 'center',
+              textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 0 12px rgba(0,0,0,0.6)',
+            }}>
+              {w}
+            </div>
+          );
+        })}
       </div>
 
       {/* 4. Phase-specific content */}
