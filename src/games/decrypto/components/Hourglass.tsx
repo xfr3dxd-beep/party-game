@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 interface Props {
   durationSeconds: number;
   startedAt: number | null; // timestamp ms
+  width?: number | string;  // larghezza clessidra: numero = px, stringa = qualsiasi unità CSS (es. '11cqw'). Default 86px
+  fontSize?: string;        // dimensione del testo del timer. Default 1.3rem
 }
 
 // ─── Immagini (in Public/Decrypto/Clessidra/) ───
@@ -22,7 +24,7 @@ const GLASS_BOTTOM = 526; // Y dove finisce l'interno della bolla bassa
 const STREAM_X = 190.5;   // X del centro (filo di sabbia)
 const STREAM_W = 8;       // spessore del filo di sabbia
 
-export default function Hourglass({ durationSeconds, startedAt }: Props) {
+export default function Hourglass({ durationSeconds, startedAt, width = HOURGLASS_WIDTH, fontSize = '1.3rem' }: Props) {
   const [remaining, setRemaining] = useState(durationSeconds);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -51,7 +53,7 @@ export default function Hourglass({ durationSeconds, startedAt }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
       {/* Clessidra: sabbia (dietro) + immagine con cornice e vetro trasparente (davanti) */}
       <div style={{
-        position: 'relative', width: `${HOURGLASS_WIDTH}px`, aspectRatio: `${IMG_W} / ${IMG_H}`,
+        position: 'relative', width: typeof width === 'number' ? `${width}px` : width, aspectRatio: `${IMG_W} / ${IMG_H}`,
         filter: isExpired ? 'grayscale(1)' : undefined,
       }}>
         {/* Strato sabbia, ritagliato con la sagoma dell'interno del vetro */}
@@ -93,7 +95,7 @@ export default function Hourglass({ durationSeconds, startedAt }: Props) {
 
       {/* Timer text */}
       <div style={{
-        fontSize: '1.3rem',
+        fontSize,
         fontWeight: 800,
         fontFamily: 'monospace',
         color: isExpired ? '#ef4444' : isWarning ? '#ef4444' : '#fbbf24',
