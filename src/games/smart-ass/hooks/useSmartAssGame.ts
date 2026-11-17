@@ -116,16 +116,19 @@ export function useSmartAssGame({
   }, [isHost, players, broadcast]);
 
   // ---- DEV ONLY: add bots to fill the lobby ----
+  // First click fills to minimum (2), subsequent clicks add 1 bot at a time.
   const devAddBots = useCallback(() => {
     if (!import.meta.env.DEV || !isHost) return;
     const s = stateRef.current;
     if (s.phase !== 'create' && s.phase !== 'lobby') return;
     const existing = s.players.length;
-    if (existing >= 2) return;
-    const added: SmartAssPlayer[] = [];
+    if (existing >= 12) return; // MAX_PLAYERS
     const usedTokens = new Set(s.players.filter(p => p.tokenIndex >= 0).map(p => p.tokenIndex));
     let botCount = s.players.filter(p => p.id.startsWith('bot-')).length;
-    for (let i = existing; i < 2; i++) {
+    // How many to add: fill to minimum (2) first, then 1 at a time
+    const target = existing < 2 ? 2 : existing + 1;
+    const added: SmartAssPlayer[] = [];
+    for (let i = existing; i < target && i < 12; i++) {
       botCount++;
       let tokenIdx = 0;
       while (usedTokens.has(tokenIdx)) tokenIdx++;

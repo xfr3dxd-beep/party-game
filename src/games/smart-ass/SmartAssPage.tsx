@@ -112,7 +112,7 @@ export default function SmartAssPage() {
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 8px' }}
               disabled={!hostHasToken} onClick={devAddBots}
               title={hostHasToken ? '' : 'Prima scegli la tua pedina'}>
-              + Aggiungi bot (completa 2 giocatori)
+              + Aggiungi bot ({state.players.length < 2 ? 'completa minimo' : '+1'})
             </button>
           )}
           {!hostHasToken && (currentPhase === 'create' || currentPhase === 'lobby') && (

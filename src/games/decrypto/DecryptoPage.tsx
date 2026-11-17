@@ -148,7 +148,11 @@ export default function DecryptoPage() {
             <button className="btn btn-secondary" style={{ fontSize: 12, padding: '4px 8px' }}
               disabled={!hostHasTeam} onClick={devAddBots}
               title={hostHasTeam ? '' : 'Prima scegli la tua squadra'}>
-              + Aggiungi bot (completa 2 vs 2)
+              + Aggiungi bot ({
+                state.players.filter(p => p.team === 'bianca').length < 2 ||
+                state.players.filter(p => p.team === 'nera').length < 2
+                  ? 'completa minimo' : '+1'
+              })
             </button>
           )}
           {!hostHasTeam && (currentPhase === 'create' || currentPhase === 'lobby') && (

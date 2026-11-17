@@ -145,8 +145,9 @@ export function useDecryptoGame({
     }
   }, [isHost, players, broadcast]);
 
-  // ---- DEV ONLY: aggiunge bot per completare le squadre (2 vs 2) ----
-  // Esiste solo con `npm run dev`: in produzione (Vercel) import.meta.env.DEV è false.
+  // ---- DEV ONLY: aggiunge bot ----
+  // First click fills to minimum (2 vs 2), subsequent clicks add 1 bot at a time
+  // to the team with fewer players (or 'bianca' if equal).
   const devAddBots = useCallback(() => {
     if (!import.meta.env.DEV || !isHost) return;
     const s = stateRef.current;
@@ -155,9 +156,17 @@ export function useDecryptoGame({
     let n = s.players.filter(p => p.team === 'nera').length;
     let botCount = s.players.filter(p => p.id.startsWith('bot-')).length;
     const added: DecryptoPlayer[] = [];
-    while (b < 2 || n < 2) {
-      const team: DecryptoTeam = b < 2 ? 'bianca' : 'nera';
-      if (team === 'bianca') b++; else n++;
+    if (b < 2 || n < 2) {
+      // First: fill to minimum 2 vs 2
+      while (b < 2 || n < 2) {
+        const team: DecryptoTeam = b <= n ? 'bianca' : 'nera';
+        if (team === 'bianca') b++; else n++;
+        botCount++;
+        added.push({ id: `bot-${Date.now()}-${botCount}`, name: `Bot ${botCount}`, team });
+      }
+    } else {
+      // Already at minimum: add 1 bot to the smaller team
+      const team: DecryptoTeam = b <= n ? 'bianca' : 'nera';
       botCount++;
       added.push({ id: `bot-${Date.now()}-${botCount}`, name: `Bot ${botCount}`, team });
     }
