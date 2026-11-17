@@ -62,8 +62,20 @@ export default function SmartAssPage() {
 
   return (
     <Layout>
+      {/* Smart Ass custom background — covers the default green animated-bg */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 0,
+        backgroundImage: "url('/Smart Ass/Background_smart_ass.jpg')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      }} />
+
       {showBanner && <RoomCodeBanner roomCode={roomCode!} />}
-      <div className="container container-md" style={showBanner ? { paddingTop: '2.5rem' } : undefined}>
+      <div className="container container-md" style={{
+        position: 'relative', zIndex: 1,
+        ...(showBanner ? { paddingTop: '2.5rem' } : {}),
+      }}>
         {/* Back button */}
         {(currentPhase === 'create' || currentPhase === 'lobby') && (
           <button className="btn btn-secondary mb-lg" onClick={() => { disconnect(); navigate('/'); }}>
