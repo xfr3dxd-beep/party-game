@@ -118,6 +118,7 @@ export const CATEGORY_CSS: Record<string, string> = {
 };
 
 export const END_POSITION = 17;
+export const START_POSITION = 1;
 export const MAX_TRACK = 16;
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 12;

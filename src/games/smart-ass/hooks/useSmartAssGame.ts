@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { SmartAssState, SmartAssPhase, SmartAssPlayer, SmartAssBroadcast, DieColor } from '../types';
 import { INITIAL_STATE } from '../types';
 import { CHI_SONO_CARDS, COSA_SONO_CARDS, DOVE_SONO_CARDS, HARD_ASS_CARDS, getCardPath, drawCard } from '../cards';
-import { SQUARE_TYPES, KICK_ASS_TARGETS, END_POSITION, COLOR_TO_CATEGORY } from '../boardPositions';
+import { SQUARE_TYPES, KICK_ASS_TARGETS, END_POSITION, START_POSITION, COLOR_TO_CATEGORY } from '../boardPositions';
 import { debouncedSaveState } from '../../../lib/roomPersistence';
 
 interface UseSmartAssGameProps {
@@ -101,7 +101,7 @@ export function useSmartAssGame({
     if (players.length === 0) return;
     const humans: SmartAssPlayer[] = players.map(rp => {
       const existing = s.players.find(sp => sp.id === rp.id);
-      return existing || { id: rp.id, name: rp.name, tokenIndex: -1, position: 0, skipNextNarrator: false };
+      return existing || { id: rp.id, name: rp.name, tokenIndex: -1, position: START_POSITION, skipNextNarrator: false };
     });
     const bots = s.players.filter(p => p.id.startsWith('bot-'));
     const merged = [...humans, ...bots];
@@ -134,7 +134,7 @@ export function useSmartAssGame({
         id: `bot-${Date.now()}-${botCount}`,
         name: `Bot ${botCount}`,
         tokenIndex: tokenIdx,
-        position: 0,
+        position: START_POSITION,
         skipNextNarrator: false,
       });
     }
@@ -154,7 +154,7 @@ export function useSmartAssGame({
     // Also add from room players if not in state yet
     if (!updated.some(p => p.id === pid)) {
       const rp = playersRef.current.find(p => p.id === pid);
-      if (rp) updated.push({ id: rp.id, name: rp.name, tokenIndex, position: 0, skipNextNarrator: false });
+      if (rp) updated.push({ id: rp.id, name: rp.name, tokenIndex, position: START_POSITION, skipNextNarrator: false });
     }
     syncState({ ...s, players: updated });
   }, [isHost, syncState]);
@@ -165,8 +165,8 @@ export function useSmartAssGame({
     const s = stateRef.current;
     // Pick a random starting narrator
     const narratorIndex = Math.floor(Math.random() * s.players.length);
-    // All players start at position 0 (START)
-    const players = s.players.map(p => ({ ...p, position: 0 }));
+    // All players start at START (position 1)
+    const players = s.players.map(p => ({ ...p, position: START_POSITION }));
     syncState({
       ...s,
       phase: 'narrator-roll',
@@ -181,6 +181,7 @@ export function useSmartAssGame({
       hardAssReaderId: null,
       winnerId: null,
       activeMoverId: null,
+      lastEvent: null,
     });
   }, [isHost, syncState]);
 
@@ -236,7 +237,7 @@ export function useSmartAssGame({
 
     // Check for END
     if (newPos >= END_POSITION) {
-      return { ...s, players: updated, phase: 'game-over', winnerId: moverId, lastDieValue: dieValue };
+      return { ...s, players: updated, phase: 'game-over', winnerId: moverId, lastDieValue: dieValue, lastEvent: null };
     }
 
     // Check special square
@@ -268,6 +269,7 @@ export function useSmartAssGame({
             hardAssCardPath: getCardPath('hard_ass', drawn.filename),
             lastDieValue: dieValue,
             usedHardAss: [...usedHard, drawn.index],
+            lastEvent: `⚡ Kick Ass! ${player.name} torna alla casella ${target} → Hard Ass!`,
           };
         }
       }
@@ -284,8 +286,9 @@ export function useSmartAssGame({
         lastDieValue: dieValue,
         hardAssCardPath: null,
         hardAssPlayerId: null,
-      hardAssReaderId: null,
+        hardAssReaderId: null,
         activeMoverId: null,
+        lastEvent: `⚡ Kick Ass! ${player.name} torna alla casella ${target}!`,
       };
     }
 
@@ -306,6 +309,7 @@ export function useSmartAssGame({
           hardAssCardPath: getCardPath('hard_ass', drawn.filename),
           lastDieValue: dieValue,
           usedHardAss: [...usedHard, drawn.index],
+          lastEvent: `🟣 ${player.name} è finito su Hard Ass!`,
         };
       }
     }
@@ -326,8 +330,9 @@ export function useSmartAssGame({
         lastDieValue: dieValue,
         hardAssCardPath: null,
         hardAssPlayerId: null,
-      hardAssReaderId: null,
+        hardAssReaderId: null,
         activeMoverId: null,
+        lastEvent: `💤 Dumb Ass! ${player.name} salterà il prossimo turno da narratore!`,
       };
     }
 
@@ -346,6 +351,7 @@ export function useSmartAssGame({
       hardAssPlayerId: null,
       hardAssReaderId: null,
       activeMoverId: null,
+      lastEvent: null,
     };
   }, []);
 
@@ -406,7 +412,7 @@ export function useSmartAssGame({
       ...INITIAL_STATE,
       phase: 'lobby' as SmartAssPhase,
       roomCode: s.roomCode,
-      players: s.players.map(p => ({ ...p, position: 0, skipNextNarrator: false })),
+      players: s.players.map(p => ({ ...p, position: START_POSITION, skipNextNarrator: false })),
     });
   }, [isHost, syncState]);
 

@@ -52,7 +52,7 @@ export default function SmartAssPage() {
 
   // Build lobby player list from game state or room presence
   const gamePlayers = state.players.length > 0 ? state.players : players.map(p => ({
-    id: p.id, name: p.name, tokenIndex: -1, position: 0, skipNextNarrator: false,
+    id: p.id, name: p.name, tokenIndex: -1, position: 1, skipNextNarrator: false,
   }));
 
   const showBanner = !!roomCode && currentPhase !== 'create' && currentPhase !== 'lobby';

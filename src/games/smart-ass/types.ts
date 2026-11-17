@@ -45,6 +45,9 @@ export interface SmartAssState {
   // Winner
   winnerId: string | null;
 
+  // Last special event message (shown as feedback)
+  lastEvent: string | null;
+
   // Active mover (player who needs to roll / move)
   activeMoverId: string | null;
 }
@@ -72,5 +75,6 @@ export const INITIAL_STATE: SmartAssState = {
   hardAssPlayerId: null,
   hardAssReaderId: null,
   winnerId: null,
+  lastEvent: null,
   activeMoverId: null,
 };

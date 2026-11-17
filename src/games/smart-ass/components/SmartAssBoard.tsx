@@ -60,6 +60,15 @@ export default function SmartAssBoard({ state, playerId, isHost, onAct }: Props)
       case 'narrator-roll':
         return (
           <div style={{ textAlign: 'center', padding: '1rem' }}>
+            {state.lastEvent && (
+              <div style={{
+                marginBottom: '1rem', padding: '0.6rem 1.2rem', borderRadius: '12px',
+                background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.4)',
+                fontSize: '0.95rem', fontWeight: 700, color: '#c084fc',
+              }}>
+                {state.lastEvent}
+              </div>
+            )}
             <div style={{
               fontSize: '1.1rem', fontWeight: 800, marginBottom: '1rem',
               color: TOKEN_CSS_COLORS[narrator?.tokenIndex ?? 0],
@@ -152,6 +161,17 @@ export default function SmartAssBoard({ state, playerId, isHost, onAct }: Props)
                 <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '1rem' }}>
                   Chi ha risposto correttamente?
                 </div>
+                {/* Review card button */}
+                <button
+                  onClick={() => setShowCard(true)}
+                  style={{
+                    padding: '0.4rem 1rem', borderRadius: '999px', marginBottom: '1rem',
+                    border: '1.5px solid rgba(255,255,255,0.25)', background: 'rgba(255,255,255,0.08)',
+                    color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem',
+                  }}
+                >
+                  👁️ Rivedi la carta
+                </button>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center', marginBottom: '1rem' }}>
                   {state.players.map(p => (
                     <button
