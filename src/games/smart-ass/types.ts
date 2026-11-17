@@ -15,6 +15,7 @@ export type SmartAssPhase =
   | 'answerer-roll'
   | 'hard-ass-card'
   | 'hard-ass-roll'
+  | 'tiebreaker-card'
   | 'game-over';
 
 export type DieColor = 'orange' | 'blue' | 'teal';
@@ -50,6 +51,9 @@ export interface SmartAssState {
 
   // Active mover (player who needs to roll / move)
   activeMoverId: string | null;
+
+  // Tiebreaker mode
+  isTiebreaker: boolean;
 }
 
 export type SmartAssBroadcast =
@@ -77,4 +81,5 @@ export const INITIAL_STATE: SmartAssState = {
   winnerId: null,
   lastEvent: null,
   activeMoverId: null,
+  isTiebreaker: false,
 };

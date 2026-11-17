@@ -150,7 +150,9 @@ export default function SmartAssBoard({ state, playerId, isHost, onAct }: Props)
             {isNarrator ? (
               <>
                 <div style={{ fontWeight: 800, fontSize: '1.1rem', marginBottom: '1rem' }}>
-                  Chi ha risposto correttamente?
+                  {state.isTiebreaker
+                    ? '⚔️ Spareggio! Chi ha risposto correttamente?'
+                    : 'Chi ha risposto correttamente?'}
                 </div>
                 {/* Review card button */}
                 <button
@@ -179,20 +181,81 @@ export default function SmartAssBoard({ state, playerId, isHost, onAct }: Props)
                     </button>
                   ))}
                 </div>
-                <button
-                  onClick={() => onAct('select-answerer', { answererId: narrator.id })}
-                  style={{
-                    padding: '0.5rem 1.5rem', borderRadius: '999px',
-                    border: '1.5px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.08)',
-                    color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontWeight: 700, fontSize: '0.85rem',
-                  }}
-                >
-                  Nessuno ha risposto (io avanzo)
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => onAct('select-answerer', { answererId: narrator.id })}
+                    style={{
+                      padding: '0.5rem 1.2rem', borderRadius: '999px',
+                      border: '1.5px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.08)',
+                      color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem',
+                    }}
+                  >
+                    Nessuno ha risposto (io avanzo)
+                  </button>
+                  {!state.isTiebreaker && (
+                    <button
+                      onClick={() => onAct('tiebreaker')}
+                      style={{
+                        padding: '0.5rem 1.2rem', borderRadius: '999px',
+                        border: '1.5px solid rgba(168,85,247,0.5)', background: 'rgba(168,85,247,0.12)',
+                        color: '#c084fc', cursor: 'pointer', fontWeight: 700, fontSize: '0.8rem',
+                      }}
+                    >
+                      ⚔️ Spareggio (più giocatori)
+                    </button>
+                  )}
+                </div>
               </>
             ) : (
               <div style={{ color: 'rgba(255,255,255,0.7)', fontStyle: 'italic' }}>
                 {narrator?.name} sta selezionando chi ha risposto...
+              </div>
+            )}
+          </div>
+        );
+
+      case 'tiebreaker-card':
+        return (
+          <div style={{ textAlign: 'center', padding: '1rem' }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+              padding: '0.6rem 1.4rem', borderRadius: '999px', marginBottom: '1rem',
+              background: 'rgba(168,85,247,0.2)', border: '2px solid #a855f7',
+              fontSize: '1.2rem', fontWeight: 900, color: '#c084fc',
+            }}>
+              ⚔️ Spareggio — Hard Ass
+            </div>
+            {isNarrator ? (
+              <div>
+                <div style={{ marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.95rem', color: '#fbbf24' }}>
+                  📖 Leggi la domanda a voce alta a tutti i giocatori!
+                </div>
+                <button
+                  onClick={() => setShowCard(true)}
+                  style={{
+                    padding: '0.8rem 2rem', fontSize: '1rem', fontWeight: 800, borderRadius: '999px', border: 'none',
+                    cursor: 'pointer', color: '#fff', marginBottom: '0.5rem',
+                    background: '#a855f7',
+                  }}
+                >
+                  👁️ Vedi la carta
+                </button>
+                <div>
+                  <button
+                    onClick={() => { setShowCard(false); onAct('tiebreaker-acknowledged'); }}
+                    style={{
+                      padding: '0.6rem 1.5rem', fontSize: '0.9rem', fontWeight: 700, borderRadius: '999px',
+                      border: '1.5px solid rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.1)',
+                      color: '#fff', cursor: 'pointer', marginTop: '0.5rem',
+                    }}
+                  >
+                    ✅ Ho letto la domanda
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontStyle: 'italic', fontSize: '1.05rem' }}>
+                🗣️ {narrator?.name} sta leggendo la domanda di spareggio... Ascolta e rispondi!
               </div>
             )}
           </div>

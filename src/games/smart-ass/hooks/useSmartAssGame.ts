@@ -185,6 +185,7 @@ export function useSmartAssGame({
       winnerId: null,
       activeMoverId: null,
       lastEvent: null,
+      isTiebreaker: false,
     });
   }, [isHost, syncState]);
 
@@ -225,7 +226,33 @@ export function useSmartAssGame({
       answeringPlayerId: answererId,
       activeMoverId: answererId,
       lastDieValue: null,
+      isTiebreaker: false,
     });
+  }, [isHost, syncState]);
+
+  // ---- TIEBREAKER: draw Hard Ass card for narrator ----
+  const handleTiebreaker = useCallback(() => {
+    if (!isHost) return;
+    const s = stateRef.current;
+    const cards = HARD_ASS_CARDS;
+    const used = s.usedHardAss;
+    const drawn = drawCard(cards, used);
+    if (!drawn) return;
+    const cardPath = getCardPath('hard_ass', drawn.filename);
+    syncState({
+      ...s,
+      phase: 'tiebreaker-card',
+      currentCardPath: cardPath,
+      isTiebreaker: true,
+      usedHardAss: [...used, drawn.index],
+    });
+  }, [isHost, syncState]);
+
+  // ---- TIEBREAKER ACKNOWLEDGED (narrator read the tiebreaker card) ----
+  const handleTiebreakerAcknowledged = useCallback(() => {
+    if (!isHost) return;
+    const s = stateRef.current;
+    syncState({ ...s, phase: 'select-answerer' });
   }, [isHost, syncState]);
 
   // ---- PROCESS MOVE: handles movement + special squares ----
@@ -442,6 +469,8 @@ export function useSmartAssGame({
             case 'hard-ass-correct': handleHardAssCorrect(); break;
             case 'hard-ass-incorrect': handleHardAssIncorrect(); break;
             case 'hard-ass-number-rolled': handleHardAssNumberRolled(payload.value); break;
+            case 'tiebreaker': handleTiebreaker(); break;
+            case 'tiebreaker-acknowledged': handleTiebreakerAcknowledged(); break;
             case 'dismiss-event': handleDismissEvent(); break;
             case 'new-game': handleNewGame(); break;
           }
@@ -455,7 +484,8 @@ export function useSmartAssGame({
   }, [isHost, onBroadcast, broadcast, handlePickToken, handleStartGame,
       handleCategoryRolled, handleCardAcknowledged, handleSelectAnswerer,
       handleNumberRolled, handleHardAssCorrect, handleHardAssIncorrect,
-      handleHardAssNumberRolled, handleDismissEvent, handleNewGame]);
+      handleHardAssNumberRolled, handleTiebreaker, handleTiebreakerAcknowledged,
+      handleDismissEvent, handleNewGame]);
 
   // ---- ACT (called by components) ----
   const act = useCallback((action: string, payload?: any) => {
@@ -471,6 +501,8 @@ export function useSmartAssGame({
         case 'hard-ass-correct': handleHardAssCorrect(); break;
         case 'hard-ass-incorrect': handleHardAssIncorrect(); break;
         case 'hard-ass-number-rolled': handleHardAssNumberRolled(payload.value); break;
+        case 'tiebreaker': handleTiebreaker(); break;
+        case 'tiebreaker-acknowledged': handleTiebreakerAcknowledged(); break;
         case 'dismiss-event': handleDismissEvent(); break;
         case 'new-game': handleNewGame(); break;
       }
@@ -480,7 +512,8 @@ export function useSmartAssGame({
   }, [isHost, broadcast, handlePickToken, handleStartGame,
       handleCategoryRolled, handleCardAcknowledged, handleSelectAnswerer,
       handleNumberRolled, handleHardAssCorrect, handleHardAssIncorrect,
-      handleHardAssNumberRolled, handleDismissEvent, handleNewGame]);
+      handleHardAssNumberRolled, handleTiebreaker, handleTiebreakerAcknowledged,
+      handleDismissEvent, handleNewGame]);
 
   return { state, act, setState, devAddBots };
 }
