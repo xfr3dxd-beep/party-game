@@ -2,24 +2,24 @@
 // Square 0 = START position, Squares 1-16 = track, Square 17 = END (donkey's butt target).
 
 export const BOARD_POSITIONS: { x: number; y: number }[] = [
-  { x: 50, y: 91 },   // 0: START
-  { x: 50, y: 91 },   // 1: START (same visual as 0)
-  { x: 36, y: 86 },   // 2
-  { x: 23, y: 74 },   // 3
-  { x: 13, y: 59 },   // 4: HARD ASS
-  { x: 12, y: 43 },   // 5
-  { x: 18, y: 29 },   // 6
-  { x: 25, y: 15 },   // 7: KICK ASS → goes to 4
-  { x: 36, y: 7 },    // 8
-  { x: 47, y: 4 },    // 9: DUMB ASS
-  { x: 59, y: 7 },    // 10
-  { x: 70, y: 14 },   // 11: HARD ASS
-  { x: 79, y: 27 },   // 12
-  { x: 84, y: 42 },   // 13: DUMB ASS
-  { x: 85, y: 56 },   // 14
-  { x: 80, y: 69 },   // 15: KICK ASS → goes to 12
-  { x: 72, y: 80 },   // 16
-  { x: 56, y: 36 },   // 17: END (donkey's butt target)
+  { x: 57.0, y: 83.3 },  // 0: START
+  { x: 57.0, y: 83.3 },  // 1: START
+  { x: 37.7, y: 80.3 },  // 2
+  { x: 21.4, y: 68.6 },  // 3
+  { x: 13.5, y: 54.5 },  // 4: HARD ASS
+  { x: 12.6, y: 38.6 },  // 5
+  { x: 17.7, y: 25.1 },  // 6
+  { x: 25.9, y: 14.7 },  // 7: KICK ASS → goes to 4
+  { x: 36.9, y: 8.0 },  // 8
+  { x: 49.9, y: 7.6 },  // 9: DUMB ASS
+  { x: 62.8, y: 9.6 },  // 10
+  { x: 74.2, y: 14.7 },  // 11: HARD ASS
+  { x: 83.3, y: 25.1 },  // 12
+  { x: 86.8, y: 38.6 },  // 13: DUMB ASS
+  { x: 87.2, y: 57.0 },  // 14
+  { x: 80.9, y: 69.2 },  // 15: KICK ASS → goes to 12
+  { x: 69.1, y: 58.8 },  // 16
+  { x: 60.1, y: 27.9 },  // 17: END (donkey's butt target)
 ];
 
 // Special square types
