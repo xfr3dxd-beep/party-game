@@ -40,6 +40,7 @@ export interface SmartAssState {
   // Hard Ass handling
   hardAssCardPath: string | null;
   hardAssPlayerId: string | null;
+  hardAssReaderId: string | null;  // next player who reads the card aloud
 
   // Winner
   winnerId: string | null;
@@ -69,6 +70,7 @@ export const INITIAL_STATE: SmartAssState = {
   usedHardAss: [],
   hardAssCardPath: null,
   hardAssPlayerId: null,
+  hardAssReaderId: null,
   winnerId: null,
   activeMoverId: null,
 };

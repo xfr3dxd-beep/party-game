@@ -30,6 +30,8 @@ export default function SmartAssBoard({ state, playerId, isHost, onAct }: Props)
   const isAnswerer = state.answeringPlayerId === playerId;
   const hardAssPlayer = state.players.find(p => p.id === state.hardAssPlayerId);
   const isHardAssPlayer = state.hardAssPlayerId === playerId;
+  const hardAssReader = state.players.find(p => p.id === state.hardAssReaderId);
+  const isHardAssReader = state.hardAssReaderId === playerId;
   const isActiveMover = state.activeMoverId === playerId;
   const winner = state.players.find(p => p.id === state.winnerId);
 
@@ -220,42 +222,61 @@ export default function SmartAssBoard({ state, playerId, isHost, onAct }: Props)
             }}>
               🟣 Hard Ass! {hardAssPlayer?.name} deve rispondere!
             </div>
-            {state.hardAssCardPath && (
-              <div style={{ marginBottom: '1rem' }}>
-                <img
-                  src={state.hardAssCardPath}
-                  alt="Hard Ass Card"
-                  style={{
-                    maxWidth: '100%', maxHeight: '50vh', borderRadius: '16px',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                  }}
-                />
+            {isHardAssReader ? (
+              /* The reader sees the card and reads it aloud */
+              <>
+                <div style={{
+                  marginBottom: '0.75rem', fontWeight: 700, fontSize: '0.95rem',
+                  color: '#fbbf24',
+                }}>
+                  📖 Leggi la domanda a voce alta a {hardAssPlayer?.name}!
+                </div>
+                {state.hardAssCardPath && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <img
+                      src={state.hardAssCardPath}
+                      alt="Hard Ass Card"
+                      style={{
+                        maxWidth: '100%', maxHeight: '50vh', borderRadius: '16px',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                      }}
+                    />
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={() => onAct('hard-ass-correct')}
+                    style={{
+                      padding: '0.8rem 2rem', fontSize: '1rem', fontWeight: 900, borderRadius: '999px', border: 'none',
+                      cursor: 'pointer', color: '#fff',
+                      background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                      boxShadow: '0 6px 18px rgba(34,197,94,0.4)',
+                    }}
+                  >
+                    ✅ Risposta Corretta
+                  </button>
+                  <button
+                    onClick={() => onAct('hard-ass-incorrect')}
+                    style={{
+                      padding: '0.8rem 2rem', fontSize: '1rem', fontWeight: 900, borderRadius: '999px', border: 'none',
+                      cursor: 'pointer', color: '#fff',
+                      background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                      boxShadow: '0 6px 18px rgba(239,68,68,0.4)',
+                    }}
+                  >
+                    ❌ Risposta Sbagliata
+                  </button>
+                </div>
+              </>
+            ) : isHardAssPlayer ? (
+              /* The player who must answer sees a waiting message */
+              <div style={{ color: 'rgba(255,255,255,0.8)', fontStyle: 'italic', fontSize: '1.05rem' }}>
+                🧠 Ascolta la domanda da {hardAssReader?.name} e rispondi!
               </div>
-            )}
-            {isHost && (
-              <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                <button
-                  onClick={() => onAct('hard-ass-correct')}
-                  style={{
-                    padding: '0.8rem 2rem', fontSize: '1rem', fontWeight: 900, borderRadius: '999px', border: 'none',
-                    cursor: 'pointer', color: '#fff',
-                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                    boxShadow: '0 6px 18px rgba(34,197,94,0.4)',
-                  }}
-                >
-                  ✅ Risposta Corretta
-                </button>
-                <button
-                  onClick={() => onAct('hard-ass-incorrect')}
-                  style={{
-                    padding: '0.8rem 2rem', fontSize: '1rem', fontWeight: 900, borderRadius: '999px', border: 'none',
-                    cursor: 'pointer', color: '#fff',
-                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
-                    boxShadow: '0 6px 18px rgba(239,68,68,0.4)',
-                  }}
-                >
-                  ❌ Risposta Sbagliata
-                </button>
+            ) : (
+              /* Other players see a waiting message */
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontStyle: 'italic' }}>
+                📖 {hardAssReader?.name} sta leggendo la domanda a {hardAssPlayer?.name}...
               </div>
             )}
           </div>

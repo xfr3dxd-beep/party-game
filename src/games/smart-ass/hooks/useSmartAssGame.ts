@@ -178,6 +178,7 @@ export function useSmartAssGame({
       lastDieValue: null,
       hardAssCardPath: null,
       hardAssPlayerId: null,
+      hardAssReaderId: null,
       winnerId: null,
       activeMoverId: null,
     });
@@ -255,11 +256,15 @@ export function useSmartAssGame({
         const usedHard = s.usedHardAss;
         const drawn = drawCard(hardCards, usedHard);
         if (drawn) {
+          // The reader is the next player after the one who landed on Hard Ass
+          const moverIdx = kicked.findIndex(p => p.id === moverId);
+          const readerId = kicked[(moverIdx + 1) % kicked.length].id;
           return {
             ...s,
             players: kicked,
             phase: 'hard-ass-card',
             hardAssPlayerId: moverId,
+            hardAssReaderId: readerId,
             hardAssCardPath: getCardPath('hard_ass', drawn.filename),
             lastDieValue: dieValue,
             usedHardAss: [...usedHard, drawn.index],
@@ -279,6 +284,7 @@ export function useSmartAssGame({
         lastDieValue: dieValue,
         hardAssCardPath: null,
         hardAssPlayerId: null,
+      hardAssReaderId: null,
         activeMoverId: null,
       };
     }
@@ -288,11 +294,15 @@ export function useSmartAssGame({
       const usedHard = s.usedHardAss;
       const drawn = drawCard(hardCards, usedHard);
       if (drawn) {
+        // The reader is the next player after the one who landed on Hard Ass
+        const moverIdx = updated.findIndex(p => p.id === moverId);
+        const readerId = updated[(moverIdx + 1) % updated.length].id;
         return {
           ...s,
           players: updated,
           phase: 'hard-ass-card',
           hardAssPlayerId: moverId,
+          hardAssReaderId: readerId,
           hardAssCardPath: getCardPath('hard_ass', drawn.filename),
           lastDieValue: dieValue,
           usedHardAss: [...usedHard, drawn.index],
@@ -316,6 +326,7 @@ export function useSmartAssGame({
         lastDieValue: dieValue,
         hardAssCardPath: null,
         hardAssPlayerId: null,
+      hardAssReaderId: null,
         activeMoverId: null,
       };
     }
@@ -333,6 +344,7 @@ export function useSmartAssGame({
       lastDieValue: dieValue,
       hardAssCardPath: null,
       hardAssPlayerId: null,
+      hardAssReaderId: null,
       activeMoverId: null,
     };
   }, []);
@@ -372,6 +384,7 @@ export function useSmartAssGame({
       answeringPlayerId: null,
       hardAssCardPath: null,
       hardAssPlayerId: null,
+      hardAssReaderId: null,
       activeMoverId: null,
     });
   }, [isHost, syncState]);
