@@ -13,6 +13,7 @@ import CitadelsPage from './games/citadels/CitadelsPage';
 import DixitPage from './games/dixit/DixitPage';
 import WavelengthPage from './games/wavelength/WavelengthPage';
 import DecryptoPage from './games/decrypto/DecryptoPage';
+import SmartAssPage from './games/smart-ass/SmartAssPage';
 
 export default function App() {
   return (
@@ -97,6 +98,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <DecryptoPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/smart-ass"
+            element={
+              <ProtectedRoute>
+                <SmartAssPage />
               </ProtectedRoute>
             }
           />

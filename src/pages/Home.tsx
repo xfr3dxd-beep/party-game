@@ -261,6 +261,33 @@ export default function Home() {
               <span className="mind-players-badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}>📱 Multiplayer online</span>
             </div>
           </div>
+          {/* Smart Ass Card */}
+          <div
+            className="game-card animate-slide-in"
+            onClick={() => navigate('/smart-ass')}
+            id="game-card-smart-ass"
+            style={{ animationDelay: '1.0s' }}
+          >
+            <span className="game-card-badge badge-live">Giocabile</span>
+            <div className="game-card-icon" style={{ fontSize: '3.5rem' }}>
+              🫏
+            </div>
+            <h2 className="game-card-title">Smart Ass</h2>
+            <p className="game-card-desc">
+              Chi indovina per primo? Il narratore legge gli indizi, gli altri competono per rispondere!
+              Avanza sul tabellone e attento alle caselle speciali.
+            </p>
+            <div style={{
+              display: 'flex',
+              gap: '0.5rem',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              marginTop: '0.5rem',
+            }}>
+              <span className="mind-players-badge" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#fb923c', borderColor: 'rgba(249, 115, 22, 0.3)' }}>👥 2-12 giocatori</span>
+              <span className="mind-players-badge" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#fb923c', borderColor: 'rgba(249, 115, 22, 0.3)' }}>📱 Multiplayer online</span>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>
