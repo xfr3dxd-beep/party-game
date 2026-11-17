@@ -407,6 +407,13 @@ export function useSmartAssGame({
     syncState(newState);
   }, [isHost, syncState, processMove]);
 
+  // ---- DISMISS EVENT ----
+  const handleDismissEvent = useCallback(() => {
+    if (!isHost) return;
+    const s = stateRef.current;
+    syncState({ ...s, lastEvent: null });
+  }, [isHost, syncState]);
+
   // ---- NEW GAME ----
   const handleNewGame = useCallback(() => {
     if (!isHost) return;
@@ -435,6 +442,7 @@ export function useSmartAssGame({
             case 'hard-ass-correct': handleHardAssCorrect(); break;
             case 'hard-ass-incorrect': handleHardAssIncorrect(); break;
             case 'hard-ass-number-rolled': handleHardAssNumberRolled(payload.value); break;
+            case 'dismiss-event': handleDismissEvent(); break;
             case 'new-game': handleNewGame(); break;
           }
         } else if (event.type === 'request-sync') {
@@ -447,7 +455,7 @@ export function useSmartAssGame({
   }, [isHost, onBroadcast, broadcast, handlePickToken, handleStartGame,
       handleCategoryRolled, handleCardAcknowledged, handleSelectAnswerer,
       handleNumberRolled, handleHardAssCorrect, handleHardAssIncorrect,
-      handleHardAssNumberRolled, handleNewGame]);
+      handleHardAssNumberRolled, handleDismissEvent, handleNewGame]);
 
   // ---- ACT (called by components) ----
   const act = useCallback((action: string, payload?: any) => {
@@ -463,6 +471,7 @@ export function useSmartAssGame({
         case 'hard-ass-correct': handleHardAssCorrect(); break;
         case 'hard-ass-incorrect': handleHardAssIncorrect(); break;
         case 'hard-ass-number-rolled': handleHardAssNumberRolled(payload.value); break;
+        case 'dismiss-event': handleDismissEvent(); break;
         case 'new-game': handleNewGame(); break;
       }
     } else {
@@ -471,7 +480,7 @@ export function useSmartAssGame({
   }, [isHost, broadcast, handlePickToken, handleStartGame,
       handleCategoryRolled, handleCardAcknowledged, handleSelectAnswerer,
       handleNumberRolled, handleHardAssCorrect, handleHardAssIncorrect,
-      handleHardAssNumberRolled, handleNewGame]);
+      handleHardAssNumberRolled, handleDismissEvent, handleNewGame]);
 
   return { state, act, setState, devAddBots };
 }

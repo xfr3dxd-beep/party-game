@@ -60,15 +60,6 @@ export default function SmartAssBoard({ state, playerId, isHost, onAct }: Props)
       case 'narrator-roll':
         return (
           <div style={{ textAlign: 'center', padding: '1rem' }}>
-            {state.lastEvent && (
-              <div style={{
-                marginBottom: '1rem', padding: '0.6rem 1.2rem', borderRadius: '12px',
-                background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.4)',
-                fontSize: '0.95rem', fontWeight: 700, color: '#c084fc',
-              }}>
-                {state.lastEvent}
-              </div>
-            )}
             <div style={{
               fontSize: '1.1rem', fontWeight: 800, marginBottom: '1rem',
               color: TOKEN_CSS_COLORS[narrator?.tokenIndex ?? 0],
@@ -464,6 +455,62 @@ export default function SmartAssBoard({ state, playerId, isHost, onAct }: Props)
           <img src={state.currentCardPath} alt="Card" />
           <div style={{ marginTop: '1rem', color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem' }}>
             Tocca per chiudere
+          </div>
+        </div>
+      )}
+
+      {/* Full-screen special event overlay (all players) */}
+      {state.lastEvent && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexDirection: 'column', padding: '2rem',
+        }}>
+          <div style={{
+            background: 'linear-gradient(145deg, rgba(30,30,70,0.98), rgba(20,20,50,0.98))',
+            borderRadius: '24px', padding: '2.5rem 2rem', maxWidth: '420px', width: '90%',
+            textAlign: 'center',
+            border: '2px solid rgba(255,255,255,0.15)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 40px rgba(139,92,246,0.15)',
+          }}>
+            <div style={{
+              fontSize: '3rem', marginBottom: '1rem',
+              filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))',
+            }}>
+              {state.lastEvent.includes('Kick Ass') ? '⚡' :
+               state.lastEvent.includes('Hard Ass') ? '🟣' :
+               state.lastEvent.includes('Dumb Ass') ? '💤' : '📢'}
+            </div>
+            <div style={{
+              fontSize: '1.3rem', fontWeight: 900, lineHeight: 1.4,
+              color: state.lastEvent.includes('Kick Ass') ? '#fbbf24' :
+                     state.lastEvent.includes('Hard Ass') ? '#a855f7' :
+                     state.lastEvent.includes('Dumb Ass') ? '#60a5fa' : '#fff',
+              marginBottom: '1.5rem',
+              textShadow: '0 2px 8px rgba(0,0,0,0.5)',
+            }}>
+              {state.lastEvent}
+            </div>
+            {isHost && (
+              <button
+                onClick={() => onAct('dismiss-event')}
+                style={{
+                  padding: '0.8rem 2.5rem', fontSize: '1rem', fontWeight: 800,
+                  borderRadius: '999px', border: 'none', cursor: 'pointer',
+                  color: '#fff',
+                  background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)',
+                  boxShadow: '0 6px 20px rgba(139,92,246,0.4)',
+                }}
+              >
+                ✅ Continua
+              </button>
+            )}
+            {!isHost && (
+              <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', fontStyle: 'italic' }}>
+                In attesa che l'host continui...
+              </div>
+            )}
           </div>
         </div>
       )}
